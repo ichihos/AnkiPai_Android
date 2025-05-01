@@ -202,14 +202,11 @@ class MemoryService with ChangeNotifier {
     });
 
     // バックグラウンドタスクをキューに追加
-    final result = await _backgroundProcessor.startTask({
+    final result =
+        await _backgroundProcessor.runTaskInForeground('techniqueGeneration', {
       'taskId': taskId,
-      'type': 'techniqueGeneration',
       'content': content,
-      'userId': user.uid,
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
     });
-
     if (result.isEmpty) {
       // バックグラウンドサービスが開始できなかった場合
       await _firestore
@@ -267,9 +264,9 @@ class MemoryService with ChangeNotifier {
     });
 
     // バックグラウンドタスクをキューに追加
-    final result = await _backgroundProcessor.startTask({
+    final result =
+        await _backgroundProcessor.runTaskInForeground('flashcardCreation', {
       'taskId': taskId,
-      'type': 'flashcardCreation',
       'cardSetId': cardSetId,
       'cardSetName': cardSetName,
       'flashcardsData': flashcardDataList,
@@ -337,7 +334,7 @@ class MemoryService with ChangeNotifier {
 
       if (!taskDoc.exists) {
         // バックグラウンドプロセッサーから取得を試みる
-        return await _backgroundProcessor.getTaskProgress(taskId);
+        return await _backgroundProcessor.getTaskStatus(taskId);
       }
 
       final taskData = taskDoc.data()!;
@@ -350,7 +347,7 @@ class MemoryService with ChangeNotifier {
     } catch (e) {
       print('タスク進捗の取得に失敗しました: $e');
       // バックグラウンドプロセッサーから取得を試みる
-      return await _backgroundProcessor.getTaskProgress(taskId);
+      return await _backgroundProcessor.getTaskStatus(taskId);
     }
   }
 
@@ -1804,7 +1801,8 @@ class MemoryService with ChangeNotifier {
         taskData['notificationBody'] = notificationBody;
 
         // バックグラウンドタスクを開始
-        final result = await backgroundProcessor.startTask(taskData);
+        final result =
+            await backgroundProcessor.runTaskInForeground(taskType, taskData);
 
         if (result.isEmpty) {
           // タスクの完了を待機
@@ -1820,7 +1818,7 @@ class MemoryService with ChangeNotifier {
 
             // タスクの状態を確認
             final taskProgress =
-                await backgroundProcessor.getTaskProgress(taskId);
+                await backgroundProcessor.getTaskStatus(taskId);
             final status = taskProgress['status'] as String? ?? 'unknown';
 
             print('バックグラウンドタスク状態: $status');
