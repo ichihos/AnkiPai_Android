@@ -1,0 +1,60 @@
+  // OCR結果のテキストを処理
+  Future<void> _processOcrResult(String text) async {
+    // Widgetがまだマウントされているか確認
+    if (!mounted) return;
+    
+    try {
+      // 安全にsetStateを呼び出す
+      if (mounted) {
+        setState(() {
+          _isProcessing = true;
+        });
+      }
+      
+      // テキストが空でないことを確認
+      final String content = text.trim();
+      if (content.isEmpty) {
+        throw 'テキストが空です。別の画像を試してみてください。';
+      }
+      
+      print('OCRから抽出したテキスト: $content');
+      
+      // 入力フィールドにOCRテキストをセット
+      _inputController.text = content;
+      
+      // 入力欄にフォーカスを当てる
+      _inputFocusNode.requestFocus();
+      
+      // 成功メッセージを表示
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('OCRテキストを取得しました。内容を確認して保存ボタンを押してください。'),
+          backgroundColor: Colors.green.shade600,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      String errorMessage = e.toString();
+      // エラーメッセージをユーザーフレンドリーに調整
+      if (errorMessage.contains('permission-denied')) {
+        errorMessage = 'データベースのアクセス権限がありません。再度ログインしてください。';
+      } else if (errorMessage.contains('ログイン')) {
+        errorMessage = 'ログイン状態が無効です。再度ログインしてください。';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('OCRテキストの取得に失敗しました: $errorMessage'),
+          backgroundColor: Colors.red.shade400,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } finally {
+      // 処理完了後にフラグをリセット
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }

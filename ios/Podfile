@@ -1,0 +1,407 @@
+# Uncomment this line to define a global platform for your project
+platform :ios, '14.0'
+
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+# Suppress warning about master specs repo
+install! 'cocoapods', :warn_for_unused_master_specs_repo => false
+
+# Set a global variable for iOS version to use in hooks
+$iOSVersion = '14.0'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  
+  # Add language package you need to use
+  pod 'GoogleSignIn', '~> 7.1'
+  
+  # Explicitly include Firebase Auth from CocoaPods - use specific versions to prevent conflicts
+  pod 'Firebase/Core'
+  pod 'Firebase/Auth'
+  pod 'FirebaseCore'
+  pod 'FirebaseAuth'
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+post_install do |installer|
+  # Set deployment target and other basic config for all targets
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = $iOSVersion
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'i386'
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        'PERMISSION_CAMERA=1',
+      ]
+      
+      # Specifically for Firebase and gRPC related issues
+      if target.name.include?('Firebase') || target.name.include?('gRPC') || target.name.include?('grpc') || 
+         target.name.include?('openssl') || target.name.include?('absl') || target.name.include?('Firestore')
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        config.build_settings['APPLICATION_EXTENSION_API_ONLY'] = 'NO'
+        
+        # Use Swift 5 for Firebase targets
+        config.build_settings['SWIFT_VERSION'] = '5.0' if config.build_settings['SWIFT_VERSION']
+      end
+    end
+  end
+
+  # GRPC and Firestore specific settings
+  installer.pods_project.targets.each do |target|
+    if target.name.start_with?('GRPC') || target.name.include?('gRPC') || target.name.include?('Firestore') || 
+       target.name.include?('grpc') || target.name == 'openssl_grpc' || target.name == 'absl'
+      target.build_configurations.each do |config|
+        config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ""
+        config.build_settings['CODE_SIGNING_REQUIRED'] = "NO"
+        config.build_settings['CODE_SIGNING_ALLOWED'] = "NO"
+      end
+    end
+  end
+
+  # Fix duplicate frameworks - comprehensive approach
+  installer.pods_project.targets.each do |target|
+    frameworks_build_phase = target.build_phases.find { |phase| phase.is_a?(Xcodeproj::Project::Object::PBXFrameworksBuildPhase) }
+    embed_frameworks_build_phase = target.build_phases.find { |phase| phase.is_a?(Xcodeproj::Project::Object::PBXCopyFilesBuildPhase) && phase.name == 'Embed Frameworks' }
+    
+    if frameworks_build_phase.present? && embed_frameworks_build_phase.present?
+      # Create hashes to track unique frameworks
+      unique_frameworks = {}
+      unique_embed_frameworks = {}
+      
+      # Process each file, keeping only the first occurrence
+      frameworks_build_phase.files.each do |file|
+        file_ref = file.file_ref
+        next unless file_ref
+        path = file_ref.path
+        if unique_frameworks[path].nil?
+          unique_frameworks[path] = file
+        else
+          frameworks_build_phase.remove_build_file(file)
+        end
+      end
+      
+      # Process each embed file, keeping only the first occurrence
+      embed_frameworks_build_phase.files.each do |file|
+        file_ref = file.file_ref
+        next unless file_ref
+        path = file_ref.path
+        if unique_embed_frameworks[path].nil?
+          unique_embed_frameworks[path] = file
+        else
+          embed_frameworks_build_phase.remove_build_file(file)
+        end
+      end
+    end
+  end
+  
+  # Explicitly handle problematic frameworks
+  problematic_frameworks = ['absl', 'grpc', 'grpcpp', 'openssl_grpc', 'FirebaseFirestoreInternal']
+  installer.pods_project.targets.each do |target|
+    if problematic_frameworks.any? { |name| target.name.include?(name) }
+      puts "Applying special handling for #{target.name}"
+      target.build_configurations.each do |config|
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
+        config.build_settings['APPLICATION_EXTENSION_API_ONLY'] = 'NO'
+      end
+    end
+  end
+  
+  # Remove duplicate build phases - more detailed approach
+  installer.pods_project.targets.each do |target|
+    # Skip if not the main Runner target
+    next unless target.name == 'Runner'
+    
+    # Identify and handle duplicate embed frameworks build phases
+    embed_frameworks_phases = target.build_phases.select { |phase| 
+      phase.is_a?(Xcodeproj::Project::Object::PBXCopyFilesBuildPhase) && 
+      phase.name == 'Embed Frameworks'
+    }
+    
+    if embed_frameworks_phases.count > 1
+      puts "Found multiple 'Embed Frameworks' phases in #{target.name}, consolidating..."
+      # Keep the first one, remove others
+      main_phase = embed_frameworks_phases.first
+      embed_frameworks_phases[1..-1].each do |duplicate_phase|
+        # Move any files to the main phase
+        duplicate_phase.files.each do |file|
+          unless main_phase.files.map(&:file_ref).include?(file.file_ref)
+            main_phase.add_file_reference(file.file_ref)
+          end
+        end
+        # Remove the duplicate phase
+        target.build_phases.delete(duplicate_phase)
+      end
+    end
+    
+    # Now deduplicate files within the remaining embed frameworks phase
+    if embed_frameworks_phases.any?
+      main_phase = embed_frameworks_phases.first
+      # Track files we've seen
+      seen_files = {}
+      files_to_remove = []
+      
+      main_phase.files.each do |file|
+        next unless file.file_ref
+        path = file.file_ref.path
+        
+        if seen_files[path]
+          # This is a duplicate, mark for removal
+          files_to_remove << file
+        else
+          seen_files[path] = true
+        end
+      end
+      
+      # Remove duplicate files
+      files_to_remove.each do |file|
+        main_phase.remove_build_file(file)
+      end
+    end
+  end
+# Special handling for BoringSSL-GRPC
+installer.pods_project.targets.each do |target|
+    if target.name == 'BoringSSL-GRPC'
+    target.source_build_phase.files.each do |file|
+        if file.settings && file.settings['COMPILER_FLAGS']
+        flags = file.settings['COMPILER_FLAGS'].split
+        flags.reject! { |flag| flag == '-GCC_WARN_INHIBIT_ALL_WARNINGS' }
+        file.settings['COMPILER_FLAGS'] = flags.join(' ')
+        end
+    end
+    end
+end
+
+# Fix Firebase module redefinition issues
+firebase_pods = ['Firebase', 'FirebaseCore', 'FirebaseAnalytics', 'FirebaseCrashlytics', 'FirebaseAuth', 'FirebaseAppCheck', 'FirebaseStorage', 'FirebaseMLModelDownloader']
+installer.pods_project.targets.each do |target|
+if firebase_pods.include?(target.name)
+    # More comprehensive fix for all modulemap files
+    Dir.glob("Pods/#{target.name}/**/*.modulemap").each do |modulemap_path|
+    puts "Checking #{modulemap_path}"
+    content = File.read(modulemap_path)
+    original_content = content.dup
+    
+    # Fix multiple module definitions
+    if content.scan(/module\s+\w+/).length > 1
+        puts "Fixing duplicate module definitions in #{modulemap_path}"
+        # Keep only first module definition
+        first_module_match = content.match(/module\s+\w+\s+{.*?}/m)
+        if first_module_match
+        content = first_module_match[0]
+        end
+    end
+    
+    # Convert regular module to framework module
+    if !content.include?("framework module") && content.match(/^module\s+\w+/)
+        puts "Converting to framework module in #{modulemap_path}"
+        content = content.gsub(/^module\s+(\w+)/, 'framework module \1')
+    end
+    
+    # Ensure umbrella header declaration is correct for Firebase modules
+    if modulemap_path.include?("Firebase") && content.match(/header\s+"[^"]+\.h"/) && !content.include?("umbrella header")
+        header_match = content.match(/header\s+"([^"]+\.h)"/)
+        if header_match
+        puts "Adding umbrella header in #{modulemap_path}"
+        content = content.gsub(/header\s+"([^"]+\.h)"/, 'umbrella header "\1"')
+        end
+    end
+    
+    # Add module * export directive if missing
+    if !content.include?("module *")
+        puts "Adding module export directive in #{modulemap_path}"
+        if content.include?("}")
+        content = content.sub(/}/, "  module * { export * }\n}")
+        end
+    end
+    
+    # Write changes only if content was modified
+    if content != original_content
+        puts "Writing fixed modulemap to #{modulemap_path}"
+        File.write(modulemap_path, content)
+    end
+    end
+        # Add build settings to resolve module conflicts
+        target.build_configurations.each do |config|
+            config.build_settings['APPLICATION_EXTENSION_API_ONLY'] = 'NO'
+            config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
+            
+            # Add preprocessor definitions known to fix Firebase module issues
+            config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+            config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'PB_FIELD_32BIT=1 PB_NO_PACKED_STRUCTS=1 PB_ENABLE_MALLOC=1'
+            
+            # Additional build settings to fix module map issues
+            config.build_settings['DEFINES_MODULE'] = 'YES'
+            config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+            
+            # For FirebaseCore and other problematic modules
+            if target.name == 'FirebaseCore' || target.name == 'Firebase'
+                puts "Applying special fixes for #{target.name}"
+                config.build_settings['OTHER_SWIFT_FLAGS'] = '$(inherited) -Xcc -fmodule-map-file="${PODS_ROOT}/Headers/Public/Firebase/Firebase.modulemap"'
+            end
+        end
+    end
+    end
+
+  # Fix FirebaseAppCheckInterop header include style
+  firebaseAppCheckInteropDir = installer.sandbox.pod_dir('FirebaseAppCheckInterop')
+  if firebaseAppCheckInteropDir.exist?
+    Dir.glob(firebaseAppCheckInteropDir.to_s + "/**/*.h").each do |file|
+      content = File.read(file)
+      fixed_content = content.gsub(/#include "(FIRAppCheck.*\.h)"/, '#include <\1>')
+      fixed_content = fixed_content.gsub(/#include "(FirebaseAppCheckInterop\.h)"/, '#include <\1>')
+      if content != fixed_content
+        puts "Fixing #{file}"
+        File.write(file, fixed_content)
+      end
+    end
+  end
+
+  # Standard Flutter settings
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+    
+    target.build_configurations.each do |config|
+      # Ensure minimum iOS version
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+      
+      # Disable bitcode
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+      
+      # Fix for unsupported option '-G' for target 'arm64-apple-ios14.0'
+      if config.build_settings['OTHER_CPLUSPLUSFLAGS'].is_a?(Array)
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = config.build_settings['OTHER_CPLUSPLUSFLAGS'].reject { |flag| flag == '-G' }
+      end
+      
+      # Fix for CocoaPods base configuration warning
+      if target.name == 'Runner'
+        xcconfig_path = "Target Support Files/Pods-Runner/Pods-Runner.#{config.name.downcase}.xcconfig"
+        config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = '$(inherited)'
+        config.build_settings.delete('IPHONEOS_DEPLOYMENT_TARGET')
+        if File.exist?(File.join(installer.sandbox.root, xcconfig_path))
+          config.base_configuration_reference = installer.sandbox.root.join(xcconfig_path)
+        end
+      end
+    end
+  end
+# Add comprehensive Firebase and modulemap fixes
+# Fix for all Firebase-related modules
+firebase_module_pods = installer.pod_targets.select { |p| p.name.start_with?('Firebase') || p.name == 'Firebase' }
+firebase_module_pods.each do |pod|
+pod.specs.each do |spec|
+    if spec.module_map
+    module_map_file = spec.module_map.to_s
+    if File.exist?(module_map_file)
+        content = File.read(module_map_file)
+        original_content = content.dup
+        
+        # Ensure it's a framework module
+        if content.match(/^module\s+\w+/) && !content.include?("framework module")
+        puts "Converting to framework module in #{module_map_file}"
+        content = content.gsub(/^module\s+(\w+)/, 'framework module \1')
+        end
+        
+        # Add umbrella header if needed
+        module_name = File.basename(File.dirname(module_map_file))
+        if !content.include?("umbrella header")
+        header_files = Dir.glob(File.join(File.dirname(module_map_file), "*.h"))
+        if header_files.any?
+            umbrella_candidate = header_files.find { |f| File.basename(f).downcase == "#{module_name.downcase}.h" } || header_files.first
+            umbrella_header = File.basename(umbrella_candidate)
+            
+            # If there's a header statement, replace it with umbrella header
+            if content.match(/header\s+"[^"]+"/)
+            content = content.gsub(/header\s+"([^"]+)"/, "umbrella header \"#{umbrella_header}\"")
+            else
+            # Otherwise add the umbrella header before any closing brace
+            content = content.sub(/}/, "  umbrella header \"#{umbrella_header}\"\n}")
+            end
+            puts "Added umbrella header #{umbrella_header} to #{module_map_file}"
+        end
+        end
+        
+        # Add module * export directive if missing
+        if !content.include?("module *")
+        content = content.sub(/}/, "  module * { export * }\n}")
+        puts "Added module export directive to #{module_map_file}"
+        end
+        
+        # Write changes if content was modified
+        if content != original_content
+        puts "Writing fixed modulemap to #{module_map_file}"
+        File.write(module_map_file, content)
+        end
+    end
+    end
+end
+end
+
+# Additional direct fix for the main Firebase module.modulemap
+firebase_modulemap = "Pods/Firebase/CoreOnly/Sources/module.modulemap"
+if File.exist?(firebase_modulemap)
+content = File.read(firebase_modulemap)
+fixed_content = "framework module Firebase {\n  umbrella header \"Firebase.h\"\n  export *\n  module * { export * }\n}\n"
+
+if content != fixed_content
+    puts "Applying complete fix to Firebase module.modulemap"
+    File.write(firebase_modulemap, fixed_content)
+end
+end
+
+# Fix specifically for FirebaseAnalytics module maps
+Dir.glob("#{installer.sandbox.root}/**/FirebaseAnalytics*/**/*.modulemap").each do |modulemap_path|
+  puts "Checking FirebaseAnalytics module map: #{modulemap_path}"
+  content = File.read(modulemap_path)
+  
+  # Check if module map is missing closing braces
+  open_braces = content.scan(/{/).count
+  close_braces = content.scan(/}/).count
+  
+  if open_braces > close_braces
+    puts "  Adding #{open_braces - close_braces} missing closing braces to #{modulemap_path}"
+    fixed_content = content.dup
+    (open_braces - close_braces).times do
+      fixed_content = fixed_content.strip + "\n}"
+    end
+    File.write(modulemap_path, fixed_content)
+  end
+  
+  # Also check for incomplete module export statements
+  if content.include?("module *") && !content.include?("module * { export * }")
+    fixed_content = content.gsub(/module \* \{ export \*$/, "module * { export * }")
+    if fixed_content != content
+      puts "  Fixing incomplete module export in #{modulemap_path}"
+      File.write(modulemap_path, fixed_content)
+    end
+  end
+end
+end

@@ -1,0 +1,47 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "memoryTechniques",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "contentKeywords",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "contentHash",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "memoryTechniques",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "isPublic",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "memoryTechniques",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

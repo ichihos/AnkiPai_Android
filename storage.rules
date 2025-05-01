@@ -1,0 +1,23 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // デフォルトでは全てのアクセスを拒否
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+    
+    // プロフィール画像へのアクセスルール
+    match /profile_images/{userId}/{imageId} {
+      // 認証済みユーザーのみが自分のプロフィール画像を読み取れる
+      allow read: if request.auth != null && (
+        // 自分のプロフィール画像を読み取ることができる
+        request.auth.uid == userId ||
+        // または公開されている画像を読み取ることができる（将来的な拡張）
+        resource.metadata.isPublic == true
+      );
+      
+      // 認証済みユーザーのみが自分のプロフィール画像を書き込める
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>暗記Pai アプリアイコン生成ツール</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f5f5f5;
+        }
+        
+        h1 {
+            color: #2196F3;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #1976D2;
+        }
+        
+        .size-selector {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        
+        .icon-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .icon {
+            border-radius: 22%;  /* iOS風の丸め */
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .icon-inner {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #E0F7FA;  /* 薬水色の背景 */
+        }
+        
+        .pie-outer {
+            width: 85%;
+            height: 85%;
+            background-color: #FFCA28;  /* 濃い黄色の外側 - amber.shade400 */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .pie-inner {
+            width: 78%;
+            height: 78%;
+            background-color: #FFE082;  /* より明るい黄色の内側 - amber.shade200 */
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .pie-slice {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            top: 0;
+            left: 0;
+            transform-origin: 50% 50%;
+            /* 扇形の角度を狭く調整 */
+            clip-path: polygon(50% 50%, 100% 50%, 100% 20%, 70% 0%);
+            /* 中央右側に配置するように調整 */
+            transform: rotate(0deg);
+        }
+        
+        .instructions {
+            max-width: 800px;
+            margin-top: 40px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .sizes-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .sizes-table th, .sizes-table td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        .sizes-table th {
+            background-color: #f2f2f2;
+        }
+        
+        .download-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>暗記Pai アプリアイコン生成ツール</h1>
+    
+    <div class="controls">
+        <select id="sizeSelector" class="size-selector" onchange="changeIconSize()">
+            <option value="120">120×120 (iPhone)</option>
+            <option value="180">180×180 (iPhone高解像度)</option>
+            <option value="192">192×192 (Android/PWA)</option>
+            <option value="512">512×512 (Play Store)</option>
+            <option value="1024" selected>1024×1024 (App Store)</option>
+        </select>
+        
+        <button onclick="downloadIcon()">アイコンを保存</button>
+    </div>
+    
+    <div class="icon-container">
+        <div id="icon" class="icon" style="width: 300px; height: 300px;">
+            <div class="icon-inner">
+                <div class="pie-outer">
+                    <div class="pie-inner">
+                        <div class="pie-slice"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p>スクリーンショットまたは「アイコンを保存」ボタンでアイコンを保存してください</p>
+    </div>
+    
+    <div class="instructions">
+        <h2>アプリアイコンの使用方法</h2>
+        
+        <h3>各プラットフォームで必要なサイズ</h3>
+        <table class="sizes-table">
+            <tr>
+                <th>プラットフォーム</th>
+                <th>サイズ (px)</th>
+                <th>ファイル形式</th>
+                <th>配置場所</th>
+            </tr>
+            <tr>
+                <td>iOS</td>
+                <td>120×120, 180×180</td>
+                <td>PNG</td>
+                <td>iOS/Assets.xcassets/AppIcon.appiconset/</td>
+            </tr>
+            <tr>
+                <td>Android</td>
+                <td>192×192, 512×512</td>
+                <td>PNG</td>
+                <td>android/app/src/main/res/mipmap/</td>
+            </tr>
+            <tr>
+                <td>Web (PWA)</td>
+                <td>192×192, 512×512</td>
+                <td>PNG</td>
+                <td>web/icons/</td>
+            </tr>
+        </table>
+        
+        <div class="download-info">
+            <p><strong>使用方法:</strong></p>
+            <ol>
+                <li>上のドロップダウンメニューからアイコンのサイズを選択</li>
+                <li>「アイコンを保存」ボタンをクリックして画像をダウンロード</li>
+                <li>Flutter プロジェクトの適切なディレクトリに保存</li>
+                <li>pubspec.yaml の flutter > assets セクションに追加</li>
+            </ol>
+            
+            <p><strong>Flutter アイコン生成ツールの使用:</strong></p>
+            <p>アイコンを生成した後、<a href="https://pub.dev/packages/flutter_launcher_icons" target="_blank">flutter_launcher_icons</a> パッケージを使うと簡単にすべてのプラットフォームのアイコンを設定できます:</p>
+            <pre>
+flutter pub add flutter_launcher_icons --dev
+            </pre>
+            <p>pubspec.yaml に以下を追加:</p>
+            <pre>
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    background_color: "#E0F7FA"
+    theme_color: "#E0F7FA"
+            </pre>
+            <p>そして以下のコマンドを実行:</p>
+            <pre>
+flutter pub run flutter_launcher_icons
+            </pre>
+        </div>
+    </div>
+
+    <script>
+        function changeIconSize() {
+            const size = document.getElementById('sizeSelector').value;
+            const icon = document.getElementById('icon');
+            
+            // 表示サイズは常に300pxにして、data属性に実際のサイズを保存
+            icon.setAttribute('data-size', size);
+        }
+        
+        function downloadIcon() {
+            const size = document.getElementById('sizeSelector').value;
+            const iconContainer = document.getElementById('icon');
+            
+            // Canvas作成
+            const canvas = document.createElement('canvas');
+            const actualSize = parseInt(size);
+            canvas.width = actualSize;
+            canvas.height = actualSize;
+            const ctx = canvas.getContext('2d');
+            
+            // 背景描画
+            ctx.fillStyle = '#E0F7FA';
+            ctx.fillRect(0, 0, actualSize, actualSize);
+            
+            // 外側の円
+            ctx.fillStyle = '#FFCA28'; // amber.shade400
+            ctx.beginPath();
+            ctx.arc(actualSize/2, actualSize/2, actualSize * 0.425, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 内側の円
+            ctx.fillStyle = '#FFE082'; // amber.shade200
+            ctx.beginPath();
+            ctx.arc(actualSize/2, actualSize/2, actualSize * 0.33, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // パイスライス - 角度を狭く中央右側に配置
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.moveTo(actualSize/2, actualSize/2);
+            // 引数: 中心点、半径、開始角度、終了角度
+            ctx.arc(actualSize/2, actualSize/2, actualSize * 0.33, -0.5, 0.55, false);
+            ctx.closePath();
+            ctx.fill();
+            
+            // ダウンロード
+            const link = document.createElement('a');
+            link.download = `anki_pai_icon_${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>

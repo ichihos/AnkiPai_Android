@@ -1,0 +1,118 @@
+name: anki_pai
+description: Memorization app with AI support.
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.19.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  firebase_core: ^2.25.3
+  firebase_auth: ^4.17.3
+  cloud_firestore: ^4.15.3
+  cloud_functions: ^4.6.0
+  google_sign_in: ^6.1.5
+  provider: ^6.1.1
+  http: ^1.2.0
+  image_picker: ^1.0.4
+  firebase_storage: ^11.2.7
+  firebase_ml_model_downloader: ^0.2.5+6
+  intl: ^0.18.1
+  shared_preferences: ^2.5.3
+  flutter_dotenv: ^5.1.0
+  get_it: ^7.6.7
+  flip_card: ^0.7.0
+  google_vision: ^2.0.0+4
+  flutter_launcher_icons: ^0.14.3
+  dotted_border: ^2.1.0
+  crop_your_image: ^2.0.0
+  path_provider: ^2.1.1
+  image: ^4.1.3
+  flutter_math_fork: ^0.7.3
+  # OCR関連テスト用
+  openai_dart: ^0.2.2
+  # 決済関連
+  in_app_purchase: ^3.1.11
+  in_app_purchase_android: ^0.3.0+15
+  in_app_purchase_storekit: ^0.3.7+1
+  url_launcher: ^6.2.4
+  flutter_stripe: ^9.6.0
+  flutter_stripe_web: ^4.6.0
+  uuid: ^4.5.1
+  flutter_local_notifications: ^19.1.0
+  firebase_messaging: ^14.9.4
+  timezone: ^0.10.0
+  workmanager: ^0.5.2
+  # Android向けバックグラウンド処理用
+  android_alarm_manager_plus: ^3.0.4
+  flutter_foreground_task: ^6.1.2
+  # Temporarily commented out to fix build issues
+  # flutter_background_service: ^5.1.0
+  # flutter_background_service_ios: ^5.0.3
+  # flutter_background_service_android: ^6.3.0
+  # Temporarily commenting out to fix build issues
+  # google_mobile_ads: ^3.1.0
+  flutter_native_splash: ^2.4.4
+  app_tracking_transparency: ^2.0.4
+  # Temporarily commenting out to fix build issues
+  # sign_in_with_apple: ^5.0.0
+  crypto: ^3.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
+    - assets/.env
+    - assets/images/
+  fonts:
+    - family: Rounded
+      fonts:
+        - asset: assets/fonts/ZenMaruGothic-Medium.ttf
+          weight: 100
+        - asset: assets/fonts/ZenMaruGothic-Medium.ttf
+          weight: 200
+        - asset: assets/fonts/ZenMaruGothic-Medium.ttf
+          weight: 300
+        - asset: assets/fonts/ZenMaruGothic-Medium.ttf
+          weight: 400
+        - asset: assets/fonts/ZenMaruGothic-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/ZenMaruGothic-Bold.ttf
+          weight: 600
+        - asset: assets/fonts/ZenMaruGothic-Bold.ttf
+          weight: 700
+        # - asset: assets/fonts/ZenMaruGothic-Medium.ttf
+        #   weight: 500
+
+# Override dependencies with versions compatible with macOS 10.15
+dependency_overrides:
+  # Fix for gRPC and BoringSSL-GRPC compatibility issues with macOS 10.15
+  grpc: 3.1.0
+  googleapis_auth: 1.4.1
+  http2: 2.0.0
+  http: ^1.2.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    background_color: "#E0F7FA"
+    theme_color: "#E0F7FA"
+
+flutter_native_splash:
+  color: "#E0F7FA"
+  image: "assets/images/splash.png"

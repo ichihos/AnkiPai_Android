@@ -1,0 +1,70 @@
+{
+
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "anki-pai",
+          "appId": "1:1019104165530:android:01c9298891f933eccc2923",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "anki-pai",
+          "appId": "1:1019104165530:ios:d3065726e40abb25cc2923",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "anki-pai",
+          "appId": "1:1019104165530:ios:a8e0051fbb31a38dcc2923",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "anki-pai",
+          "configurations": {
+            "android": "1:1019104165530:android:01c9298891f933eccc2923",
+            "ios": "1:1019104165530:ios:d3065726e40abb25cc2923",
+            "macos": "1:1019104165530:ios:a8e0051fbb31a38dcc2923",
+            "web": "1:1019104165530:web:069d29841f0e0848cc2923"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore_indexes/firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.* !**/assets/.env",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs18",
+    "memory": "1GB",
+    "timeoutSeconds": 60,
+    "region": "asia-northeast1",
+    "minInstances": 1
+  }
+}

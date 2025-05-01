@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection rules
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Memory items rules
+      match /memoryItems/{itemId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null && 
+                              request.auth.uid == userId && 
+                              request.resource.data.keys().hasAll(['title', 'content', 'contentType']);
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Card sets rules
+      match /cardSets/{setId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null && 
+                              request.auth.uid == userId && 
+                              request.resource.data.keys().hasAll(['title', 'createdAt']);
+        allow delete: if request.auth != null && request.auth.uid == userId;
+
+        // Nested flashcards within cardSets
+        match /flashcards/{cardId} {
+          allow read: if request.auth != null && request.auth.uid == userId;
+          allow create, update: if request.auth != null && 
+                                request.auth.uid == userId && 
+                                request.resource.data.keys().hasAll(['frontText', 'backText']);
+          allow delete: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+      
+      // Flash cards rules
+      match /flashCards/{cardId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null && 
+                              request.auth.uid == userId && 
+                              request.resource.data.setId is string && 
+                              request.resource.data.keys().hasAll(['frontText', 'backText', 'setId']) &&
+                              exists(/databases/$(database)/documents/users/$(userId)/cardSets/$(request.resource.data.setId));
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // 通知設定のルール
+      match /settings/notifications {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // FCMトークンのルール
+      match /tokens/{tokenId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Memory techniques rules (shared access)
+    match /memoryTechniques/{techniqueId} {
+      // Allow all read operations if authenticated
+      allow read: if request.auth != null;
+      
+      // Allow list queries
+      allow list: if request.auth != null;
+                    
+      // Allow creating technique if user is authenticated
+      allow create: if request.auth != null;
+                    
+      // Allow updating technique if user is the owner or if it's a new document
+      allow update: if request.auth != null && 
+                    (resource == null || resource.data.userId == request.auth.uid);
+                    
+      // Allow deleting technique if user is the owner
+      allow delete: if request.auth != null && 
+                    resource.data.userId == request.auth.uid;
+    }
+    
+    // Subscription rules
+    match /subscriptions/{userId} {
+      // Allow read if user is authenticated and is the owner
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow write if user is authenticated and is the owner
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

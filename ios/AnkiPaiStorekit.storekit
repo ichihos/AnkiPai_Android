@@ -1,0 +1,145 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "E854A523",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6744670157",
+    "_developerTeamID" : "5V8LL38C2D",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 766946111.03667402,
+    "_locale" : "ja",
+    "_storefront" : "JPN",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21669330",
+      "localizations" : [
+
+      ],
+      "name" : "暗記Paiプレミアム",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "19.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6744824363",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "暗記Paiの全機能を一年間制限なくお使いいただけます。",
+              "displayName" : "暗記Pai年間プレミアムプラン",
+              "locale" : "ja"
+            }
+          ],
+          "productID" : "AnkiPaiAnnualyPremium",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "暗記Pai年間プレミアムプラン",
+          "subscriptionGroupID" : "21669330",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "1.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6744670298",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "暗記Paiの全機能を一ヶ月間制限なくお使いいただけます。",
+              "displayName" : "暗記Pai月間プレミアムプラン",
+              "locale" : "ja"
+            }
+          ],
+          "productID" : "AnkiPaiMonthlyPremium",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "暗記Pai月間プレミアムプラン",
+          "subscriptionGroupID" : "21669330",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}
