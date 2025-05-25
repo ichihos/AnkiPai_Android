@@ -319,27 +319,42 @@ class UpgradeDialog {
       {bool isRecommended = false}) {
     return GestureDetector(
       onTap: () async {
-        // 選択されたプランでStripe決済を開始
-        Navigator.of(context).pop(true);
-
         try {
+          // プランタイプを決定
           final type = plan == 'yearly'
               ? SubscriptionType.premium_yearly
               : SubscriptionType.premium_monthly;
+          
+          // 重要: コンテキスト参照エラーを避けるため、BuildContextをキャプチャ
+          final NavigatorState navigator = Navigator.of(context);
+          final ScaffoldMessengerState scaffoldMessenger = ScaffoldMessenger.of(context);
+          
+          // 安全にダイアログを閉じる
+          navigator.pop(true);
+          
+          // 決済の実行前にマイクロ遅延を入れる
+          await Future.delayed(const Duration(milliseconds: 300));
 
-          // Stripe決済開始
-          final result = await StripePaymentService.startSubscription(type);
-
-          if (result['success'] != true) {
-            // 決済開始に失敗した場合
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('決済の開始に失敗しました。後ほどお試しください。')),
+          try {
+            // Stripe決済開始 - 外部ブラウザで開きます
+            final result = await StripePaymentService.startSubscription(type);
+            
+            // 注意: URLが開かれた後はエラーメッセージを表示しない (コンテキストが存在しない可能性があるため)
+            // URLが開く前に失敗した場合のみエラーを表示
+            if (result['success'] != true && result['url'] == null) {
+              scaffoldMessenger.showSnackBar(
+                const SnackBar(content: Text('決済の開始に失敗しました。後ほどお試しください。')),
+              );
+            }
+          } catch (e) {
+            // エラー処理 - URLが開く前に発生したエラーのみ表示
+            scaffoldMessenger.showSnackBar(
+              SnackBar(content: Text('決済ページ読み込みエラー: $e')),
             );
           }
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('エラーが発生しました: $e')),
-          );
+          // 初期化時の例外処理
+          print('購入初期化処理エラー: $e');
         }
       },
       child: Container(

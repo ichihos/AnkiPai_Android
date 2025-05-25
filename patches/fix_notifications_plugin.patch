@@ -1,0 +1,12 @@
+diff --git a/android/src/main/java/com/dexterous/flutterlocalnotifications/FlutterLocalNotificationsPlugin.java b/android/src/main/java/com/dexterous/flutterlocalnotifications/FlutterLocalNotificationsPlugin.java
+index someindex..newindex 100644
+--- a/android/src/main/java/com/dexterous/flutterlocalnotifications/FlutterLocalNotificationsPlugin.java
++++ b/android/src/main/java/com/dexterous/flutterlocalnotifications/FlutterLocalNotificationsPlugin.java
+@@ -1029,7 +1029,7 @@
+ 
+     if (bigPictureStyleInformation.hideExpandedLargeIcon) {
+-      bigPictureStyle.bigLargeIcon(null);
++      bigPictureStyle.bigLargeIcon((android.graphics.Bitmap) null);
+     } else {
+       if (bigPictureStyleInformation.largeIcon != null) {
+         bigPictureStyle.bigLargeIcon(

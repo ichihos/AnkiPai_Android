@@ -25,7 +25,7 @@ class OpenAIService {
         print('ユーザーが認証されていません');
         return false;
       }
-      
+
       _isInitialized = true;
       return true;
     } catch (e) {
@@ -97,7 +97,7 @@ class OpenAIService {
           'temperature': 0.1,
         }
       };
-      
+
       final result = await callable.call(requestData);
       final data = result.data;
       print('OpenAI OCR API レスポンス受信');
@@ -151,10 +151,10 @@ class OpenAIService {
           'max_tokens': 2000,
         }
       };
-      
+
       final result = await callable.call(requestData);
       final data = result.data;
-      
+
       // レスポンスからテキストを抽出
       final choices = data['choices'];
       if (choices != null && choices.isNotEmpty) {
@@ -217,7 +217,7 @@ class OpenAIService {
           'temperature': 0.1,
         }
       };
-      
+
       final result = await callable.call(requestData);
       final data = result.data;
 
@@ -283,7 +283,7 @@ class OpenAIService {
           'max_tokens': 2000,
         }
       };
-      
+
       final result = await callable.call(requestData);
       final data = result.data;
 

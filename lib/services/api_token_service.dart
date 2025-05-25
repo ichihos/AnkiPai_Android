@@ -50,7 +50,7 @@ class ApiTokenService {
     try {
       // Firebase Functionsを呼び出してトークンを取得
       final result = await _functions
-          .httpsCallable('getTemporaryApiToken')
+          .httpsCallable('ankiPaiGenerateAPIToken')
           .call();
       
       final data = result.data as Map<String, dynamic>;

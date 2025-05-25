@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
-import 'subscription_service.dart';
+import '../services/subscription_service.dart';
 import 'dart:async';
 import '../models/flash_card.dart';
 import '../models/subscription_model.dart';

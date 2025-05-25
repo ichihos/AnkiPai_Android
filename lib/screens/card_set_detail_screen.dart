@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:provider/provider.dart';
 import 'package:get_it/get_it.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../models/card_set.dart';
 import '../models/flash_card.dart';
 import '../models/subscription_model.dart';
@@ -11,6 +12,7 @@ import '../services/flash_card_service.dart';
 import '../services/auth_service.dart';
 import '../services/subscription_service.dart';
 import '../services/ad_service.dart';
+import '../services/connectivity_service.dart';
 import 'card_editor_screen.dart';
 import 'card_detail_screen.dart';
 import 'card_study_screen.dart';
@@ -119,13 +121,19 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
       // 既存の購読があればキャンセル
       await _cardSetSubscription?.cancel();
       await _cardsSubscription?.cancel();
+      
+      // オフラインかどうかを確認
+      final connectivityService = GetIt.instance<ConnectivityService>();
+      final isOffline = connectivityService.isOffline;
 
-      // 認証状態を確認
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final isValidAuth = await authService.validateAuthentication();
+      // オンラインモードの場合のみ認証状態を確認
+      if (!isOffline) {
+        final authService = Provider.of<AuthService>(context, listen: false);
+        final isValidAuth = await authService.validateAuthentication();
 
-      if (!isValidAuth) {
-        throw '認証状態が無効です。再度ログインしてください。';
+        if (!isValidAuth) {
+          throw '認証状態が無効です。再度ログインしてください。';
+        }
       }
 
       final cardSetService =
@@ -142,8 +150,8 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
                 // カードセットが削除された場合は前の画面に戻る
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('このカードセットは削除されました'),
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context)!.cardSetDeleted),
                     backgroundColor: Colors.orange,
                   ),
                 );
@@ -155,7 +163,8 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('カードセット情報の取得に失敗しました: $error'),
+                content: Text(AppLocalizations.of(context)!
+                    .failedToLoadCardSetInfo(error.toString())),
                 backgroundColor: Colors.red.shade400,
               ),
             );
@@ -184,7 +193,8 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('カード情報の取得に失敗しました: $error'),
+                content: Text(AppLocalizations.of(context)!
+                    .failedToLoadCardInfo(error.toString())),
                 backgroundColor: Colors.red.shade400,
               ),
             );
@@ -207,7 +217,8 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('データの読み込みに失敗しました: $e'),
+          content: Text(
+              AppLocalizations.of(context)!.failedToLoadData(e.toString())),
           backgroundColor: Colors.red.shade400,
         ),
       );
@@ -233,34 +244,35 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('プレミアムプランへのアップグレード'),
-        content: const Column(
+        title: Text(AppLocalizations.of(context)!.premiumUpgradeTitle),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('プレミアムプランでは以下の特典があります:'),
-            SizedBox(height: 8),
+            Text(AppLocalizations.of(context)!.premiumBenefitsIntro),
+            const SizedBox(height: 8),
             ListTile(
-              leading: Icon(Icons.check_circle, color: Colors.green),
+              leading: const Icon(Icons.check_circle, color: Colors.green),
               contentPadding: EdgeInsets.zero,
-              title: Text('考え方モードとマルチエージェントモードが無制限'),
+              title: Text(
+                  AppLocalizations.of(context)!.unlimitedThinkingAndMultiAgent),
               dense: true,
             ),
             ListTile(
-              leading: Icon(Icons.check_circle, color: Colors.green),
+              leading: const Icon(Icons.check_circle, color: Colors.green),
               contentPadding: EdgeInsets.zero,
-              title: Text('カードセット数無制限'),
+              title: Text(AppLocalizations.of(context)!.unlimitedCardSets),
               dense: true,
             ),
             ListTile(
-              leading: Icon(Icons.check_circle, color: Colors.green),
+              leading: const Icon(Icons.check_circle, color: Colors.green),
               contentPadding: EdgeInsets.zero,
-              title: Text('各カードセットのカード枚数無制限'),
+              title: Text(AppLocalizations.of(context)!.unlimitedCardsPerSet),
               dense: true,
             ),
             ListTile(
-              leading: Icon(Icons.check_circle, color: Colors.green),
+              leading: const Icon(Icons.check_circle, color: Colors.green),
               contentPadding: EdgeInsets.zero,
-              title: Text('広告の非表示'),
+              title: Text(AppLocalizations.of(context)!.noAds),
               dense: true,
             ),
           ],
@@ -268,7 +280,7 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -281,13 +293,14 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
 
               // 成功メッセージ
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('プレミアムプランにアップグレードしました！'),
+                SnackBar(
+                  content:
+                      Text(AppLocalizations.of(context)!.upgradedToPremium),
                   backgroundColor: Colors.green,
                 ),
               );
             },
-            child: const Text('アップグレード'),
+            child: Text(AppLocalizations.of(context)!.upgrade),
           ),
         ],
       ),
@@ -307,20 +320,20 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('カード枚数の制限'),
-            content: const Text(
-                '無料プランでは各カードセットに最大${SubscriptionModel.maxCardsPerSet}枚までのカードしか作成できません。プレミアムプランにアップグレードすると、無制限に作成できます。'),
+            title: Text(AppLocalizations.of(context)!.cardLimitTitle),
+            content: Text(AppLocalizations.of(context)!
+                .cardLimitMessage(SubscriptionModel.maxCardsPerSet)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('閉じる'),
+                child: Text(AppLocalizations.of(context)!.close),
               ),
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
                   _showPremiumUpgradeDialog();
                 },
-                child: const Text('アップグレード'),
+                child: Text(AppLocalizations.of(context)!.upgrade),
               ),
             ],
           ),
@@ -357,18 +370,18 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('カードを削除'),
-        content: const Text('このカードを削除しますか？'),
+        title: Text(AppLocalizations.of(context)!.deleteCardTitle),
+        content: Text(AppLocalizations.of(context)!.deleteCardConfirmText),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text(
-              '削除',
-              style: TextStyle(color: Colors.red),
+            child: Text(
+              AppLocalizations.of(context)!.delete,
+              style: const TextStyle(color: Colors.red),
             ),
           ),
         ],
@@ -383,14 +396,15 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('カードを削除しました'),
+            content: Text(AppLocalizations.of(context)!.cardDeleted),
             backgroundColor: Colors.green.shade400,
           ),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('削除に失敗しました: $e'),
+            content:
+                Text(AppLocalizations.of(context)!.deleteFailed(e.toString())),
             backgroundColor: Colors.red.shade400,
           ),
         );
@@ -423,7 +437,8 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
         title: Row(
           children: [
             Expanded(
-              child: Text(_cardSet?.title ?? 'カードセット詳細'),
+              child: Text(_cardSet?.title ??
+                  AppLocalizations.of(context)!.cardSetDetails),
             ),
             // プレミアムバッジ
             if (!_isSubscriptionLoading &&
@@ -435,16 +450,18 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
                   color: Colors.amber,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.star, color: Colors.white, size: 12),
-                    SizedBox(width: 2),
-                    Text('プレミアム',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold)),
+                    const Icon(Icons.star, color: Colors.white, size: 12),
+                    const SizedBox(width: 2),
+                    Text(
+                      AppLocalizations.of(context)!.premium,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold),
+                    ),
                   ],
                 ),
               ),
@@ -457,14 +474,15 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
             IconButton(
               icon: const Icon(Icons.school),
               onPressed: _startStudySession,
-              tooltip: '学習開始',
+              tooltip: AppLocalizations.of(context)!.startLearning,
             ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _cardSet == null
-              ? const Center(child: Text('カードセットが見つかりません'))
+              ? Center(
+                  child: Text(AppLocalizations.of(context)!.cardSetNotFound))
               : Column(
                   children: [
                     // カードセット情報
@@ -498,7 +516,8 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
                                     size: 16, color: Colors.green.shade600),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'カード数: ${_cardSet!.cardCount}',
+                                  AppLocalizations.of(context)!
+                                      .cardCount(_cardSet!.cardCount),
                                   style: TextStyle(
                                     color: Colors.green.shade700,
                                     fontWeight: FontWeight.w500,
@@ -557,20 +576,21 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'このセットで学習を始める',
-                                    style: TextStyle(
+                                    AppLocalizations.of(context)!
+                                        .startLearningWithSet,
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                       color: Color.fromARGB(255, 62, 175, 83),
                                     ),
                                   ),
-                                  SizedBox(height: 4),
+                                  const SizedBox(height: 4),
                                 ],
                               ),
                             ),
@@ -578,8 +598,8 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
                               onPressed: _startStudySession,
                               icon: const Icon(Icons.play_circle_filled,
                                   size: 28),
-                              label: const Text('スタート',
-                                  style: TextStyle(
+                              label: Text(AppLocalizations.of(context)!.start,
+                                  style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 22)),
                               style: ElevatedButton.styleFrom(
@@ -604,7 +624,8 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
                       child: TextField(
                         controller: _searchController,
                         decoration: InputDecoration(
-                          hintText: 'カードを検索...',
+                          hintText:
+                              AppLocalizations.of(context)!.searchCardsHint,
                           prefixIcon:
                               Icon(Icons.search, color: Colors.orange.shade400),
                           border: OutlineInputBorder(
@@ -662,7 +683,8 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
                                     ElevatedButton.icon(
                                       onPressed: _addNewCard,
                                       icon: const Icon(Icons.add),
-                                      label: const Text('カードを追加'),
+                                      label: Text(AppLocalizations.of(context)!
+                                          .addCard),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.blue,
                                         foregroundColor: Colors.white,
@@ -672,7 +694,11 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
                               ),
                             )
                           : ListView.builder(
-                              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 80), // 下部に広告のスペースを確保
+                              padding: const EdgeInsets.only(
+                                  left: 16,
+                                  right: 16,
+                                  top: 16,
+                                  bottom: 80), // 下部に広告のスペースを確保
                               itemCount: _filteredCards.length,
                               itemBuilder: (context, index) {
                                 final card = _filteredCards[index];
@@ -712,13 +738,17 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
                                                 icon: const Icon(Icons.edit),
                                                 onPressed: () =>
                                                     _editCard(card),
-                                                tooltip: '編集',
+                                                tooltip: AppLocalizations.of(
+                                                        context)!
+                                                    .edit,
                                               ),
                                               IconButton(
                                                 icon: const Icon(Icons.delete),
                                                 onPressed: () =>
                                                     _deleteCard(card),
-                                                tooltip: '削除',
+                                                tooltip: AppLocalizations.of(
+                                                        context)!
+                                                    .delete,
                                               ),
                                             ],
                                           ),
@@ -739,7 +769,10 @@ class _CardSetDetailScreenState extends State<CardSetDetailScreen> {
                             ),
                     ),
                     // 広告表示エリア
-                    if (!_isSubscriptionLoading && _subscription != null && !_subscription!.isPremium && _isBannerAdLoaded)
+                    if (!_isSubscriptionLoading &&
+                        _subscription != null &&
+                        !_subscription!.isPremium &&
+                        _isBannerAdLoaded)
                       Container(
                         alignment: Alignment.center,
                         color: Colors.grey.shade100,

@@ -1,4 +1,3 @@
-
 class CardSet {
   final String id;
   final String title;

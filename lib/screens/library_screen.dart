@@ -2,11 +2,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:get_it/get_it.dart';
+import '../services/connectivity_service.dart';
 import '../models/memory_item.dart';
 import '../models/memory_technique.dart';
 import '../services/memory_service.dart';
 import '../services/auth_service.dart';
+import '../services/offline_storage_service.dart';
 import 'memory_method_screen.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -20,6 +24,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
   List<MemoryItem> _memoryItems = [];
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+
+  // スクロール位置を保持するためのコントローラー
+  final ScrollController _scrollController = ScrollController();
 
   // ストリーム購読管理用
   StreamSubscription<List<MemoryItem>>? _memoryItemsSubscription;
@@ -39,13 +46,43 @@ class _LibraryScreenState extends State<LibraryScreen> {
   List<MemoryTechnique> _searchedPublicTechniques = [];
   bool _isSearchingPublicTechniques = false;
 
+  bool _isFirstLoad = true;
+
   @override
   void initState() {
     super.initState();
-    _loadMemoryItems();
-    _loadRecentPublicTechnique(); // 公開された覚え方はボタンで表示するためここで取得
-    _loadUserMemoryTechniques();
-    _loadUserPublishedTechniques(); // 自分が公開した覚え方をロード
+    // initState内では直接localization依存のものを呼び出さない
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    print('🔵 LibraryScreen.didChangeDependenciesが呼ばれました');
+    // 最初のロードのみ実行（didChangeDependenciesは複数回呼ばれるため）
+    if (_isFirstLoad) {
+      print('🔵 LibraryScreen: 最初のロードを実行します');
+      _isFirstLoad = false;
+
+      // オフラインかどうかを確認
+      final connectivityService = GetIt.instance<ConnectivityService>();
+      final isOffline = connectivityService.isOffline;
+      print('📱 ライブラリ初期化: オフラインモード = $isOffline');
+
+      // オフラインモードでの認証状態を確認
+      if (isOffline) {
+        final authService = Provider.of<AuthService>(context, listen: false);
+        final isAuthenticated = authService.isAuthenticated();
+        print('📱 オフラインモード: 認証状態 = $isAuthenticated');
+      }
+
+      // 各種データの読み込み
+      _loadMemoryItems();
+      _loadRecentPublicTechnique(); // 公開された覚え方はボタンで表示するためここで取得
+      _loadUserMemoryTechniques();
+      _loadUserPublishedTechniques(); // 自分が公開した覚え方をロード
+    } else {
+      print('🔵 LibraryScreen: 最初のロードは既に完了しています');
+    }
   }
 
   @override
@@ -53,10 +90,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
     // ストリーム購読の解除
     _memoryItemsSubscription?.cancel();
     _searchController.dispose();
+    _scrollController.dispose(); // ScrollControllerの解放
     super.dispose();
   }
 
   Future<void> _loadMemoryItems() async {
+    // localizationの参照はdidChangeDependencies以降で行われるので安全
+    final l10n = AppLocalizations.of(context)!;
     // mountedプロパティの確認を追加
     if (!mounted) return;
 
@@ -68,12 +108,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
       // 既存の購読があればキャンセル
       await _memoryItemsSubscription?.cancel();
 
-      // 認証状態を確認
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final isValidAuth = await authService.validateAuthentication();
+      // オフラインかどうかを確認
+      final connectivityService = GetIt.instance<ConnectivityService>();
+      final isOffline = connectivityService.isOffline;
 
-      if (!isValidAuth) {
-        throw '認証状態が無効です。再度ログインしてください。';
+      // オンラインモードの場合のみ認証チェックを行う
+      if (!isOffline) {
+        // 認証状態を確認
+        final authService = Provider.of<AuthService>(context, listen: false);
+        final isValidAuth = await authService.validateAuthentication();
+
+        if (!isValidAuth) {
+          throw l10n.invalidAuthState;
+        }
+      } else {
+        print('📱 オフラインモード: 認証チェックをスキップします');
       }
 
       final memoryService = Provider.of<MemoryService>(context, listen: false);
@@ -99,17 +148,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
             String errorMessage = error.toString();
             // エラーメッセージをユーザーフレンドリーに調整
             if (errorMessage.contains('permission-denied')) {
-              errorMessage = 'データベースのアクセス権限がありません。再度ログインしてください。';
+              errorMessage = l10n.permissionDenied;
             } else if (errorMessage.contains('ログイン')) {
-              errorMessage = 'ログイン状態が無効です。再度ログインしてください。';
+              errorMessage = l10n.invalidLoginState;
             }
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('データの読み込みに失敗しました: $errorMessage'),
+                content: Text(l10n.dataLoadFailed(errorMessage)),
                 backgroundColor: Colors.red.shade400,
                 action: SnackBarAction(
-                  label: 'ログイン',
+                  label: l10n.login,
                   textColor: Colors.white,
                   onPressed: () {
                     // ログイン画面に遷移するコードを追加したい場合はここに記述
@@ -145,7 +194,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('データの読み込みに失敗しました: $errorMessage'),
+          content: Text(
+              AppLocalizations.of(context)!.dataLoadingFailed(errorMessage)),
           backgroundColor: Colors.red.shade400,
           action: SnackBarAction(
             label: 'ログイン',
@@ -156,6 +206,46 @@ class _LibraryScreenState extends State<LibraryScreen> {
           ),
         ),
       );
+    }
+  }
+
+  // スクロール位置をリセットせずにデータを更新するメソッド
+  Future<void> _refreshDataWithoutScrollReset() async {
+    try {
+      // 認証状態を確認
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final isValidAuth = await authService.validateAuthentication();
+
+      if (!isValidAuth || !mounted) return;
+
+      final memoryService = Provider.of<MemoryService>(context, listen: false);
+
+      // データを非同期で取得
+      memoryService.watchMemoryItems().then((stream) {
+        // 既存の購読があればキャンセル
+        _memoryItemsSubscription?.cancel();
+
+        _memoryItemsSubscription = stream.listen(
+          (items) {
+            if (mounted) {
+              setState(() {
+                _memoryItems = items;
+              });
+            }
+          },
+        );
+      });
+
+      // 公開済みの覚え方も非同期で更新
+      memoryService.getUserPublishedTechniques().then((techniques) {
+        if (mounted) {
+          setState(() {
+            _userPublishedTechniques = techniques;
+          });
+        }
+      });
+    } catch (e) {
+      print('バックグラウンド更新エラー: $e');
     }
   }
 
@@ -203,6 +293,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
     });
 
     try {
+      // オフラインかどうかを確認
+      final connectivityService = GetIt.instance<ConnectivityService>();
+      final isOffline = connectivityService.isOffline;
+
+      if (isOffline) {
+        print('📱 オフラインモード: 最近の公開暗記法の読み込みをスキップします');
+        if (mounted) {
+          setState(() {
+            // オフラインモードではローディングを終了する
+            _isLoadingPublicTechnique = false;
+          });
+        }
+        return;
+      }
+
       final memoryService = Provider.of<MemoryService>(context, listen: false);
       // Firestoreから最近の暗記法を1件取得
       final technique = await memoryService.getRecentPublicTechnique();
@@ -222,7 +327,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('最近の暗記法の取得に失敗しました: $e'),
+            content: Text(AppLocalizations.of(context)!
+                .failedToLoadRecentTechnique(e.toString())),
             backgroundColor: Colors.red.shade400,
           ),
         );
@@ -265,7 +371,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '自分が公開した覚え方',
+                      AppLocalizations.of(context)!.myPublishedTechniques,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -308,7 +414,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             child: Padding(
                               padding: const EdgeInsets.all(32.0),
                               child: Text(
-                                '公開した覚え方はまだありません',
+                                AppLocalizations.of(context)!
+                                    .noPublishedTechniquesYet,
                                 style: TextStyle(color: Colors.grey.shade600),
                               ),
                             ),
@@ -334,7 +441,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('公開覚え方の読み込みに失敗しました: $e'),
+            content: Text(AppLocalizations.of(context)!
+                .failedToLoadPublicTechniques(e.toString())),
             backgroundColor: Colors.red.shade400,
           ),
         );
@@ -342,14 +450,34 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
   }
 
-  // ユーザーの暗記法を取得
   Future<void> _loadUserMemoryTechniques() async {
+    print('🔵 LibraryScreen._loadUserMemoryTechniquesが呼ばれました');
     if (!mounted) return;
 
+    // オフラインかどうかを確認
+    final connectivityService = GetIt.instance<ConnectivityService>();
+    final isOffline = connectivityService.isOffline;
+
+    print('📱 ユーザー暗記法の読み込みを開始: オフラインモード = $isOffline');
+
+    final memoryService = Provider.of<MemoryService>(context, listen: false);
+
     try {
-      final memoryService = Provider.of<MemoryService>(context, listen: false);
-      // Firestoreからユーザーの暗記法を取得
-      final techniques = await memoryService.getUserMemoryTechniques();
+      List<MemoryTechnique> techniques = [];
+
+      if (isOffline) {
+        print('📱 オフラインモード: ローカルストレージから暗記法を取得します');
+        // オフラインモードの場合は、直接OfflineStorageServiceから取得することも可能
+        techniques = await memoryService.getUserMemoryTechniques();
+        print('✅ オフラインモード: ローカルストレージから${techniques.length}個の暗記法を取得しました');
+      } else {
+        // オンラインモードの場合は通常の処理
+        print('🌐 オンラインモード: Firestoreから暗記法を取得します');
+        techniques = await memoryService.getUserMemoryTechniques();
+        print('✅ オンラインモード: Firestoreから${techniques.length}個の暗記法を取得しました');
+      }
+
+      print('✅ ユーザー暗記法の読み込み完了: ${techniques.length}件');
 
       if (mounted) {
         setState(() {
@@ -357,23 +485,52 @@ class _LibraryScreenState extends State<LibraryScreen> {
         });
       }
     } catch (e) {
+      print('❌ ユーザー暗記法の読み込みエラー: $e');
+
+      // エラー時にオフラインストレージから取得を試みる
+      if (isOffline) {
+        try {
+          print('📱 オフラインモードエラー時: 再度ローカルストレージから取得を試みます');
+          final offlineStorage = OfflineStorageService();
+          final techniques = await offlineStorage.getMemoryTechniques();
+          print('✅ オフラインモード: 再試行で${techniques.length}個の暗記法を取得しました');
+
+          if (mounted) {
+            setState(() {
+              _userMemoryTechniques = techniques;
+            });
+            return;
+          }
+        } catch (offlineError) {
+          print('❌ オフラインストレージからの取得も失敗: $offlineError');
+        }
+      }
+
       if (mounted) {
         setState(() {
           _userMemoryTechniques = [];
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('自分の暗記法の取得に失敗しました: $e'),
-            backgroundColor: Colors.red.shade400,
-          ),
-        );
+        // オフラインモードではエラーメッセージを表示しない
+        final connectivityService = GetIt.instance<ConnectivityService>();
+        final isOffline = connectivityService.isOffline;
+
+        if (!isOffline) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!
+                  .failedToLoadMyTechniques(e.toString())),
+              backgroundColor: Colors.red.shade400,
+            ),
+          );
+        }
       }
     }
   }
 
   // メモリーアイテムを削除
   Future<void> _deleteMemoryItem(MemoryItem item) async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       final memoryService = Provider.of<MemoryService>(context, listen: false);
       await memoryService.deleteMemoryItem(item.id);
@@ -384,14 +541,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('項目を削除しました'),
+          content: Text(l10n.itemDeleted),
           backgroundColor: Colors.green.shade400,
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('削除に失敗しました: $e'),
+          content: Text(l10n.deleteFailed('$e')),
           backgroundColor: Colors.red.shade400,
         ),
       );
@@ -400,6 +557,64 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    // オフラインかどうかを確認
+    final connectivityService = GetIt.instance<ConnectivityService>();
+    final isOffline = connectivityService.isOffline;
+
+    // オフラインモードの場合はエラーメッセージを表示
+    if (isOffline) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.wifi_off,
+                size: 80,
+                color: Colors.grey.shade400,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'オフラインモードです',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade700,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'ライブラリ画面を使用するにはネットワークに接続してください。',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey.shade600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () {
+                  // 再読み込みを試みる
+                  setState(() {
+                    _isFirstLoad = true;
+                  });
+                  didChangeDependencies();
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('再試行'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.only(top: 8),
       child: Column(
@@ -432,7 +647,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         });
                       },
                       decoration: InputDecoration(
-                        hintText: '覚え方を検索...',
+                        hintText: l10n.searchMethodsHint,
                         hintStyle: TextStyle(color: Colors.blue.shade300),
                         prefixIcon:
                             Icon(Icons.search, color: Colors.blue.shade500),
@@ -456,23 +671,24 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   ),
                 ),
               ),
-              // 公開暗記法ボタン
-              Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: IconButton(
-                  onPressed: () => _showPublishedTechniquesDialog(),
-                  icon: Icon(
-                    Icons.public,
-                    color: Colors.green.shade700,
-                    size: 28,
-                  ),
-                  tooltip: '公開された覚え方',
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.green.shade50,
-                    padding: const EdgeInsets.all(8),
+              // 公開暗記法ボタン - オフラインモード時は非表示
+              if (!isOffline)
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: IconButton(
+                    onPressed: () => _showPublishedTechniquesDialog(),
+                    icon: Icon(
+                      Icons.public,
+                      color: Colors.green.shade700,
+                      size: 28,
+                    ),
+                    tooltip: l10n.publicMethods,
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.green.shade50,
+                      padding: const EdgeInsets.all(8),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -490,11 +706,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     onRefresh: _loadMemoryItems,
                     color: Colors.blue.shade600,
                     child: ListView(
+                      controller: _scrollController, // スクロールコントローラーを設定
                       padding: const EdgeInsets.only(
                           top: 8, left: 16, right: 16, bottom: 16),
                       children: [
-                        // 他の人の公開覚え方（1件表示）
-                        if (_recentPublicTechnique != null &&
+                        // 他の人の公開覚え方（1件表示） - オフラインモード時は非表示
+                        if (!isOffline &&
+                            _recentPublicTechnique != null &&
                             (_searchQuery.isEmpty ||
                                 _hasMatchingPublicTechnique))
                           Column(
@@ -503,7 +721,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: Text(
-                                  '他の人の覚え方',
+                                  l10n.otherPeopleMethods,
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -527,7 +745,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: Text(
-                                  '自分の覚え方',
+                                  l10n.myMethods,
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -544,8 +762,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             !_hasMatchingPublicTechnique)
                           _buildEmptyState(),
 
-                        // 他の人の覚え方から検索ボタン
-                        if (_searchQuery.isNotEmpty)
+                        // 他の人の覚え方から検索ボタン - オフラインモード時は非表示
+                        if (!isOffline && _searchQuery.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 16.0),
                             child: _isSearchingPublicTechniques
@@ -555,8 +773,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                     ? ElevatedButton.icon(
                                         onPressed: _searchPublicTechniques,
                                         icon: const Icon(Icons.public),
-                                        label:
-                                            Text('他の人の覚え方から「$_searchQuery」を検索'),
+                                        label: Text(l10n.searchInOthersMethods(
+                                            _searchQuery)),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor:
                                               Colors.green.shade100,
@@ -574,7 +792,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                             padding: const EdgeInsets.only(
                                                 bottom: 8),
                                             child: Text(
-                                              '他の人の覚え方検索結果',
+                                              l10n.otherMethodsSearchResults,
                                               style: TextStyle(
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.bold,
@@ -601,6 +819,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   // 空の状態表示
   Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
@@ -614,8 +833,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
           const SizedBox(height: 16),
           Text(
             _searchQuery.isEmpty
-                ? 'ライブラリにはまだ項目がありません'
-                : '「$_searchQuery」に一致する項目はありません',
+                ? l10n.noItemsInLibrary
+                : l10n.noMatchForSearchQuery(_searchQuery),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -626,8 +845,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
           const SizedBox(height: 8),
           Text(
             _searchQuery.isEmpty
-                ? 'ホーム画面から新しい暗記アイテムを追加しましょう！'
-                : '別のキーワードで検索してみてください',
+                ? l10n.addNewMemoryItem
+                : l10n.tryDifferentKeyword,
             style: TextStyle(
               fontSize: 14,
               color: Colors.blue.shade900,
@@ -639,16 +858,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  // 日付のフォーマット
+  // 日付のフォーマット（国際化対応）
   String _formatDate(DateTime date) {
+    final l10n = AppLocalizations.of(context)!;
     final now = DateTime.now();
     final difference = now.difference(date).inDays;
 
     if (difference == 0) {
-      return '今日';
+      return l10n.today;
     } else if (difference == 1) {
-      return '昨日';
+      return l10n.yesterday;
     } else if (difference < 7) {
+      // '日前'は将来的に翻訳キーを追加すべき
       return '$difference日前';
     } else {
       return DateFormat('yyyy/MM/dd').format(date);
@@ -657,6 +878,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   // 最近公開された暗記法カードの作成
   Widget _buildRecentPublicTechniqueCard() {
+    final l10n = AppLocalizations.of(context)!;
     if (_isLoadingPublicTechnique) {
       return Card(
         margin: const EdgeInsets.only(bottom: 8),
@@ -676,7 +898,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   Icon(Icons.public, color: Colors.green.shade600, size: 18),
                   const SizedBox(width: 8),
                   Text(
-                    '最近公開された覚え方',
+                    l10n.recentlyPublishedMethods,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -726,7 +948,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 Icon(Icons.public, color: Colors.green.shade600, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  '最近公開された覚え方',
+                  AppLocalizations.of(context)!.recentPublicTechnique,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -785,7 +1007,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 icon:
                     Icon(Icons.refresh, size: 16, color: Colors.green.shade600),
                 label: Text(
-                  '別の覚え方を見る',
+                  l10n.viewOtherMethods,
                   style: TextStyle(color: Colors.green.shade600),
                 ),
                 style: TextButton.styleFrom(
@@ -804,6 +1026,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   // メモリーアイテムカードの作成
   Widget _buildMemoryItemCard(MemoryItem item) {
+    final l10n = AppLocalizations.of(context)!;
     // タグを取得（重複を削除）
     final allTags = <String>[];
     for (var technique in item.memoryTechniques) {
@@ -862,9 +1085,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
           ).then((_) {
-            // 画面から戻ってきた時に、再読み込みを行う
-            _loadMemoryItems();
-            _loadUserPublishedTechniques(); // 公開状態の更新を反映させる
+            // 画面から戻ってきた時に、スクロール位置を保持しながらバックグラウンドで再読み込み
+            // 完全なリロードではなく非同期で更新する
+            _refreshDataWithoutScrollReset();
           });
         },
         borderRadius: BorderRadius.circular(16),
@@ -943,7 +1166,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           size: 14, color: Colors.grey.shade600),
                       const SizedBox(width: 4),
                       Text(
-                        '作成: ${_formatDate(item.createdAt)}',
+                        l10n.createdOn(_formatDate(item.createdAt)),
                         style: TextStyle(
                             fontSize: 12, color: Colors.grey.shade600),
                       ),
@@ -961,12 +1184,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: const Text('確認'),
-                              content: const Text('この暗記アイテムを削除しますか？'),
+                              title: Text(l10n.confirmation),
+                              content: Text(l10n.deleteMemoryItemConfirm),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context),
-                                  child: const Text('キャンセル'),
+                                  child: Text(l10n.cancel),
                                 ),
                                 TextButton(
                                   onPressed: () {
@@ -974,7 +1197,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                     _deleteMemoryItem(item);
                                   },
                                   child: Text(
-                                    '削除',
+                                    l10n.delete,
                                     style:
                                         TextStyle(color: Colors.red.shade600),
                                   ),
@@ -1054,7 +1277,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('公開覚え方の検索に失敗しました: $e'),
+            content: Text(AppLocalizations.of(context)!
+                .failedToSearchPublicTechniques(e.toString())),
             backgroundColor: Colors.red.shade400,
           ),
         );
@@ -1085,6 +1309,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
     });
 
     try {
+      // オフラインかどうかを確認
+      final connectivityService = GetIt.instance<ConnectivityService>();
+      final isOffline = connectivityService.isOffline;
+
+      if (isOffline) {
+        print('📱 オフラインモード: 公開暗記法の読み込みをスキップします');
+        if (mounted) {
+          setState(() {
+            // オフラインモードでは空のリストを設定してローディングを終了する
+            _userPublishedTechniques = [];
+            _isLoadingUserPublishedTechniques = false;
+          });
+        }
+        return;
+      }
+
       final memoryService = Provider.of<MemoryService>(context, listen: false);
       final techniques = await memoryService.getUserPublishedTechniques();
 
@@ -1103,7 +1343,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('公開済み覚え方の取得に失敗しました: $e'),
+            content: Text(AppLocalizations.of(context)!
+                .failedToLoadPublicTechniques(e.toString())),
             backgroundColor: Colors.red.shade400,
           ),
         );

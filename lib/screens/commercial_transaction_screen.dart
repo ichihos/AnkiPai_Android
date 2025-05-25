@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// 特定商取引法に基づく表記画面
 class CommercialTransactionScreen extends StatelessWidget {
@@ -8,7 +9,7 @@ class CommercialTransactionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('特定商取引法に基づく表記'),
+        title: Text(AppLocalizations.of(context)!.commercialTransactionAct),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -17,48 +18,36 @@ class CommercialTransactionScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionTitle('販売業社名'),
-              _buildContentText('細辻一'),
-              _buildSectionTitle('代表者'),
-              _buildContentText('細辻一'),
-              _buildSectionTitle('所在地'),
-              _buildContentText('メールアドレスへご請求いただければ、遅滞なく開示いたします。'),
-              _buildSectionTitle('電話番号'),
-              _buildContentText('メールアドレスへご請求いただければ、遅滞なく開示いたします。'),
-              _buildSectionTitle('連絡先'),
-              _buildContentText('メールアドレス: AnkiPai.app@gmail.com'),
-              _buildSectionTitle('商品の販売価格'),
-              _buildContentText('暗記Pai月間プレミアムプラン：380円（税込）\n'
-                  '暗記Pai年間プレミアムプラン：2,980円（税込）'),
-              _buildSectionTitle('商品代金以外の必要料金'),
-              _buildContentText('なし（インターネット接続料金はお客様負担となります）'),
-              _buildSectionTitle('引き渡し時期'),
-              _buildContentText('お支払い完了後、即時にご利用いただけます。'),
-              _buildSectionTitle('支払方法'),
-              _buildContentText(
-                  'クレジットカード（Visa, Mastercard, American Express, JCB, Discover）\n'
-                  '※決済処理はStripe社のシステムを使用しています。'),
-              _buildSectionTitle('支払時期'),
-              _buildContentText('月間プレミアムプラン：申込時及び毎月の契約応当日に自動決済\n'
-                  '年間プレミアムプラン：申込時及び毎年の契約応当日に自動決済'),
-              _buildSectionTitle('キャンセル・返品・交換について'),
-              _buildContentText('デジタルコンテンツの性質上、お申込み後のキャンセル・返品・返金はお受けしておりません。\n'
-                  'サブスクリプションはいつでも解約可能ですが、日割り計算による返金は行いません。\n'
-                  '解約後は契約期間満了まで引き続きサービスをご利用いただけます。'),
-              _buildSectionTitle('動作環境'),
-              _buildContentText('iOS: iOS 14.0以上\n'
-                  'Android: Android 6.0以上\n'
-                  'Web: 最新版のGoogle Chrome, Safari, Firefox, Microsoft Edge'),
-              _buildSectionTitle('サービス提供の停止・中断について'),
-              _buildContentText(
-                  '以下の場合、事前の通知なくサービスの全部または一部の提供を停止または中断する場合があります。\n'
-                  '・システムの保守点検または更新を定期的または緊急に行う場合\n'
-                  '・地震、落雷、火災、停電、天災などの不可抗力により、サービスの提供が困難となった場合\n'
-                  '・その他、運営者が停止または中断を必要と判断した場合'),
+              _buildSectionTitle(AppLocalizations.of(context)!.companyName),
+              _buildContentText(AppLocalizations.of(context)!.ichihosotsuji),
+              _buildSectionTitle(AppLocalizations.of(context)!.representative),
+              _buildContentText(AppLocalizations.of(context)!.ichihosotsuji),
+              _buildSectionTitle(AppLocalizations.of(context)!.location),
+              _buildContentText(AppLocalizations.of(context)!.disclosureUponRequest),
+              _buildSectionTitle(AppLocalizations.of(context)!.phoneNumber),
+              _buildContentText(AppLocalizations.of(context)!.disclosureUponRequest),
+              _buildSectionTitle(AppLocalizations.of(context)!.contact),
+              _buildContentText(AppLocalizations.of(context)!.emailAddress('AnkiPai.app@gmail.com')),
+              _buildSectionTitle(AppLocalizations.of(context)!.productPrice),
+              _buildContentText(AppLocalizations.of(context)!.priceDescription),
+              _buildSectionTitle(AppLocalizations.of(context)!.additionalFees),
+              _buildContentText(AppLocalizations.of(context)!.additionalFeesDescription),
+              _buildSectionTitle(AppLocalizations.of(context)!.deliveryTime),
+              _buildContentText(AppLocalizations.of(context)!.deliveryDescription),
+              _buildSectionTitle(AppLocalizations.of(context)!.paymentMethod),
+              _buildContentText(AppLocalizations.of(context)!.paymentDescription),
+              _buildSectionTitle(AppLocalizations.of(context)!.paymentTiming),
+              _buildContentText(AppLocalizations.of(context)!.paymentTimingDescription),
+              _buildSectionTitle(AppLocalizations.of(context)!.cancellationRefundExchange),
+              _buildContentText(AppLocalizations.of(context)!.cancellationRefundExchangeDescription),
+              _buildSectionTitle(AppLocalizations.of(context)!.operatingEnvironment),
+              _buildContentText(AppLocalizations.of(context)!.operatingEnvironmentDescription),
+              _buildSectionTitle(AppLocalizations.of(context)!.serviceSuspension),
+              _buildContentText(AppLocalizations.of(context)!.serviceSuspensionDescription),
               const SizedBox(height: 32),
               Center(
                 child: Text(
-                  '最終更新日: 2025年4月16日',
+                  AppLocalizations.of(context)!.lastUpdated,
                   style: TextStyle(
                     color: Colors.grey.shade600,
                     fontSize: 12,

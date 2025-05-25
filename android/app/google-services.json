@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1019104165530",
+    "project_id": "anki-pai",
+    "storage_bucket": "anki-pai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1019104165530:android:ea22c73c70c99217cc2923",
+        "android_client_info": {
+          "package_name": "com.ichihos.ankipai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1019104165530-937aa25i0lgn1ghpj72mughchb6mskla.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ichihos.ankipai",
+            "certificate_hash": "457f30093faefdd47c30379388f749ccc9a04a6d"
+          }
+        },
+        {
+          "client_id": "1019104165530-2d7q6sfj83873t4ngbu2ut8hd7me9oqt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpgWSAHlm9voHFyeea4mYa6nJ2uYkwtxk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1019104165530-0p4h7s221708ecddsvb2a44ke5mqjngb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1019104165530-alohbeb9flq0u1nj3gtskl2u44d7e5a8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ichihos.ankipai"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

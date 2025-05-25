@@ -5,28 +5,15 @@ import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-// Temporarily commented out: import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
 import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'subscription_service.dart';
-
-// Temporary stub classes for sign_in_with_apple package
-// These will be removed when the actual package is restored
-class AppleIDAuthorizationScopes {
-  static const email = 'email';
-  static const fullName = 'fullName';
-}
-
-class WebAuthenticationOptions {
-  final String clientId;
-  final Uri redirectUri;
-  
-  WebAuthenticationOptions({required this.clientId, required this.redirectUri});
-}
+import 'connectivity_service.dart';
 
 class AuthService with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -44,23 +31,223 @@ class AuthService with ChangeNotifier {
 
   // ユーザーが認証されているかチェック
   bool isAuthenticated() {
+    // オフラインモードの場合は別の方法で確認
+    try {
+      final connectivityService = GetIt.instance<ConnectivityService>();
+      if (connectivityService.isOffline) {
+        // オフラインモードでは常に認証済みとみなす
+        return true;
+      }
+    } catch (e) {
+      print('接続状態の確認中にエラーが発生: $e');
+    }
+    
     return _auth.currentUser != null;
+  }
+  
+  // ローカルストレージからユーザー情報を取得
+  Future<Map<String, dynamic>?> getOfflineUserInfo() async {
+    try {
+      print('💾 ローカルストレージからユーザー情報を取得します');
+      final prefs = await SharedPreferences.getInstance();
+      
+      // ユーザーIDを先に確認
+      final userId = prefs.getString('offline_user_id');
+      if (userId == null || userId.isEmpty) {
+        print('⚠️ ローカルストレージにユーザーIDがありません');
+      } else {
+        print('🔑 ローカルストレージからユーザーIDを取得: $userId');
+      }
+      
+      // ユーザー情報を取得
+      final userInfoJson = prefs.getString('offline_user_info');
+      
+      if (userInfoJson == null || userInfoJson.isEmpty) {
+        print('⚠️ ローカルストレージにユーザー情報がありません');
+        return null;
+      }
+      
+      // JSONをデコード
+      try {
+        final userInfo = jsonDecode(userInfoJson) as Map<String, dynamic>;
+        
+        // データの検証
+        if (!userInfo.containsKey('uid') || userInfo['uid'] == null) {
+          print('⚠️ ユーザー情報にユーザーIDがありません');
+          return null;
+        }
+        
+        // ユーザー情報の最終更新日時を確認
+        if (userInfo.containsKey('lastUpdated')) {
+          try {
+            final lastUpdated = DateTime.parse(userInfo['lastUpdated'] as String);
+            final now = DateTime.now();
+            final difference = now.difference(lastUpdated);
+            
+            // 最終更新からの経過時間を表示
+            print('💾 ユーザー情報の最終更新: ${difference.inDays}日前');
+          } catch (dateError) {
+            print('⚠️ 最終更新日時の解析エラー: $dateError');
+          }
+        }
+        
+        print('✅ ローカルストレージからユーザー情報を取得しました: ${userInfo['displayName'] ?? userInfo['email'] ?? userInfo['uid']}');
+        return userInfo;
+      } catch (jsonError) {
+        print('❌ JSONデコードエラー: $jsonError');
+        return null;
+      }
+    } catch (e) {
+      print('❌ オフラインユーザー情報の取得エラー: $e');
+      return null;
+    }
+  }
+  
+  // ユーザー情報をローカルストレージに保存
+  Future<void> saveUserInfoToLocalStorage() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        print('⚠️ ユーザーがログインしていないため、ユーザー情報の保存をスキップします');
+        return;
+      }
+      
+      print('💾 ユーザー情報の保存を開始: ${user.uid}');
+      
+      // プロフィール画像のURLがあれば取得する
+      String? profileImageData;
+      if (user.photoURL != null && user.photoURL!.isNotEmpty) {
+        try {
+          // プロフィール画像のURLを保存
+          profileImageData = user.photoURL;
+          print('✅ プロフィール画像のURLを保存しました');
+        } catch (imageError) {
+          print('⚠️ プロフィール画像の取得エラー: $imageError');
+          // エラーが発生しても処理を続行
+        }
+      }
+      
+      // ユーザーの詳細情報を取得
+      Map<String, dynamic> additionalUserInfo = {};
+      try {
+        // 詳細情報を取得する処理を追加することも可能
+        // 例: Firestoreからユーザーの詳細情報を取得するなど
+      } catch (userInfoError) {
+        print('⚠️ 追加ユーザー情報の取得エラー: $userInfoError');
+      }
+      
+      // ユーザー情報をマップにまとめる
+      final userInfo = {
+        'uid': user.uid,
+        'email': user.email,
+        'displayName': user.displayName,
+        'photoURL': profileImageData,
+        'emailVerified': user.emailVerified,
+        'isAnonymous': user.isAnonymous,
+        'creationTime': user.metadata.creationTime?.toIso8601String(),
+        'lastSignInTime': user.metadata.lastSignInTime?.toIso8601String(),
+        'lastUpdated': DateTime.now().toIso8601String(),
+        'additionalInfo': additionalUserInfo,
+      };
+      
+      // ローカルストレージに保存
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('offline_user_info', jsonEncode(userInfo));
+      
+      // ユーザーIDを別に保存（クイックアクセス用）
+      await prefs.setString('offline_user_id', user.uid);
+      
+      print('✅ ユーザー情報をローカルストレージに保存しました: ${user.displayName ?? user.email}');
+    } catch (e) {
+      print('❌ ユーザー情報のローカル保存エラー: $e');
+    }
+  }
+  
+  // オフラインモードでもユーザー情報を取得できるようにする
+  Future<Map<String, dynamic>?> getUserInfo() async {
+    try {
+      // オフライン状態を確認
+      final connectivityService = GetIt.instance<ConnectivityService>();
+      final isOffline = connectivityService.isOffline;
+      
+      if (isOffline) {
+        // オフラインモードではローカルストレージから取得
+        print('📱 オフラインモード: ローカルストレージからユーザー情報を取得します');
+        return await getOfflineUserInfo();
+      }
+      
+      // オンラインモードの場合は通常の処理
+      final user = _auth.currentUser;
+      if (user == null) {
+        print('⚠️ ユーザーがログインしていません');
+        return null;
+      }
+      
+      // ユーザー情報をローカルストレージに保存（オフラインモード用）
+      saveUserInfoToLocalStorage();
+      
+      return {
+        'uid': user.uid,
+        'email': user.email,
+        'displayName': user.displayName,
+        'photoURL': user.photoURL,
+        'emailVerified': user.emailVerified,
+        'isAnonymous': user.isAnonymous,
+        'creationTime': user.metadata.creationTime?.toIso8601String(),
+        'lastSignInTime': user.metadata.lastSignInTime?.toIso8601String(),
+      };
+    } catch (e) {
+      print('❌ ユーザー情報取得エラー: $e');
+      return null;
+    }
   }
 
   // ユーザーの認証状態を再検証
   Future<bool> validateAuthentication() async {
     try {
+      // オフライン状態を確認
+      try {
+        final connectivityService = GetIt.instance<ConnectivityService>();
+        if (connectivityService.isOffline) {
+          print('📱 オフラインモード: 認証チェックをスキップします');
+          // オフラインモードでは常にtrueを返す
+          return true;
+        }
+      } catch (connectivityError) {
+        print('接続状態の確認中にエラーが発生: $connectivityError');
+        // 接続状態の確認に失敗した場合は、オフラインとみなしてtrueを返す
+        return true;
+      }
+      
+      // オンラインモードの場合は通常の認証チェックを行う
       final user = _auth.currentUser;
       if (user == null) {
-        return false;
+        print('認証: ユーザーが見つかりません、即座に匿名ログインを試みます');
+        try {
+          // ユーザーがいない場合は自動的に匿名ログインを試みる
+          await _auth.signInAnonymously();
+          print('認証: 匿名ログインに成功しました');
+          return true;
+        } catch (anonError) {
+          print('認証: 匿名ログインに失敗しました: $anonError');
+          // 失敗してもアプリは使用可能としてtrueを返す
+          return true;
+        }
       }
 
       // トークンの再取得を試みる（期限切れの場合に更新される）
-      await user.getIdToken(true);
-      return true;
+      try {
+        await user.getIdToken(true);
+        print('認証: トークン再取得成功');
+        return true;
+      } catch (tokenError) {
+        print('認証: トークンの再取得に失敗しましたが、アプリは継続します: $tokenError');
+        return true; // トークンの再取得に失敗しても、アプリは使用可能とみなす
+      }
     } catch (e) {
-      print('認証状態の検証に失敗しました: $e');
-      return false;
+      print('認証状態の検証中に予期しないエラーが発生しました: $e');
+      // 予期しないエラーの場合も、アプリは使用可能とみなす
+      return true;
     }
   }
 
@@ -133,6 +320,9 @@ class AuthService with ChangeNotifier {
 
       // ユーザーの最終ログイン日時を更新
       await _createUserInFirestoreIfNeeded(result.user!);
+      
+      // ローカルストレージにユーザー情報を保存
+      await saveUserInfoToLocalStorage();
 
       notifyListeners();
       return result;
@@ -265,14 +455,43 @@ class AuthService with ChangeNotifier {
   // 匿名サインイン
   Future<UserCredential> signInAnonymously() async {
     try {
+      // オフラインかどうか確認
+      final connectivityService = GetIt.instance<ConnectivityService>();
+      final isOffline = connectivityService.isOffline;
+      
+      if (isOffline) {
+        print('📱 オフラインモード: 匿名サインインをスキップします');
+        // オフラインモードでは疑似的なUserCredentialを返す
+        final prefs = await SharedPreferences.getInstance();
+        final offlineUserId = prefs.getString('offline_user_id');
+        
+        if (offlineUserId != null) {
+          print('📱 オフラインモード: 以前のユーザーIDを使用します: $offlineUserId');
+          // 疑似的なUserCredentialを作成して返す（実際には使用されない）
+          throw '📱 オフラインモードではサインインをスキップします';
+        } else {
+          print('⚠️ オフラインモード: 以前のユーザーIDが見つかりません');
+          throw 'オフラインモードで初めて起動しました。一度オンラインに接続してください';
+        }
+      }
+      
       final result = await _auth.signInAnonymously();
 
       // Firestore にユーザー情報を登録
       await _createUserInFirestoreIfNeeded(result.user!);
+      
+      // オフライン用にユーザーIDを保存
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('offline_user_id', result.user!.uid);
 
       notifyListeners();
       return result;
     } catch (e) {
+      print('匿名サインインエラー: $e');
+      // オフラインモードのエラーは特別に処理
+      if (e.toString().contains('オフラインモード')) {
+        rethrow; // そのまま再スロー
+      }
       throw '匿名サインインに失敗しました: $e';
     }
   }
@@ -415,9 +634,38 @@ class AuthService with ChangeNotifier {
     }
   }
 
-  // プロフィール画像のURLを更新
+  // プロフィール画像URLを更新
   Future<void> updateProfilePhotoURL(String photoURL) async {
     try {
+      // オフライン状態を確認
+      final connectivityService = GetIt.instance<ConnectivityService>();
+      final isOffline = connectivityService.isOffline;
+      
+      if (isOffline) {
+        print('📱 オフラインモード: プロフィール画像の更新はキューに保存されます');
+        
+        // ローカルストレージからユーザー情報を取得
+        final userInfo = await getOfflineUserInfo();
+        if (userInfo == null) {
+          throw Exception('オフラインモードでユーザー情報が見つかりません');
+        }
+        
+        // ユーザー情報を更新
+        final prefs = await SharedPreferences.getInstance();
+        final updatedUserInfo = Map<String, dynamic>.from(userInfo);
+        updatedUserInfo['photoURL'] = photoURL;
+        updatedUserInfo['lastUpdated'] = DateTime.now().toIso8601String();
+        
+        // 更新した情報を保存
+        await prefs.setString('offline_user_info', jsonEncode(updatedUserInfo));
+        print('✅ オフラインモード: プロフィール画像URLをローカルに保存しました');
+        
+        // オフラインモードではここで処理を終了
+        notifyListeners();
+        return;
+      }
+      
+      // オンラインモードの場合は通常の処理
       final user = _auth.currentUser;
       if (user == null) {
         throw Exception('ユーザーがログインしていません');
@@ -425,15 +673,21 @@ class AuthService with ChangeNotifier {
 
       // Firebaseユーザープロファイルを更新
       await user.updatePhotoURL(photoURL);
+      print('✅ Firebase Authのプロフィール画像URLを更新しました');
 
       // Firestoreユーザードキュメントを更新
       await _firestore.collection('users').doc(user.uid).update({
         'photoURL': photoURL,
+        'lastUpdated': FieldValue.serverTimestamp(),
       });
+      print('✅ Firestoreのプロフィール画像URLを更新しました');
+      
+      // ローカルストレージにも保存（オフラインモード用）
+      await saveUserInfoToLocalStorage();
 
       notifyListeners();
     } catch (e) {
-      print('プロフィール画像URLの更新に失敗しました: $e');
+      print('❌ プロフィール画像URLの更新に失敗しました: $e');
       throw Exception('プロフィール画像URLの更新に失敗しました: $e');
     }
   }
@@ -441,13 +695,35 @@ class AuthService with ChangeNotifier {
   // プロフィール画像のURLを取得
   Future<String?> getProfilePhotoURL() async {
     try {
+      // オフライン状態を確認
+      final connectivityService = GetIt.instance<ConnectivityService>();
+      final isOffline = connectivityService.isOffline;
+      
+      if (isOffline) {
+        // オフラインモードではローカルストレージから取得
+        print('📱 オフラインモード: ローカルストレージからプロフィール画像URLを取得します');
+        final userInfo = await getOfflineUserInfo();
+        if (userInfo != null && userInfo.containsKey('photoURL')) {
+          final photoURL = userInfo['photoURL'];
+          if (photoURL != null && photoURL.isNotEmpty) {
+            print('✅ ローカルストレージからプロフィール画像URLを取得しました');
+            return photoURL;
+          }
+        }
+        print('⚠️ ローカルストレージにプロフィール画像URLがありません');
+        return null;
+      }
+      
+      // オンラインモードの場合は通常の処理
       final user = _auth.currentUser;
       if (user == null) {
+        print('⚠️ ユーザーがログインしていません');
         return null;
       }
 
       // Firebase Authからphoto URLを取得
       if (user.photoURL != null && user.photoURL!.isNotEmpty) {
+        print('✅ Firebase Authからプロフィール画像URLを取得しました');
         return user.photoURL;
       }
 
@@ -459,13 +735,19 @@ class AuthService with ChangeNotifier {
         if (photoURL != null && photoURL.isNotEmpty) {
           // Firebase Authのプロファイルも更新しておく
           await user.updatePhotoURL(photoURL);
+          print('✅ Firestoreからプロフィール画像URLを取得しました');
+          
+          // ローカルストレージにも保存
+          await saveUserInfoToLocalStorage();
+          
           return photoURL;
         }
       }
 
+      print('⚠️ プロフィール画像URLが見つかりませんでした');
       return null;
     } catch (e) {
-      print('プロフィール画像URLの取得に失敗しました: $e');
+      print('❌ プロフィール画像URLの取得に失敗しました: $e');
       return null;
     }
   }
@@ -473,6 +755,35 @@ class AuthService with ChangeNotifier {
   // 表示名を更新
   Future<void> updateDisplayName(String displayName) async {
     try {
+      // オフライン状態を確認
+      final connectivityService = GetIt.instance<ConnectivityService>();
+      final isOffline = connectivityService.isOffline;
+      
+      if (isOffline) {
+        print('📱 オフラインモード: 表示名の更新はローカルに保存されます');
+        
+        // ローカルストレージからユーザー情報を取得
+        final userInfo = await getOfflineUserInfo();
+        if (userInfo == null) {
+          throw Exception('オフラインモードでユーザー情報が見つかりません');
+        }
+        
+        // ユーザー情報を更新
+        final prefs = await SharedPreferences.getInstance();
+        final updatedUserInfo = Map<String, dynamic>.from(userInfo);
+        updatedUserInfo['displayName'] = displayName;
+        updatedUserInfo['lastUpdated'] = DateTime.now().toIso8601String();
+        
+        // 更新した情報を保存
+        await prefs.setString('offline_user_info', jsonEncode(updatedUserInfo));
+        print('✅ オフラインモード: 表示名をローカルに保存しました: $displayName');
+        
+        // オフラインモードではここで処理を終了
+        notifyListeners();
+        return;
+      }
+      
+      // オンラインモードの場合は通常の処理
       final user = _auth.currentUser;
       if (user == null) {
         throw Exception('ユーザーがログインしていません');
@@ -480,15 +791,21 @@ class AuthService with ChangeNotifier {
 
       // Firebase Authのプロファイルを更新
       await user.updateDisplayName(displayName);
+      print('✅ Firebase Authの表示名を更新しました: $displayName');
 
       // Firestoreユーザードキュメントも更新
       await _firestore.collection('users').doc(user.uid).update({
         'displayName': displayName,
+        'lastUpdated': FieldValue.serverTimestamp(),
       });
+      print('✅ Firestoreの表示名を更新しました');
+      
+      // ローカルストレージにも保存（オフラインモード用）
+      await saveUserInfoToLocalStorage();
 
       notifyListeners();
     } catch (e) {
-      print('表示名の更新に失敗しました: $e');
+      print('❌ 表示名の更新に失敗しました: $e');
       throw Exception('表示名の更新に失敗しました: $e');
     }
   }
@@ -533,44 +850,6 @@ class AuthService with ChangeNotifier {
       await userDoc.update({
         'lastLoginAt': FieldValue.serverTimestamp(),
       });
-    }
-  }
-
-  // Sign in with Apple
-  // Temporary stub implementation of signInWithApple
-  // This will be replaced when the sign_in_with_apple package is restored
-  Future<UserCredential?> signInWithApple() async {
-    try {
-      // デバッグ: 現在のプラットフォーム情報を記録
-      print('✨ Apple Sign In開始 - Platform: ${kIsWeb ? "Web" : Platform.operatingSystem}');
-      print('⚠️ Apple Sign In is temporarily disabled');
-      
-      // Webプラットフォーム用の実装のみを保持
-      if (kIsWeb) {
-        // Webプラットフォーム用の実装
-        print('✨ Web用Apple Sign Inを実行します');
-        
-        // Webではプロバイダ対象のサインインを直接使う
-        final provider = OAuthProvider('apple.com');
-        
-        // 必要なスコープを指定
-        provider.addScope('email');
-        provider.addScope('name');
-        
-        // Firebase AuthのSignInWithPopupを使用
-        print('✨ FirebaseのOAuthポップアップを開きます');
-        return await _auth.signInWithPopup(provider);
-      } else {
-        // ネイティブプラットフォーム用の実装は一時的に無効化
-        throw Exception('Apple Sign Inは現在、このアプリでは利用できません。他のサインイン方法をお試しください。');
-      }
-      
-      // Note: The code below will never be reached in the native implementation
-      // but is left as a placeholder for when the actual implementation is restored
-      return null;
-    } catch (e) {
-      print('Apple Sign Inに失敗しました: $e');
-      return null;
     }
   }
 

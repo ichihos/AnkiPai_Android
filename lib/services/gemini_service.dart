@@ -2,7 +2,10 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:get_it/get_it.dart';
 import 'ai_service_interface.dart';
+import 'package:anki_pai/services/language_service.dart';
+import 'package:anki_pai/services/connectivity_service.dart';
 
 /// Gemini APIを使用した記憶法生成サービス
 class GeminiService implements AIServiceInterface {
@@ -18,7 +21,23 @@ class GeminiService implements AIServiceInterface {
   }
 
   @override
-  bool get hasValidApiKey => _isUserAuthenticated();
+  bool get hasValidApiKey {
+    // Check if we're offline first
+    try {
+      final connectivityService = GetIt.instance<ConnectivityService>();
+      if (connectivityService.isOffline) {
+        print('📱 オフラインモード: APIキー検証をスキップします');
+        return false;
+      }
+    } catch (e) {
+      print('⚠️ 接続状態の確認中にエラーが発生: $e');
+      // If we can't check connectivity, assume we're offline
+      return false;
+    }
+
+    // If online, check authentication
+    return _isUserAuthenticated();
+  }
 
   /// 入力内容から複数の項目を検出します（最適化版）
   @override
@@ -69,16 +88,17 @@ class GeminiService implements AIServiceInterface {
     }
 
     // 複数項目判定に特化したシンプルなプロンプト（コンテンツの重複を避ける）
-    final prompt = '''あなたは学習テキストを解析して、テキストが複数の独立した学習項目を含むかどうかを判定する専門家です。
-下記のテキストに対して、複数の個別項目が含まれているかどうかを判断してください。複数項目の詳細な内容は必要ありません。
+    final prompt = '''あなたは学習テキストを解析して、テキストが複数の学習すべき内容を含むかどうかを判定する専門家です。
+下記のテキストに対して、複数の学習項目が含まれているかどうかを判断してください。複数項目の詳細な内容は必要ありません。
 
-以下のパターンは複数項目として判定すべきです：
+以下のパターンは内容に応じて複数項目として判定すべきです：
 1. 単語とその意味のペア（例: "abandon 放棄する"、"cosine コサイン"）
 2. 表形式のデータ
-3. 区切り文字（,、|、-、:、→ など）で区切られた項目リスト
-4. 番号付きリストの各項目
-5. 箇条書きリスト
-6. 行ごとに区切られた単語や定義
+3. 箇条書きでの各項目
+4. 行ごとに区切られた単語や定義
+
+パターンのない場合でも、独立した重要な学習項目が含まれている場合は項目分けしてください。テキストはOCRによって生成されている可能性があります。余分な情報は必ず無視してください。
+【重要】4つ以上への項目分割は分量が多い場合にのみ行うこと。
 
 判定するテキスト:
 """$content"""
@@ -88,14 +108,15 @@ JSON形式で結果を返してください。項目の詳細内容やカテゴ�
   "isMultipleItems": true/false,  // 複数の独立した学習項目か
   "itemCount": 数値,  // おおよその項目数
   "type": "vocabulary/list/mixed/single"  // 項目の種類（語彙/リスト/混合/単一）
+  "items": ["項目1", "項目2", ...] // 学ぶべき項目内容
 }''';
 
     try {
       final response = await generateText(
-        model: 'gemini-2.5-flash-preview-04-17',
+        model: 'gemini-2.5-pro-preview-05-06',
         prompt: prompt,
         temperature: 0.2, // 低い温度で一貫性を保つ
-        maxTokens: 20000, // 軽量な応答なので少ないトークン数で十分
+        maxTokens: 10000, // 軽量な応答なので少ないトークン数で十分
       );
 
       // レスポンスからJSONを抽出
@@ -117,33 +138,35 @@ JSON形式で結果を返してください。項目の詳細内容やカテゴ�
           };
         }
 
-        // 複数項目があると判断された場合、行分割で項目を抽出
+        // 複数項目があると判断された場合、Geminiから返された情報を使用
         final String itemType = parsedResponse['type'] ?? 'mixed';
+        final int itemCount = parsedResponse['itemCount'] ?? 1;
 
-        // 複数項目の場合は項目をパースしてリスト化
-        final List<Map<String, String>> parsedItems = [];
-        // 単純なOCRの組み立てによる項目抽出
-        final lines = content
-            .split('\n')
-            .where((line) => line.trim().isNotEmpty)
-            .take(20) // 最大項目数を制限して過剰検出を防止
-            .toList();
-
-        // 各行を項目として追加
-        for (final line in lines) {
-          parsedItems.add({
-            'content': line.trim(),
-            'description': '',
-          });
+        // List<dynamic>を適切に処理
+        List<Map<String, dynamic>> processedItems = [];
+        if (parsedResponse.containsKey('items') &&
+            parsedResponse['items'] is List) {
+          final dynamic rawItems = parsedResponse['items'];
+          // 各項目をMap形式に変換
+          for (var item in rawItems) {
+            if (item is String) {
+              processedItems.add({
+                'content': item,
+                'type': 'text',
+              });
+            }
+          }
+          print('項目リストを処理しました: ${processedItems.length}件');
         }
 
+        // 複数項目検出結果を返す
         return {
           'isMultipleItems': true,
-          'items': parsedItems, // List<Map>型の項目リストを返す
-          'rawContent': content, // 生のデータも保持
-          'itemCount': parsedItems.length,
+          'items': processedItems,
+          'rawContent': content, // 生データをそのまま使用
+          'itemCount': itemCount,
           'itemType': itemType,
-          'message': '複数の学習項目が検出されました（約${parsedItems.length}項目、タイプ:$itemType）',
+          'message': '複数の学習項目が検出されました（約${itemCount}項目、タイプ:$itemType）',
         };
       } catch (e) {
         print('複数項目検出のJSON解析エラー: $e');
@@ -175,7 +198,7 @@ JSON形式で結果を返してください。項目の詳細内容やカテゴ�
 項目内容: "$content"
 ${description.isNotEmpty ? '補足説明: "$description"' : ''}
 
-【重要】以下の例のように、シンプルで直接的な覚え方を提案してください:
+【重要】以下の例のように、シンプルで直接的な覚え方を提案してください。:
 
 例1: wash (洗う) → 「washはウォッシュレットで洗う」と連想する。
 例2: home (自宅) → 「homeはホーム(home)に帰る」でそのまま覚える。
@@ -213,8 +236,23 @@ ${description.isNotEmpty ? '補足説明: "$description"' : ''}
 
       // JSONを解析
       try {
-        print("koko$response");
-        final technique = jsonDecode(response);
+        // レスポンスからコードブロックを削除し、JSON部分のみを抽出
+        String cleanedResponse = _cleanMarkdownCodeBlocks(response);
+
+        // JSONの前後に余分なテキストがある可能性があるので、日本語文章部分を除去
+        // JSON部分のみを抽出する
+        RegExp jsonPattern = RegExp(r'\{[\s\S]*\}', multiLine: true);
+        final match = jsonPattern.firstMatch(cleanedResponse);
+        if (match != null) {
+          cleanedResponse = match.group(0) ?? cleanedResponse;
+        }
+
+        print(
+            'クリーニング後のレスポンス: ${cleanedResponse.length > 100 ? cleanedResponse.substring(0, 100) + "..." : cleanedResponse}');
+
+        // JSONパース
+        final technique = jsonDecode(cleanedResponse);
+
         // 元の項目情報を保存
         technique['itemContent'] = content;
         technique['itemDescription'] = description;
@@ -510,7 +548,7 @@ ${description.isNotEmpty ? '補足説明: "$description"' : ''}
 
     // テキスト形式の語彙データ（従来のcheck）
     if (_isTextFormattedVocabulary(content)) {
-      print('テキスト形式の語彙データを検出');
+      print('テキスト形式の語彙データを検出しました');
       return true;
     }
 
@@ -577,8 +615,8 @@ ${description.isNotEmpty ? '補足説明: "$description"' : ''}
   }) async {
     // バッチサイズの設定（項目数に応じて自動調整）
     int determineBatchSize(int totalCount) {
-      if (totalCount <= 10) return totalCount; // 10個以下はそのまま処理
-      return 10; // 多数項目の場合は小さいバッチサイズ
+      if (totalCount <= 5) return totalCount; // 5個以下はそのまま処理
+      return 5; // 多数項目の場合は小さいバッチサイズに制限
     }
 
     // 結果リスト
@@ -736,13 +774,31 @@ ${description.isNotEmpty ? '補足説明: "$description"' : ''}
       batchFutures.add(processBatch());
     }
 
-    // すべてのバッチを並列実行
-    print('並列処理開始: $batchCount個のバッチを同時実行');
-    final batchResultsList = await Future.wait(batchFutures);
+    // バッチを制限された並列処理で実行（最大10つのバッチを同時実行）
+    print('制限付き並列処理開始: $batchCount個のバッチを最大10個ずつ実行');
 
-    // 結果をフラット化して統合
-    for (final batchResults in batchResultsList) {
-      allResults.addAll(batchResults);
+    // バッチを小さなグループに分割して実行
+    for (int i = 0; i < batchFutures.length; i += 10) {
+      // 現在のグループの終了インデックスを計算
+      int endIdx = i + 10;
+      if (endIdx > batchFutures.length) endIdx = batchFutures.length;
+
+      // このグループのバッチだけを並列実行
+      final currentBatchFutures = batchFutures.sublist(i, endIdx);
+      print(
+          'バッチグループ ${i ~/ 5 + 1}/${(batchFutures.length / 5).ceil()}: ${currentBatchFutures.length}個のバッチを実行');
+
+      final groupResults = await Future.wait(currentBatchFutures);
+
+      // 結果を統合
+      for (final batchResults in groupResults) {
+        allResults.addAll(batchResults);
+      }
+
+      // バッチグループ間に短い遅延を挿入してAPIの負荷を分散
+      if (endIdx < batchFutures.length) {
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
     }
 
     print('並列処理完了: 合計${allResults.length}件の暗記法を生成');
@@ -843,9 +899,9 @@ ${description.isNotEmpty ? '補足説明: "$description"' : ''}
       // 高速検知時は生のOCRデータを使用し、JSON変換を行わない
       print('高速検知された複数項目に対して生データを使用した暗記法を生成します（項目数: $itemCount）');
       prompt =
-          '''あなたは暗記学習をサポートする専門家です。以下の$itemCount個の項目に対して、全体を表す簡潔なタイトル（20文字以内）とそれぞれの項目に対するシンプルでわかりやすい覚え方を提案してください。
+          '''あなたは暗記学習をサポートする専門家です。以下の約$itemCount個の項目に対して、全体を表す簡潔なタイトル（20文字以内）とそれぞれの項目に対するシンプルでわかりやすい覚え方を提案してください。
 
-【重要】以下の例のようなシンプルで直感的な覚え方を目指してください:
+【重要】以下の例のようなシンプルで直感的な覚え方を目指してください。:
 
 例1: wash (洗う) → 「washはウォッシュレットで洗う」と連想する。
 例2: home (自宅) → 「homeはホーム(home)に帰る」でそのまま覚える。
@@ -856,7 +912,7 @@ ${description.isNotEmpty ? '補足説明: "$description"' : ''}
 覚え方の文は必ず「〜は〜と覚えよう」「〜は〜と連想しよう」などの形式にしてください。イメージ部分は必要ない場合は省略しても構いません。
 各項目にはそれぞれに適切なアプローチを選択して暗記法を考えてください。
 
-学習項目一覧（簡易的に構造化されたテキストのため、区切りは適切に判断すること）:
+学習項目一覧（簡易的に構造化されたテキストのため、区切りは適切に判断すること。）:
 $rawContent
 
 以下の特別なJSON形式で返してください。トークン数削減のため、全ての項目に共通のフィールドを最初に指定し、個別の暗記法はそれを参照します:
@@ -883,7 +939,7 @@ $rawContent
 }
 
 重要な注意事項:
-1. 必ず$itemCount個の項目全てに対して個別の暗記法を生成してください。
+1. 項目数は全体内容から適切に判断すること。漏れなく、分割しすぎず（単語リスト等の場合は単語単位）。
 2. 各暗記法のitemIndexは、必ず対応する項目のインデックスを正確に指定してください（最初の項目は0、次は1など）。
 3. 暗記法のoriginalContentには、元の項目内容をそのまま含めてください。
 4. 各項目に対して、シンプルで覚えやすい暗記法をカスタマイズして提案してください。
@@ -891,9 +947,9 @@ $rawContent
     } else {
       // 通常の暗記法生成時は項目リストを使用
       prompt =
-          '''あなたは暗記学習をサポートする専門家です。以下の${contentList.length}個の項目に対して、全体を表す簡潔なタイトル（20文字以内）とそれぞれの項目に対するシンプルでわかりやすい覚え方を提案してください。
+          '''あなたは暗記学習をサポートする専門家です。以下の約${contentList.length}個の項目に対して、全体を表す簡潔なタイトル（20文字以内）とそれぞれの項目に対するシンプルでわかりやすい覚え方を提案してください。
 
-【重要】以下の例のようなシンプルで直感的な覚え方を目指してください:
+【重要】以下の例のようなシンプルで直感的な覚え方を目指してください。
 
 例1: wash (洗う) → 「washはウォッシュレットで洗う」と連想する。
 例2: home (自宅) → 「homeはホーム(home)に帰る」でそのまま覚える。
@@ -901,17 +957,11 @@ $rawContent
 例4: substance (物質) → 「sub:下に、stance:立つもの」という語源から土台→物質と覚える。
 例5: H,He,Li,Be,B,C,N,O,F,Ne → 「水兵リーベぼくの船」と覚える。
 
-覚え方の文は必ず「〜は〜と覚えよう」「〜は〜と連想しよう」などの形式にしてください。イメージ部分は必要ない場合は省略しても構いません。
+覚え方の文は必ず「〜は〜と覚えよう」「〜は〜と連想しよう」などの主語のある形式にしてください。イメージ部分は必要ない場合は省略しても構いません。
 各項目にはそれぞれに適切なアプローチを選択して暗記法を考えてください。
 
-学習項目一覧:
-${contentList.asMap().entries.map((entry) {
-        int i = entry.key;
-        String content = entry.value;
-        String description =
-            i < descriptionList.length ? descriptionList[i] : '';
-        return '【項目${i + 1}】 "$content" ${description.isNotEmpty ? "(補足: $description)" : ""}';
-      }).join('\n')}
+複数項目を含む入力:
+"$rawContent"
 
 以下の特別なJSON形式で返してください。トークン数削減のため、全ての項目に共通のフィールドを最初に指定し、個別の暗記法はそれを参照します:
 
@@ -937,11 +987,11 @@ ${contentList.asMap().entries.map((entry) {
 }
 
 重要な注意事項:
-1. 必ず${contentList.length}個の項目全てに対して個別の暗記法を生成してください。
-2. 各暗記法のitemIndexは、必ず対応する項目のインデックスを正確に指定してください（最初の項目は0、次は1など）。
-3. 暗記法のoriginalContentには、元の項目内容をそのまま含めてください。
-4. 各項目に対して、シンプルで覚えやすい暗記法をカスタマイズして提案してください。
-5. フラッシュカードの内容に数式を含む場合は\$で囲まれるtex表記としてください''';
+1. 各暗記法のitemIndexは、必ず対応する項目のインデックスを正確に指定してください（最初の項目は0、次は1など）。
+2. 暗記法のoriginalContentには、元の項目内容をそのまま含めてください。
+3. 各項目に対して、シンプルで覚えやすい暗記法をカスタマイズして提案してください。
+4. フラッシュカードの内容に数式を含む場合は\$で囲まれるtex表記としてください。
+5. 個別の暗記法はその内容に被りの内容にしてください。''';
     }
     // 項目数に応じてトークン上限を計算 - 「aborted」エラーを避けるため、より効率的な計算を実施
     // 単語リストかその他かによって必要トークン数も変わる
@@ -1011,10 +1061,22 @@ ${contentList.asMap().entries.map((entry) {
 
     // JSONを解析
     try {
-      // JSONをパース
-      final responseData = jsonDecode(response);
+      // レスポンスからコードブロックを削除し、JSON部分のみを抽出
+      String cleanedResponse = _cleanMarkdownCodeBlocks(response);
+
+      // JSONの前後に余分なテキストがある可能性があるので、JSON部分のみを抽出
+      // \{...\} のパターンを探す
+      RegExp jsonPattern = RegExp(r'\{[\s\S]*\}', multiLine: true);
+      final match = jsonPattern.firstMatch(cleanedResponse);
+      if (match != null) {
+        cleanedResponse = match.group(0) ?? cleanedResponse;
+      }
+
       print(
-          'Geminiからのレスポンスを受信: ${response.substring(0, math.min(100, response.length))}...');
+          'クリーニング後のレスポンス: ${cleanedResponse.length > 100 ? cleanedResponse.substring(0, 100) + "..." : cleanedResponse}');
+
+      // JSONパース
+      final responseData = jsonDecode(cleanedResponse);
       print('レスポンスフィールド: ${responseData.keys.join(', ')}');
 
       // レスポンスデータから暗記法を抽出
@@ -1037,7 +1099,8 @@ ${contentList.asMap().entries.map((entry) {
         techniquesList = [responseData]; // レスポンス全体を暗記法として使用
       } else {
         print('techniquesフィールドが見つからず、直接暗記法オブジェクトでもありません');
-        print('利用可能なフィールド: ${responseData.keys.join(', ')}');
+        print(
+            '利用可能なフィールド: ${responseData is Map ? responseData.keys.join(', ') : 'なし'}');
 
         // フォールバックの暗記法を生成
         Map<String, dynamic> fallbackTechnique = {
@@ -1332,7 +1395,7 @@ ${contentList.asMap().entries.map((entry) {
   @override
   Future<String> generateText({
     required String prompt,
-    String model = 'gemini-2.5-pro-preview-03-25', // Geminiのモデルをデフォルトに変更
+    String model = 'gemini-2.5-flash-preview-04-17', // Geminiのモデルをデフォルトに変更
     double temperature = 0.7,
     int maxTokens = 20000,
   }) async {
@@ -1342,6 +1405,9 @@ ${contentList.asMap().entries.map((entry) {
         return _createFallbackJson('認証が必要です');
       }
 
+      // 言語設定を取得
+      final languagePrompt = await LanguageService.getAILanguagePrompt();
+
       // Gemini API向けのリクエストを作成
       final Map<String, dynamic> requestData = {
         'model': model,
@@ -1350,10 +1416,12 @@ ${contentList.asMap().entries.map((entry) {
             'role': 'user',
             'parts': [
               {
-                'text': 'You are a helpful assistant specializing in memory techniques. ' 'IMPORTANT: Always respond with valid JSON. DO NOT use markdown code blocks (```). ' +
+                'text': 'You are a helpful assistant specializing in memory techniques. '
+                        'IMPORTANT: Always respond with valid JSON. DO NOT use markdown code blocks (```). ' +
                     'DO NOT include backticks, explanations, or any other text. ' +
                     'Return ONLY the raw JSON object as requested in the prompt. ' +
                     'Your entire response must be parseable as JSON.\n\n' +
+                    '$languagePrompt\n\n' +
                     prompt
               }
             ]
@@ -1367,7 +1435,11 @@ ${contentList.asMap().entries.map((entry) {
 
       try {
         // Gemini APIを呼び出すFirebase Function
-        final HttpsCallable callable = _functions.httpsCallable('proxyGemini');
+        final HttpsCallable callable = _functions.httpsCallable(
+            'ankiPaiGeminiProxy',
+            options: HttpsCallableOptions(
+                timeout: const Duration(minutes: 10) // 10分のタイムアウト設定
+                ));
 
         // リクエストデータを正しい形式に変更
         final functionRequestData = {'data': requestData};
@@ -1467,7 +1539,12 @@ ${contentList.asMap().entries.map((entry) {
 '''
         : '';
 
-    final prompt = '''
+    // 言語設定を取得
+    final languagePrompt = await LanguageService.getAILanguagePrompt();
+    final currentLanguage = await LanguageService.getCurrentLanguageCode();
+
+    final prompt = currentLanguage == 'ja'
+        ? '''
 あなたはユーザーの暗記を補助するAIアシスタントです。ユーザーが暗記物の内容についてあなたに説明します。ユーザーが本質的なところを正しく暗記できているかどうかを評価してください。
 
 $contentInfoユーザーの説明：
@@ -1479,15 +1556,31 @@ $userExplanation
 3. 足りない点と改善案
 
 JSON形式ではなく、直接テキストとして回答してください。
+$languagePrompt
+'''
+        : '''
+You are an AI assistant helping users with memorization. The user has explained the content they are trying to memorize to you. Please evaluate whether the user has correctly memorized the essential aspects.
+
+${contentInfo}User's explanation:
+$userExplanation
+
+Please respond with a concise and friendly evaluation. Include:
+1. Accuracy of content
+2. Level of understanding
+3. Areas for improvement and suggestions
+
+Respond directly as text, not in JSON format.
+$languagePrompt
 ''';
 
     try {
       // 新しいFirebase Functionを呼び出し
-      final HttpsCallable callable = _functions.httpsCallable('proxyGemini');
+      final HttpsCallable callable =
+          _functions.httpsCallable('ankiPaiGeminiProxy');
 
       // Gemini APIに適した形式でリクエストを構築
       final requestData = {
-        'model': 'gemini-2.5-flash-preview-04-17',
+        'model': 'gemini-2.5-pro-preview-05-06',
         'contents': [
           {
             'role': 'user',
@@ -1594,7 +1687,8 @@ $content
 
     try {
       // 新しいFirebase Functionを呼び出し（V2バージョン）
-      final HttpsCallable callable = _functions.httpsCallable('proxyGemini');
+      final HttpsCallable callable =
+          _functions.httpsCallable('ankiPaiGeminiProxy');
       // generateTextメソッドと同じリクエスト形式を使用
       final Map<String, dynamic> requestData = {
         'model': 'gemini-2.5-pro-preview-03-25', // 考え方モードにはPro版が適している
@@ -1603,7 +1697,8 @@ $content
             'role': 'user',
             'parts': [
               {
-                'text': '暗記学習の専門家として、以下の内容について「～と考えよう」形式で簡潔に回答してください。\n' 'プレーンテキストのみ使用し、JSONやマークダウンは使わないでください。\n\n' +
+                'text': '暗記学習の専門家として、以下の内容について「～と考えよう」形式で簡潔に回答してください。\n'
+                        'プレーンテキストのみ使用し、JSONやマークダウンは使わないでください。\n\n' +
                     prompt
               }
             ]

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/subscription_model.dart';
 import '../services/payment_service.dart';
 import '../constants/subscription_constants.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SubscriptionPurchaseScreen extends StatefulWidget {
   final SubscriptionType? initialType;
@@ -70,8 +71,8 @@ class _SubscriptionPurchaseScreenState extends State<SubscriptionPurchaseScreen>
       if (mounted) {
         if (result.isSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('サブスクリプションの購入が完了しました'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.subscriptionPurchaseCompleted),
               backgroundColor: Colors.green,
             ),
           );
@@ -111,8 +112,8 @@ class _SubscriptionPurchaseScreenState extends State<SubscriptionPurchaseScreen>
 
         if (result.isSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('購入を復元しました'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.purchaseRestored),
               backgroundColor: Colors.green,
             ),
           );
@@ -137,7 +138,7 @@ class _SubscriptionPurchaseScreenState extends State<SubscriptionPurchaseScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('プレミアムプラン'),
+        title: Text(AppLocalizations.of(context)!.premiumPlan),
         elevation: 0,
         backgroundColor: const Color.fromARGB(255, 53, 152, 71),
         foregroundColor: Colors.white,

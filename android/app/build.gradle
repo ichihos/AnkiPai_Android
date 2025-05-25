@@ -1,0 +1,98 @@
+import java.io.FileInputStream
+
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'dev.flutter.flutter-gradle-plugin'
+    id 'com.google.gms.google-services' // Google Services plugin
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace "com.ichihos.ankipai"
+    compileSdkVersion 35 // Updated to 35 to support Google Mobile Ads and other plugins
+    ndkVersion "27.0.12077973"
+    
+    // Enable multidex support
+    defaultConfig {
+        multiDexEnabled true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+        coreLibraryDesugaringEnabled true
+    }
+    
+    dependencies {
+        coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+        implementation 'androidx.multidex:multidex:2.0.1' // Added for better multidex support
+    }
+    
+    // Make sure lint checks are ignored for problematic plugins
+    lintOptions {
+        disable 'InvalidPackage'
+        checkReleaseBuilds false
+        abortOnError false
+    }
+    
+    buildFeatures {
+        buildConfig true
+        viewBinding true
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    defaultConfig {
+        applicationId "com.ichihos.ankipai"
+        minSdkVersion 24
+        targetSdkVersion 34 // Updated to match compileSdkVersion
+        versionCode flutter.versionCode.toInteger()
+        versionName flutter.versionName
+        multiDexEnabled true
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86_64" // Supported architectures
+        }
+    }
+
+    signingConfigs {
+       release {
+           keyAlias keystoreProperties['keyAlias']
+           keyPassword keystoreProperties['keyPassword']
+           storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+           storePassword keystoreProperties['storePassword']
+       }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+            shrinkResources false
+        }
+    }
+}
+
+// Force specific versions to avoid conflicts
+configurations.all {
+    resolutionStrategy {
+        force 'androidx.core:core-ktx:1.9.0'
+        force 'androidx.activity:activity:1.6.1'
+    }
+}
+
+flutter {
+    source = "../.."
+}

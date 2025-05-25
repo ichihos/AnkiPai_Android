@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:get_it/get_it.dart';
-import 'vision_service.dart';
-import 'ai_service_interface.dart';
-import 'gemini_service.dart';
+import '../services/vision_service.dart';
+import '../services/ai_service_interface.dart';
+import '../services/gemini_service.dart';
 
 /// 画像解析サービス
 /// Vision APIを使って画像を解析し、OpenAI APIで投稿文を生成する

@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:anki_pai/screens/subscription_info_screen.dart';
+// ログビューア画面は削除されました
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get_it/get_it.dart';
@@ -14,6 +16,8 @@ import '../services/subscription_service.dart';
 import '../services/ad_service.dart';
 import '../services/auth_service.dart';
 import '../services/gemini_service.dart';
+import '../services/connectivity_service.dart';
+import '../providers/language_provider.dart';
 
 // Models
 import '../models/subscription_model.dart';
@@ -68,16 +72,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   late final AdService adService = GetIt.instance<AdService>();
 
+  bool _isFirstLoad = true;
+
   @override
   void initState() {
     super.initState();
     _inputController.addListener(_onTextChanged);
     // AIモードの設定を読み込む
     _loadAiModeSetting();
-    // データの初期読み込み
-    _initializeServices();
-    // サブスクリプション情報を取得
-    _loadSubscriptionInfo();
 
     // 動画広告を事前にロード
     if (!kIsWeb) {
@@ -86,8 +88,66 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  // サブスクリプション情報を読み込む
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 最初のロードのみ実行（didChangeDependenciesは複数回呼ばれるため）
+    if (_isFirstLoad) {
+      _isFirstLoad = false;
+      // データの初期読み込み - サービス初期化のみ行い、データ取得は延期
+      _initializeServices();
+
+      // 起動速度を上げるためにサブスク情報の補助的な値だけはロード
+      _setInitialSubscriptionValue();
+
+      // サブスクリプション情報を非同期で読み込む
+      _loadSubscriptionInfoOnStartup();
+    }
+  }
+
+  // 起動時の仮値を設定 (実際のデータはナビゲーション時に更新)
+  void _setInitialSubscriptionValue() {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final userId = authService.currentUser?.uid ?? '';
+
+    setState(() {
+      // 初期はローディングなしのフリーモードで表示
+      _isSubscriptionLoading = false;
+      _subscription = SubscriptionModel(
+        userId: userId,
+        type: SubscriptionType.free,
+      );
+    });
+  }
+
+  // タブ変更時にデータを更新する
+  Future<void> _refreshDataOnTabChange(int tabIndex) async {
+    // タブ変更時にサブスクリプション情報を更新
+    print('タブ変更: タブ$tabIndex に切り替え - データ更新実行');
+    await _loadSubscriptionInfo();
+
+    // 必要に応じて他のデータ更新処理をタブごとに追加できる
+    if (tabIndex == 0) {
+      // ホームタブの場合の追加更新処理
+    } else if (tabIndex == 1) {
+      // カードセットタブの場合の追加更新処理
+    } else if (tabIndex == 2) {
+      // ライブラリタブの場合の追加更新処理
+    }
+  }
+
+  // 他の画面から戻ってきたときにデータを更新する
+  Future<void> _refreshDataAfterScreenReturn() async {
+    // 画面遷移後にサブスクリプション情報を更新
+    print('画面から戻ってきました - データ更新実行');
+    await _loadSubscriptionInfo();
+  }
+
+  // サブスクリプション情報を読み込む - ナビゲーション時に呼び出される
   Future<void> _loadSubscriptionInfo() async {
+    if (!mounted) return;
+
+    // UIがレスポンシブであるようにローディング状態を設定
     setState(() {
       _isSubscriptionLoading = true;
     });
@@ -96,15 +156,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       final subscriptionService =
           Provider.of<SubscriptionService>(context, listen: false);
 
-      // 強制的にキャッシュをクリアして最新情報を取得
-      // 特にサブスク管理が重要なため、毎回クリアして更新する
-      print('ホーム画面: サブスク情報を再取得中...');
-      subscriptionService.clearCache();
+      // キャッシュクリアはナビゲーション時にデータが必要な場合のみ行う
+      // 起動時の不要な処理を減らす
+      print('画面遷移/タブ切替: サブスク情報を取得中');
 
-      // サブスクリプション情報を更新
-      final subscription = await subscriptionService.refreshSubscription();
+      // 通常のサブスク情報取得を実行 (重いrefreshSubscriptionは必要なときだけ実行)
+      final subscription = await subscriptionService.getUserSubscription();
       print(
-          'ホーム画面: 更新されたサブスク情報 - タイプ: ${subscription.type}, プレミアム: ${subscription.isPremium}');
+          'ナビゲーション後: サブスク情報 - タイプ: ${subscription.type}, プレミアム: ${subscription.isPremium}');
 
       if (mounted) {
         setState(() {
@@ -119,50 +178,203 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           _isSubscriptionLoading = false;
         });
       }
+    }
+  }
 
-      // エラー発生時のバックアップとして、単純取得を試行
+  // アプリ起動時にサブスクリプション情報を読み込む
+  Future<void> _loadSubscriptionInfoOnStartup() async {
+    if (!mounted) return;
+
+    try {
+      final connectivityService = GetIt.instance<ConnectivityService>();
+      final isOffline = connectivityService.isOffline;
+
+      if (isOffline) {
+        print('📱 オフラインモード: 起動時のサブスク情報取得をスキップします');
+        return;
+      }
+
+      final authService = Provider.of<AuthService>(context, listen: false);
+      if (!authService.isAuthenticated()) {
+        print('⚠️ 未認証状態: 起動時のサブスク情報取得をスキップします');
+        return;
+      }
+
+      final subscriptionService =
+          Provider.of<SubscriptionService>(context, listen: false);
+
+      print('🚀 アプリ起動時: サブスク情報を非同期で取得中...');
+
+      // サブスクリプション情報を非同期で取得
+      final subscription = await subscriptionService.getUserSubscription();
+      print(
+          '✅ アプリ起動時: サブスク情報取得完了 - タイプ: ${subscription.type}, プレミアム: ${subscription.isPremium}');
+
+      if (mounted) {
+        setState(() {
+          _subscription = subscription;
+          _isSubscriptionLoading = false;
+        });
+      }
+    } catch (e) {
+      print('❌ アプリ起動時のサブスク情報取得エラー: $e');
+      // エラー時は初期値のままとする
+    }
+
+    // 強制的にサブスク情報を更新する (購入後など必要な場合に呼び出す)
+    Future<void> _forceRefreshSubscription() async {
+      if (!mounted) return;
+
+      setState(() {
+        _isSubscriptionLoading = true;
+      });
+
       try {
         final subscriptionService =
             Provider.of<SubscriptionService>(context, listen: false);
-        final subscription = await subscriptionService.getUserSubscription();
+
+        // 強制的にキャッシュをクリアして最新情報を取得
+        print('強制更新: サブスク情報を再取得中...');
+        subscriptionService.clearCache();
+
+        // サブスクリプション情報を強制的に更新
+        final subscription = await subscriptionService.refreshSubscription();
+        print(
+            '強制更新後: サブスク情報 - タイプ: ${subscription.type}, プレミアム: ${subscription.isPremium}');
 
         if (mounted) {
           setState(() {
             _subscription = subscription;
+            _isSubscriptionLoading = false;
           });
         }
-      } catch (secondError) {
-        print('バックアップ取得も失敗: $secondError');
+      } catch (e) {
+        print('強制更新エラー: $e');
+        if (mounted) {
+          setState(() {
+            _isSubscriptionLoading = false;
+          });
+        }
       }
     }
   }
 
   // サービスを初期化し、データの読み込みを行う
   Future<void> _initializeServices() async {
+    // didChangeDependenciesから呼ばれるため、contextは利用可能
+    if (!mounted) return;
+
+    // オフライン状態判定用の変数を定義
+    bool isOffline = false;
+
     try {
+      // ConnectivityServiceの状態を確認するのみ（main.dartで既に初期化済み）
+      final connectivityService = GetIt.instance<ConnectivityService>();
+
+      // オフライン状態を取得
+      isOffline = connectivityService.isOffline;
+
+      print('📱 接続状態確認: オフラインモード = $isOffline');
+
+      if (isOffline) {
+        print('📱 オフラインモード: ローカルストレージからデータを読み込みます');
+      }
+
       final authService = Provider.of<AuthService>(context, listen: false);
-      if (authService.isAuthenticated()) {
+
+      // オフラインモードでは認証チェックをスキップし、ローカルデータを読み込む
+      if (isOffline || authService.isAuthenticated()) {
         // カードセット・メモリーサービスデータのリロード
         final cardSetService =
             Provider.of<CardSetService>(context, listen: false);
         final memoryService =
             Provider.of<MemoryService>(context, listen: false);
 
-        // 各サービスの初期化を行い、データを再読み込み
-        await cardSetService.initialize();
-
-        // 暗記アイテムのリロード
+        // カードセットサービスの初期化
         try {
-          // ここではメモリーサービスの確実な再読み込みを行う
-          await memoryService.getRecentPublicTechnique(); // 最新の公開テクニックを読み込む
-          await memoryService.getUserMemoryTechniques(); // ユーザーのテクニックを読み込む
-          print('暗記アイテムの再読み込み成功');
-        } catch (mError) {
-          print('暗記アイテムの再読み込みエラー: $mError');
+          // 初期化を実行
+          await cardSetService.initialize();
+          print('✅ カードセットサービスの初期化が完了しました');
+
+          // オフラインモードの場合はローカルストレージからカードセットを読み込む
+          if (isOffline) {
+            try {
+              // ローカルストレージからカードセットを読み込む
+              await cardSetService.loadCardSetsFromLocalStorage();
+              print('✅ オフラインモード: ローカルストレージからカードセットを読み込みました');
+            } catch (localError) {
+              print('⚠️ ローカルストレージからのカードセット読み込みエラー: $localError');
+              // エラーが発生しても続行する
+            }
+          }
+        } catch (csError) {
+          print('❌ カードセットサービスの初期化エラー: $csError');
+
+          // 初期化に失敗してもオフラインモードの場合はローカルストレージから読み込みを試みる
+          if (isOffline) {
+            try {
+              await cardSetService.loadCardSetsFromLocalStorage();
+              print('✅ オフラインモード: 初期化エラー後にローカルストレージからカードセットを読み込みました');
+            } catch (localError) {
+              print('⚠️ ローカルストレージからのカードセット読み込みエラー: $localError');
+              // エラーが発生しても続行する
+            }
+          }
         }
+
+        // メモリーサービスの初期化とデータ読み込み
+        try {
+          // オフラインモードの場合はローカルストレージから暗記法を読み込む
+          if (isOffline) {
+            try {
+              // ローカルストレージから暗記法を読み込む
+              await memoryService.loadMemoryTechniquesFromLocalStorage();
+              print('✅ オフラインモード: ローカルストレージから暗記法を読み込みました');
+            } catch (localError) {
+              print('⚠️ ローカルストレージからの暗記法読み込みエラー: $localError');
+              // エラーが発生しても続行する
+            }
+          } else {
+            // オンラインモードの場合は通常の読み込みを行う
+            // 最新の公開テクニックを読み込む
+            try {
+              await memoryService.getRecentPublicTechnique();
+              print('✅ 公開暗記法の読み込み成功');
+            } catch (rtError) {
+              print('⚠️ 公開暗記法の読み込みエラー: $rtError');
+              // エラーが発生しても続行する
+            }
+
+            // ユーザーの暗記法を読み込む
+            try {
+              await memoryService.getUserMemoryTechniques();
+              print('✅ ユーザー暗記法の読み込み成功');
+            } catch (umtError) {
+              print('⚠️ ユーザー暗記法の読み込みエラー: $umtError');
+              // エラーが発生しても続行する
+            }
+          }
+
+          print('✅ 暗記アイテムの読み込み成功');
+        } catch (mError) {
+          print('❌ 暗記アイテムの読み込みエラー: $mError');
+          // エラーが発生しても続行する
+        }
+      } else {
+        print('⚠️ ユーザーが認証されていないため、データ読み込みをスキップします');
       }
     } catch (e) {
-      print('データ初期化エラー: $e');
+      print('❌ データ初期化エラー: $e');
+
+      // 既に定義したisOffline変数を使用
+      if (!isOffline) {
+        // オンラインモードの場合のみエラーを表示
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('データの読み込みに失敗しました。ログイン状態が無効です。')),
+        );
+      } else {
+        print('📱 オフラインモードのため、エラーメッセージを表示しません');
+      }
     }
   }
 
@@ -223,8 +435,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           !(_subscription?.isPremium ?? false)) {
         final remaining = _getRemainingUses(_selectedAiMode);
         if (remaining <= 0) {
-          _showSubscriptionLimitDialog(
-              _selectedAiMode == MODE_MULTI_AGENT ? 'マルチエージェントモード' : '考え方モード');
+          _showSubscriptionLimitDialog(_selectedAiMode == MODE_MULTI_AGENT
+              ? AppLocalizations.of(context)!.multiAgentMode
+              : AppLocalizations.of(context)!.thinkingMode);
           return;
         }
       }
@@ -245,7 +458,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       result = {
         'isMultipleItems': false,
         'itemCount': 1,
-        'message': '考え方モードで処理します'
+        'message': AppLocalizations.of(context)!.processingWithThinkingMode
       };
       isMultipleItems = false;
       itemCount = 1;
@@ -255,14 +468,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       result = {
         'isMultipleItems': false,
         'itemCount': 1,
-        'message': 'マルチエージェントモードで処理します'
+        'message': AppLocalizations.of(context)!.processingWithMultiAgentMode
       };
       isMultipleItems = false;
       itemCount = 1;
     } else {
       LoadingAnimationDialog.show(
         context,
-        message: '暗記法を生成中...',
+        message: AppLocalizations.of(context)!.generatingMemoryTechnique,
         animationType: AnimationType.memory,
         // 考え方モードでは項目数を表示しない
         itemCount: null,
@@ -293,10 +506,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     LoadingAnimationDialog.show(
       context,
       message: _useThinkingMode
-          ? '考え方を生成中...'
+          ? AppLocalizations.of(context)!.generatingThinkingWay
           : (_useMultiAgentMode
-              ? 'AIチームが暗記法を考えています...'
-              : (isMultipleItems ? '複数の暗記法を生成中...' : '暗記法を生成中...')),
+              ? AppLocalizations.of(context)!.aiTeamGeneratingTechnique
+              : (isMultipleItems
+                  ? AppLocalizations.of(context)!.generatingMultipleTechniques
+                  : AppLocalizations.of(context)!.generatingMemoryTechnique)),
       animationType: AnimationType.memory,
       // 考え方モードでは項目数を表示しない
       itemCount:
@@ -307,9 +522,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     // モバイルの場合は3秒後に動画広告を表示
     if (!kIsWeb) {
       adService.loadRewardedAd();
-      Future.delayed(const Duration(seconds: 3), () {
+      Future.delayed(const Duration(seconds: 3), () async {
         if (mounted) {
-          adService.showRewardedAd();
+          // 新しい実装では非同期で結果を受け取る
+          final bool result = await adService.showRewardedAd();
+          if (result && mounted) {
+            // リワード広告の視聴が完了した場合の処理
+            print('リワード広告視聴完了');
+          }
         }
       });
     }
@@ -396,7 +616,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
         if (!canUseThinkingMode) {
           Navigator.pop(context); // ローディングダイアログを閉じる
-          _showSubscriptionLimitDialog('考え方モード');
+          _showSubscriptionLimitDialog(
+              AppLocalizations.of(context)!.thinkingMode);
           setState(() {
             _isProcessing = false;
           });
@@ -425,37 +646,47 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
         if (itemCount > 1) {
           // 複数項目として処理
-          // 実際のテキスト内容を解析して個別の項目に分割
-          final List<String> lines = text.split('\n');
-          final List<Map<String, dynamic>> actualItems = [];
+          // AIが検出した項目数を尊重
+          print('AIが検出した項目数を使用します: $itemCount件');
 
-          // 各行を個別の項目として処理
-          for (int i = 0; i < lines.length && i < itemCount; i++) {
-            final String line = lines[i].trim();
-            if (line.isNotEmpty) {
-              actualItems.add({
-                'content': line,
+          // result['items']が存在する場合はそれを使用、そうでない場合は適切な形式に加工
+          List<Map<String, dynamic>> itemsList;
+          if (result.containsKey('items') &&
+              result['items'] is List &&
+              (result['items'] as List).isNotEmpty) {
+            // AIが既に項目リストを提供している場合はそれを使用
+            itemsList = List<Map<String, dynamic>>.from(result['items']);
+            print('AIが検出した項目リストを使用します: ${itemsList.length}件');
+          } else {
+            // AIが項目リストを提供していない場合は、項目数に基づいてコンテンツを分割
+            final List<String> lines = text
+                .split('\n')
+                .where((line) => line.trim().isNotEmpty)
+                .take(itemCount)
+                .toList();
+
+            itemsList = [];
+            for (int i = 0; i < lines.length && i < itemCount; i++) {
+              itemsList.add({
+                'content': lines[i].trim(),
                 'type': 'text',
               });
             }
+            print('テキスト分割により項目リストを作成しました: ${itemsList.length}件');
           }
 
-          // 実際の項目数に合わせてitemCountを更新
-          final int actualItemCount = actualItems.length;
-          print('実際の項目数: $actualItemCount');
-
           final detectionInfo = <String, dynamic>{
-            'itemCount': actualItemCount,
-            'message': '複数項目が検出されました（標準検出）',
+            'itemCount': itemCount, // AIが判断した項目数
+            'message': AppLocalizations.of(context)!.multipleItemsDetected,
             'rawContent': text, // 生データも渡す
-            'items': actualItems,
+            'items': itemsList, // 項目リスト
           };
 
-          print('複数項目を処理します: ${actualItems.length}件');
+          print('複数項目を処理します: $itemCount件');
           techniques = await memoryService.suggestMemoryTechniques(
             text,
             multipleItemsDetection: detectionInfo,
-            itemCount: actualItems.length,
+            itemCount: itemCount,
           );
         } else {
           // 単一項目として処理
@@ -471,8 +702,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         print('警告: 暗記法が生成されませんでした。デフォルトの暗記法を追加します。');
         techniques = [
           MemoryTechnique(
-            name: '標準学習法',
-            description: 'この内容は反復学習で覚えることが効果的です。',
+            name: AppLocalizations.of(context)!.defaultMemoryMethodName,
+            description:
+                AppLocalizations.of(context)!.defaultMemoryMethodDescription,
             type: 'concept',
           )
         ];
@@ -525,17 +757,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       String errorMessage = e.toString();
       // エラーメッセージをユーザーフレンドリーに調整
       if (errorMessage.contains('permission-denied')) {
-        errorMessage = 'データベースのアクセス権限がありません。再度ログインしてください。';
-      } else if (errorMessage.contains('ログイン')) {
-        errorMessage = 'ログイン状態が無効です。再度ログインしてください。';
+        errorMessage = AppLocalizations.of(context)!.permissionDeniedError;
+      } else if (errorMessage.contains(AppLocalizations.of(context)!.login)) {
+        errorMessage = AppLocalizations.of(context)!.loginRequiredError;
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('追加に失敗しました: $errorMessage'),
+          content: Text(AppLocalizations.of(context)!.addFailed(errorMessage)),
           backgroundColor: Colors.red.shade400,
           action: SnackBarAction(
-            label: 'ログイン',
+            label: AppLocalizations.of(context)!.login,
             textColor: Colors.white,
             onPressed: () async {
               // ログイン画面に遷移
@@ -577,6 +809,88 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
+  // サンプルデータのタイトルを国際化する関数
+  String _getLocalizedExampleTitle(String title, BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return title;
+
+    switch (title) {
+      case '太陽系の惑星':
+        return l10n.solarSystemPlanets;
+      case '三大栄養素と役割':
+        return l10n.threeNutrients;
+      case '民主主義の3原則':
+        return l10n.democracyPrinciples;
+      default:
+        return title;
+    }
+  }
+
+  // サンプルデータの内容を国際化する関数
+  String _getLocalizedExampleContent(
+      String title, String content, BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return content;
+    final locale = Localizations.localeOf(context).languageCode;
+
+    // 言語に応じて適切な内容を返す
+    if (locale == 'en') {
+      switch (title) {
+        case '太陽系の惑星':
+          return 'Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune';
+        case '三大栄養素と役割':
+          return 'Proteins: Building blocks for muscles and organs, Carbohydrates: Energy source, Lipids: Temperature regulation and hormone production';
+        case '民主主義の3原則':
+          return 'Sovereignty of the People, Respect for Fundamental Human Rights, Pacifism';
+        default:
+          return content;
+      }
+    }
+
+    return content;
+  }
+
+  // サンプルデータの種類を国際化する関数
+  String _getLocalizedExampleType(String type, BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return type;
+
+    switch (type) {
+      case 'ニーモニック':
+        return l10n.mnemonic;
+      case '関係性':
+        return l10n.relationship;
+      case '概念':
+        return l10n.concept;
+      default:
+        return type;
+    }
+  }
+
+  // サンプルデータの技法を国際化する関数
+  String _getLocalizedExampleTechnique(
+      String title, String technique, BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return technique;
+    final locale = Localizations.localeOf(context).languageCode;
+
+    // 言語に応じて適切な技法を返す
+    if (locale == 'en') {
+      switch (title) {
+        case '太陽系の惑星':
+          return 'Use the acronym "My Very Educated Mother Just Served Us Nachos" where each first letter represents a planet: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune.';
+        case '三大栄養素と役割':
+          return 'Associate each nutrient with its function in the body: Proteins → building blocks, Carbohydrates → fuel cells, Lipids → insulation material.';
+        case '民主主義の3原則':
+          return 'Remember the acronym "SPR" - Sovereignty, People\'s rights, and Renunciation of war.';
+        default:
+          return technique;
+      }
+    }
+
+    return technique;
+  }
+
   // カメラオプション表示
   void _showImageSourceOptions() {
     showModalBottomSheet(
@@ -590,7 +904,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           children: [
             ListTile(
               leading: Icon(Icons.camera_alt, color: Colors.blue.shade600),
-              title: const Text('カメラで撮影',
+              title: Text(AppLocalizations.of(context)!.takePhoto,
                   style: TextStyle(fontWeight: FontWeight.bold)),
               onTap: () {
                 Navigator.pop(context);
@@ -599,7 +913,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
             ListTile(
               leading: Icon(Icons.photo_library, color: Colors.green.shade600),
-              title: const Text('ギャラリーから選択',
+              title: Text(AppLocalizations.of(context)!.selectFromGallery,
                   style: TextStyle(fontWeight: FontWeight.bold)),
               onTap: () {
                 Navigator.pop(context);
@@ -654,13 +968,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               // Step 6: 成功メッセージを表示
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Row(
+                  content: Row(
                     children: [
                       Icon(Icons.check_circle, color: Colors.white),
                       SizedBox(width: 10),
                       Expanded(
-                        child:
-                            Text('OCRテキストを入力欄に設定しました。内容を確認して「送信」ボタンを押してください。'),
+                        child: Text(AppLocalizations.of(context)!.ocrTextSet),
                       ),
                     ],
                   ),
@@ -673,42 +986,62 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           imageSource: source,
           onClose: () => Navigator.pop(context),
           maxHeight: MediaQuery.of(context).size.height * 0.75,
+          // OCR完了後に自動送信を実行する仕組みを追加
+          autoSubmit: true,
+          onSubmit: () {
+            // まずモーダルを閉じてから自動送信処理を行う
+            print('自動送信コールバックを実行します');
+            Navigator.pop(context); // モーダルを確実に閉じる
+
+            // 少し遅延させてから送信処理を実行
+            Future.delayed(Duration(milliseconds: 300), () {
+              if (mounted && _inputController.text.isNotEmpty) {
+                _handleTextSubmission();
+              }
+            });
+          },
         ),
       ),
     );
   }
 
   // ドロップダウンメニューで選択できる例文の種類
-  final List<Map<String, dynamic>> _exampleTypes = [
-    {
-      'type': 'ニーモニック',
-      'title': '太陽系の惑星',
-      'content': '水 mercury、金 Venus、地球、火星、木星、土星、天王星、海王星',
-      'technique': '「水・金・地・火・木・土・天・海」の頭文字をつなげた「みずきんちかもくどってんかい」で覚えよう!。',
-      'color': Colors.amber.shade100,
-      'icon': Icons.wb_sunny,
-    },
-    {
-      'type': '関係性',
-      'title': '三大栄養素と役割',
-      'content': 'タンパク質：筋肉や臓器の材料、炭水化物：エネルギー源、脂質：体温維持やホルモン材料',
-      'technique':
-          '各栄養素の役割を体の部位と結びつけて覚えよう!。タンパク質→筋肉、炭水化物→エネルギー電池、脂質→断熱材のイメージです。',
-      'color': Colors.green.shade100,
-      'icon': Icons.account_tree_outlined,
-    },
-    {
-      'type': '概念',
-      'title': '民主主義の3原則',
-      'content': '国民主権、基本的人権の尊重、平和主義',
-      'technique': '「主・人・平」の3文字で覚えよう!。',
-      'color': Colors.purple.shade100,
-      'icon': Icons.psychology_outlined,
-    }
-  ];
+  List<Map<String, dynamic>> get _exampleTypes {
+    // ここで翻訳キーを使用して国際化対応
+    final l10n = AppLocalizations.of(context)!;
+
+    return [
+      {
+        'type': l10n.mnemonicType,
+        'title': l10n.solarSystemPlanets,
+        'content': l10n.solarSystemPlanetsContent,
+        'technique': l10n.solarSystemPlanetsTechnique,
+        'color': Colors.amber.shade100,
+        'icon': Icons.wb_sunny,
+      },
+      {
+        'type': l10n.relationshipType,
+        'title': l10n.macronutrientsAndRoles,
+        'content': l10n.macronutrientsContent,
+        'technique': l10n.macronutrientsTechnique,
+        'color': Colors.green.shade100,
+        'icon': Icons.account_tree_outlined,
+      },
+      {
+        'type': l10n.conceptType,
+        'title': l10n.democracyPrinciples,
+        'content': l10n.democracyPrinciplesContent,
+        'technique': l10n.democracyPrinciplesTechnique,
+        'color': Colors.purple.shade100,
+        'icon': Icons.psychology_outlined,
+      }
+    ];
+  }
 
   // ホーム（投稿）タブ
   Widget _buildHomeTab() {
+    // l10n変数を定義して国際化に使用
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(16),
       // SingleChildScrollViewを追加してスクロール可能にする
@@ -718,8 +1051,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           mainAxisSize: MainAxisSize.min,
           children: [
             // ヘッダー部分
+            // AppLocalizationsを使用して多言語対応
             Text(
-              '暗記パイを作ろう！',
+              l10n.createMemPie,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -728,7 +1062,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
             const SizedBox(height: 8),
             Text(
-              'テキストや画像を入力すると、AIが最適な暗記法を提案するよ。',
+              AppLocalizations.of(context)!.memPieDescription,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.blue.shade900,
@@ -737,7 +1071,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             const SizedBox(height: 24),
 
             // 入力エリア（Expandedを取り除き、自由に拡大可能にする）
-            _buildInputArea(),
+            _buildPostingWidget(),
             const SizedBox(height: 16),
 
             // AIモードの切り替え
@@ -755,29 +1089,31 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   // AIモードの切り替えウィジェット
   Widget _buildAIModeSetting() {
+    // 国際化対応済み
+
     // ドロップダウンの展開状態を管理する状態変数
     bool isDropdownOpen = false;
 
-    // 選択されたモードに基づいて色とアイコンを定義
-    Color selectedColor;
-    IconData selectedIcon;
-
-    switch (_selectedAiMode) {
-      case MODE_MULTI_AGENT:
-        selectedColor = Colors.purple.shade600;
-        selectedIcon = Icons.group_work_outlined;
-        break;
-      case MODE_THINKING:
-        selectedColor = Colors.teal.shade600;
-        selectedIcon = Icons.psychology_outlined;
-        break;
-      default: // MODE_STANDARD
-        selectedColor = Colors.blue.shade600;
-        selectedIcon = Icons.auto_awesome_outlined;
-    }
-
     return StatefulBuilder(
       builder: (context, setState) {
+        // 選択されたモードに基づいて色とアイコンを定義
+        Color selectedColor;
+        IconData selectedIcon;
+
+        switch (_selectedAiMode) {
+          case MODE_MULTI_AGENT:
+            selectedColor = Colors.purple.shade600;
+            selectedIcon = Icons.group_work_outlined;
+            break;
+          case MODE_THINKING:
+            selectedColor = Colors.teal.shade600;
+            selectedIcon = Icons.psychology_outlined;
+            break;
+          default: // MODE_STANDARD
+            selectedColor = Colors.blue.shade600;
+            selectedIcon = Icons.auto_awesome_outlined;
+        }
+
         return Container(
           padding: const EdgeInsets.symmetric(vertical: 4),
           margin: const EdgeInsets.symmetric(vertical: 12),
@@ -825,7 +1161,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'AI生成モード',
+                              AppLocalizations.of(context)!.aiGenerationMode,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -835,10 +1171,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             const SizedBox(height: 4),
                             Text(
                               _selectedAiMode == MODE_STANDARD
-                                  ? '標準モード'
+                                  ? AppLocalizations.of(context)!.standardMode
                                   : _selectedAiMode == MODE_MULTI_AGENT
-                                      ? 'マルチエージェントモード'
-                                      : '考え方モード',
+                                      ? AppLocalizations.of(context)!
+                                          .multiAgentMode
+                                      : AppLocalizations.of(context)!
+                                          .thinkingMode,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -870,8 +1208,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                     // 標準モード
                     _buildAIModeOption(
-                      title: '標準モード',
-                      subtitle: '透明感のある暗記法を生成します',
+                      title: AppLocalizations.of(context)!.standardMode,
+                      subtitle:
+                          AppLocalizations.of(context)!.standardModeDescription,
                       icon: Icons.auto_awesome_outlined,
                       color: Colors.blue.shade600,
                       isSelected: _selectedAiMode == MODE_STANDARD,
@@ -886,8 +1225,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                     // マルチエージェントモード
                     _buildAIModeOption(
-                      title: 'マルチエージェントモード',
-                      subtitle: '複数のAIが最適な暗記法を導き出します',
+                      title: AppLocalizations.of(context)!.multiAgentMode,
+                      subtitle: AppLocalizations.of(context)!
+                          .multiAgentModeDescription,
                       icon: Icons.group_work_outlined,
                       color: Colors.purple.shade600,
                       isSelected: _selectedAiMode == MODE_MULTI_AGENT,
@@ -897,7 +1237,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             _subscription != null &&
                             !(_subscription?.isPremium ?? false) &&
                             _getRemainingUses(MODE_MULTI_AGENT) <= 0) {
-                          _showSubscriptionLimitDialog('マルチエージェントモード');
+                          _showSubscriptionLimitDialog(
+                              AppLocalizations.of(context)!.multiAgentMode);
                           return;
                         }
 
@@ -911,8 +1252,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                     // 考え方モード
                     _buildAIModeOption(
-                      title: '考え方モード',
-                      subtitle: '内容の本質や原理を捕えた簡潔な説明を生成',
+                      title: AppLocalizations.of(context)!.thinkingMode,
+                      subtitle:
+                          AppLocalizations.of(context)!.thinkingModeDescription,
                       icon: Icons.psychology_outlined,
                       color: Colors.teal.shade600,
                       isSelected: _selectedAiMode == MODE_THINKING,
@@ -922,7 +1264,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             _subscription != null &&
                             !(_subscription?.isPremium ?? false) &&
                             _getRemainingUses(MODE_THINKING) <= 0) {
-                          _showSubscriptionLimitDialog('考え方モード');
+                          _showSubscriptionLimitDialog(
+                              AppLocalizations.of(context)!.thinkingMode);
                           return;
                         }
 
@@ -959,9 +1302,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     required VoidCallback onTap,
   }) {
     String modeKey = '';
-    if (title == 'マルチエージェントモード') {
+    final l10n = AppLocalizations.of(context);
+    if (title == l10n?.multiAgentMode) {
       modeKey = MODE_MULTI_AGENT;
-    } else if (title == '考え方モード') {
+    } else if (title == l10n?.thinkingMode) {
       modeKey = MODE_THINKING;
     } else {
       modeKey = MODE_STANDARD;
@@ -1067,7 +1411,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '投稿例を見る',
+                  AppLocalizations.of(context)!.postingExamples,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1114,7 +1458,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // モード別の残り使用回数テキストを取得
   String _getRemainingUsesText(String mode) {
     final remaining = _getRemainingUses(mode);
-    return remaining < 0 ? '無制限' : '残り$remaining回';
+    final l10n = AppLocalizations.of(context)!;
+    if (remaining < 0) {
+      return l10n.unlimitedUses; // 無制限
+    } else {
+      return l10n
+          .remainingUses(remaining); // 残り{count}回 - パラメータを持つメッセージは関数として呼び出す
+    }
   }
 
   // 投稿例の詳細を表示するポップアップ
@@ -1229,7 +1579,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  '暗記法:',
+                  AppLocalizations.of(context)!.memoryTechniqueLabel,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -1283,7 +1633,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text('閉じる'),
+                    child: Text(AppLocalizations.of(context)!.close),
                   ),
                 ),
               ],
@@ -1318,8 +1668,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // 入力エリア
-  Widget _buildInputArea() {
+  // ユーザー入力を受け付けるウィジェット
+  Widget _buildPostingWidget() {
+    // l10n変数を定義して国際化に使用
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -1365,7 +1717,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 color: Colors.blue.shade900,
               ),
               decoration: InputDecoration(
-                hintText: '覚えたい内容を入力...',
+                hintText: l10n.enterContentToMemorize,
                 hintStyle: TextStyle(color: Colors.blue.shade300),
                 contentPadding: const EdgeInsets.all(16),
                 border: InputBorder.none,
@@ -1408,7 +1760,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '画像追加',
+                        l10n.addImage,
                         style: TextStyle(
                           color: _isProcessing
                               ? Colors.grey.shade400
@@ -1465,7 +1817,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       : Row(
                           children: [
                             Text(
-                              '送信',
+                              l10n.send,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -1538,7 +1890,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          '投稿例',
+                          AppLocalizations.of(context)!.postingExamples,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
@@ -1578,7 +1930,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         color: Colors.blue.shade800, size: 20),
                                   ),
                                   title: Text(
-                                    example['title'],
+                                    _getLocalizedExampleTitle(
+                                        example['title'], context),
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16),
@@ -1590,11 +1943,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         color: Colors.blue.shade700),
                                   ),
                                   onTap: () {
+                                    final localizedTitle =
+                                        _getLocalizedExampleTitle(
+                                            example['title'], context);
+                                    final localizedContent =
+                                        _getLocalizedExampleContent(
+                                            example['title'],
+                                            example['content'],
+                                            context);
+                                    final localizedType =
+                                        _getLocalizedExampleType(
+                                            example['type'], context);
+                                    final localizedTechnique =
+                                        _getLocalizedExampleTechnique(
+                                            example['title'],
+                                            example['technique'],
+                                            context);
+
                                     _showExamplePostDetail(
-                                      example['title'],
-                                      example['content'],
-                                      example['type'],
-                                      example['technique'],
+                                      localizedTitle,
+                                      localizedContent,
+                                      localizedType,
+                                      localizedTechnique,
                                       example['color'],
                                       example['icon'],
                                     );
@@ -1632,7 +2002,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text('閉じる'),
+                      child: Text(AppLocalizations.of(context)!.close),
                     ),
                   ),
                 ),
@@ -1657,10 +2027,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(bottom: 16),
                 child: Text(
-                  'このアプリについて',
+                  AppLocalizations.of(context)!.aboutThisApp,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -1669,46 +2039,57 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
               ListTile(
                 leading: Icon(Icons.help_outline, color: Colors.green.shade600),
-                title: const Text('使い方'),
+                title: Text(AppLocalizations.of(context)!.howToUse),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) => const HowToUseScreen()),
-                  );
+                  ).then((_) {
+                    // 画面から戻ったときにデータを更新
+                    _refreshDataAfterScreenReturn();
+                  });
                 },
               ),
+              // デバッグログビューアは削除されました
               ListTile(
                 leading: Icon(Icons.description_outlined,
                     color: Colors.blue.shade700),
-                title: const Text('利用規約'),
+                title: Text(AppLocalizations.of(context)!.termsOfService),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) => const TermsOfServiceScreen()),
-                  );
+                  ).then((_) {
+                    // 画面から戻ったときにデータを更新
+                    _refreshDataAfterScreenReturn();
+                  });
                 },
               ),
               ListTile(
                 leading: Icon(Icons.privacy_tip_outlined,
                     color: Colors.blue.shade700),
-                title: const Text('プライバシーポリシー'),
+                title: Text(AppLocalizations.of(context)!.privacyPolicy),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) => const PrivacyPolicyScreen()),
-                  );
+                  ).then((_) {
+                    // 画面から戻ったときにデータを更新
+                    _refreshDataAfterScreenReturn();
+                  });
                 },
               ),
               ListTile(
                 leading: Icon(Icons.shopping_bag_outlined,
                     color: Colors.blue.shade700),
-                title: const Text('特定商取引法に基づく表記'),
+                title:
+                    Text(AppLocalizations.of(context)!.commercialTransaction),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
@@ -1716,7 +2097,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     MaterialPageRoute(
                         builder: (context) =>
                             const CommercialTransactionScreen()),
-                  );
+                  ).then((_) {
+                    // 画面から戻ったときにデータを更新
+                    _refreshDataAfterScreenReturn();
+                  });
                 },
               ),
             ],
@@ -1728,40 +2112,117 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        title: const Row(
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            PieLogoSmall(),
-            SizedBox(width: 8),
-            AppTitleText(),
+            const PieLogoSmall(),
+            const SizedBox(width: 8),
+            const Flexible(
+              child: AppTitleText(),
+            ),
           ],
         ),
         actions: [
+          // 非ログイン時に表示するアイコンボタンたち
           Consumer<AuthService>(builder: (context, authService, child) {
             final user = authService.currentUser;
             final bool isAnonymous = user?.isAnonymous ?? true;
+
             if (user == null || isAnonymous) {
-              return IconButton(
-                icon: Icon(Icons.info_outline, color: Colors.blue.shade600),
-                tooltip: 'このアプリについて',
-                onPressed: () => _showLegalInfoModal(context),
+              // 非ログイン時に言語、情報、ヘルプボタンをまとめて表示する
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 言語切り替えボタン
+                  Consumer<LanguageProvider>(
+                    builder: (context, languageProvider, child) {
+                      return IconButton(
+                        icon: const Icon(Icons.language, size: 20),
+                        color: Colors.blue.shade600,
+                        tooltip: l10n.selectLanguage,
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
+                        constraints:
+                            const BoxConstraints(minWidth: 28, minHeight: 28),
+                        onPressed: () {
+                          // 言語を循環的に切り替える（日本語→英語→中国語→日本語）
+                          Locale newLocale;
+                          String message;
+
+                          switch (languageProvider.currentLocale.languageCode) {
+                            case 'ja':
+                              newLocale = const Locale('en');
+                              message = l10n.languageSwitchedEnglish;
+                              break;
+                            case 'en':
+                              newLocale = const Locale('zh');
+                              message = l10n.languageSwitchedChinese;
+                              break;
+                            case 'zh':
+                              newLocale = const Locale('ja');
+                              message = l10n.languageSwitchedJapanese;
+                              break;
+                            default:
+                              newLocale = const Locale('ja');
+                              message = l10n.languageSwitchedJapanese;
+                          }
+
+                          languageProvider.changeLocale(newLocale);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(message),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+
+                  // Aboutボタン
+                  IconButton(
+                    icon: Icon(Icons.info_outline,
+                        color: Colors.blue.shade600, size: 20),
+                    tooltip: l10n.aboutApp,
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    constraints:
+                        const BoxConstraints(minWidth: 28, minHeight: 28),
+                    onPressed: () => _showLegalInfoModal(context),
+                  ),
+
+                  // ヘルプボタン
+                  IconButton(
+                    icon: Icon(Icons.help_outline,
+                        color: Colors.blue.shade600, size: 20),
+                    tooltip: l10n.howToUse,
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    constraints:
+                        const BoxConstraints(minWidth: 28, minHeight: 28),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const HowToUseScreen()),
+                      ).then((_) {
+                        // 画面から戻ったときにデータを更新
+                        _refreshDataAfterScreenReturn();
+                      });
+                    },
+                  ),
+                ],
               );
             }
             return const SizedBox.shrink();
           }),
-          IconButton(
-            icon: Icon(Icons.help_outline, color: Colors.blue.shade600),
-            tooltip: '使い方',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const HowToUseScreen()),
-              );
-            },
-          ),
+
+          // プロフィールボタン
           Consumer<AuthService>(
             builder: (context, authService, child) {
               final user = authService.currentUser;
@@ -1781,7 +2242,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       context,
                       MaterialPageRoute(
                           builder: (context) => const ProfileScreen()),
-                    ),
+                    ).then((_) {
+                      // 画面から戻ったときにデータを更新
+                      _refreshDataAfterScreenReturn();
+                    }),
                     showBorder: true,
                     borderColor: Colors.white,
                     borderWidth: 1.5,
@@ -1800,7 +2264,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 // 非認証状態（通常あり得ない）
                 return TextButton.icon(
                   icon: const Icon(Icons.login),
-                  label: const Text('ログイン'),
+                  label: Text(AppLocalizations.of(context)!.login),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.blue.shade600,
                   ),
@@ -1816,7 +2280,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 // 匿名認証状態 - ログインボタンを表示
                 return TextButton.icon(
                   icon: const Icon(Icons.login),
-                  label: const Text('ログイン'),
+                  label: Text(AppLocalizations.of(context)!.login),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.blue.shade600,
                   ),
@@ -1913,7 +2377,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 6),
                                 child: Text(
-                                  'パイ食べ放題',
+                                  AppLocalizations.of(context)!.upgradeButton,
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -1979,9 +2443,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(0, Icons.home_rounded, 'ホーム'),
-                _buildNavItem(1, Icons.folder_copy, 'カードセット'),
-                _buildNavItem(2, Icons.library_books_rounded, 'ライブラリ'),
+                _buildNavItem(0, Icons.home_rounded, l10n.homeNavLabel),
+                _buildNavItem(1, Icons.folder_copy,
+                    AppLocalizations.of(context)!.myCardSets),
+                _buildNavItem(
+                    2, Icons.library_books_rounded, l10n.libraryNavLabel),
               ],
             ),
           ),
@@ -1996,9 +2462,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     return InkWell(
       onTap: () {
-        setState(() {
-          _selectedTabIndex = index;
-        });
+        // タブが切り替えられた場合、データを再読込
+        if (_selectedTabIndex != index) {
+          setState(() {
+            _selectedTabIndex = index;
+          });
+
+          // 必要なデータをタブ遷移時に更新
+          _refreshDataOnTabChange(index);
+        }
       },
       borderRadius: BorderRadius.circular(16),
       child: Padding(

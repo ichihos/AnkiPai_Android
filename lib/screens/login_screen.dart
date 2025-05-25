@@ -9,6 +9,7 @@ import 'privacy_policy_screen.dart';
 import 'terms_of_service_screen.dart';
 import 'commercial_transaction_screen.dart';
 import 'how_to_use_screen.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,23 +29,30 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _errorMessage;
 
   // アプリの特徴（カルーセル表示用）
-  final List<Map<String, dynamic>> _features = [
-    {
-      'icon': Icons.lightbulb_outline,
-      'title': 'サクっと暗記！',
-      'description': '簡単に知識を頭に入れよう！'
-    },
-    {
-      'icon': Icons.access_time,
-      'title': '科学的な記憶サイクル',
-      'description': '忘却曲線に基づいて、ちょうどいいタイミングで復習をお知らせ'
-    },
-    {
-      'icon': Icons.emoji_events_outlined,
-      'title': '楽しく継続！',
-      'description': 'ゲーム感覚で暗記が続く！色々な覚え方を試そう！'
-    },
-  ];
+  // 特徴リストはビルドメソッド内で初期化して国際化対応
+  late List<Map<String, dynamic>> _features;
+
+  // 特徴カルーセルのデータを初期化（国際化対応）
+  void _initFeatures(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    _features = [
+      {
+        'icon': Icons.lightbulb_outline,
+        'title': l10n.featureQuickMemorize,
+        'description': l10n.featureQuickMemorizeDesc
+      },
+      {
+        'icon': Icons.access_time,
+        'title': l10n.featureScientificCycle,
+        'description': l10n.featureScientificCycleDesc
+      },
+      {
+        'icon': Icons.emoji_events_outlined,
+        'title': l10n.featureFunContinuation,
+        'description': l10n.featureFunContinuationDesc
+      },
+    ];
+  }
 
   int _currentFeatureIndex = 0;
 
@@ -79,11 +87,11 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Padding(
-                padding: EdgeInsets.only(bottom: 16),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
                 child: Text(
-                  'このアプリについて',
-                  style: TextStyle(
+                  AppLocalizations.of(context)!.aboutThisApp,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -91,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               ListTile(
                 leading: Icon(Icons.help_outline, color: Colors.green.shade600),
-                title: const Text('使い方'),
+                title: Text(AppLocalizations.of(context)!.howToUse),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
@@ -104,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ListTile(
                 leading: Icon(Icons.description_outlined,
                     color: Colors.blue.shade700),
-                title: const Text('利用規約'),
+                title: Text(AppLocalizations.of(context)!.termsOfService),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
@@ -117,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ListTile(
                 leading: Icon(Icons.privacy_tip_outlined,
                     color: Colors.blue.shade700),
-                title: const Text('プライバシーポリシー'),
+                title: Text(AppLocalizations.of(context)!.privacyPolicy),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
@@ -130,7 +138,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ListTile(
                 leading: Icon(Icons.shopping_bag_outlined,
                     color: Colors.blue.shade700),
-                title: const Text('特定商取引法に基づく表記'),
+                title:
+                    Text(AppLocalizations.of(context)!.commercialTransaction),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
@@ -232,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _signInWithGoogle() async {
     // まずmountedをチェックしてから状態更新
     if (!mounted) return;
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -268,12 +277,12 @@ class _LoginScreenState extends State<LoginScreen> {
       // ポップアップが閉じられたエラーの場合は特別なメッセージを表示
       String errorMsg = e.toString();
       if (errorMsg.contains('popup-closed-by-user')) {
-        errorMsg = 'サインインがキャンセルされました。もう一度お試しください。';
+        errorMsg = AppLocalizations.of(context)!.signInCancelled;
         print('Googleサインインキャンセル: $e');
       } else {
         print('Googleサインインエラー: $e');
       }
-      
+
       // 状態更新前に必ずmountedをチェック
       if (mounted) {
         setState(() {
@@ -283,73 +292,6 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-  
-  // Sign in with Apple
-  Future<void> _signInWithApple() async {
-    // mountedチェック
-    if (!mounted) return;
-    
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      print('※ Apple Sign Inを開始します');
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final credential = await authService.signInWithApple();
-      
-      // ログイン成功したか確認
-      if (credential == null) {
-        print('※ Apple Sign Inが失敗しました（NULL）');
-        throw Exception('Appleサインインが完了しませんでした');
-      }
-      
-      print('※ Apple Sign Inが成功しました: uid=${credential.user?.uid}');
-
-      // 認証後のサービス初期化前に再度マウント状態をチェック
-      if (!mounted) return;
-
-      // Apple認証成功後、カードセットサービスを初期化
-      final cardSetService = Provider.of<CardSetService>(context, listen: false);
-      try {
-        await cardSetService.initialize();
-        print('Appleログイン後のCardSetServiceの初期化が完了しました');
-      } catch (e) {
-        print('Appleログイン後のCardSetServiceの初期化に失敗しました: $e');
-      }
-
-      // MemoryServiceの取得 (初期化は自動的に行われる)
-      try {
-        Provider.of<MemoryService>(context, listen: false);
-        print('Appleログイン後のメモリーサービスを取得しました');
-      } catch (e) {
-        print('Appleログイン後のメモリーサービスの取得に失敗しました: $e');
-      }
-
-      if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-        (route) => false,
-      );
-    } catch (e) {
-      // ポップアップが閉じられたエラーの場合は特別なメッセージを表示
-      String errorMsg = e.toString();
-      if (errorMsg.contains('canceled')) {
-        errorMsg = 'サインインがキャンセルされました。もう一度お試しください。';
-        print('Appleサインインキャンセル: $e');
-      } else {
-        print('Appleサインインエラー: $e');
-      }
-      
-      if (mounted) {
-        setState(() {
-          _errorMessage = errorMsg;
           _isLoading = false;
         });
       }
@@ -399,6 +341,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    // 特徴カルーセルを国際化対応するため初期化
+    _initFeatures(context);
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -423,7 +368,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const PieLogo(),
                   const SizedBox(height: 8),
                   Text(
-                    'サクッと覚える暗記パイ',
+                    l10n.appCatchphrase,
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.blue.shade800,
@@ -482,7 +427,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  _isLogin ? 'ログイン' : 'アカウント作成',
+                                  _isLogin ? l10n.login : l10n.createAccount,
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -495,15 +440,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             _buildTextField(
                               controller: _emailController,
                               icon: Icons.email,
-                              label: 'メールアドレス',
+                              label: l10n.emailAddressLabel,
                               keyboardType: TextInputType.emailAddress,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'メールアドレスを入力してください';
+                                  return l10n.pleaseEnterEmail;
                                 }
                                 if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
                                     .hasMatch(value)) {
-                                  return '有効なメールアドレスを入力してください';
+                                  return l10n.pleaseEnterValidEmail;
                                 }
                                 return null;
                               },
@@ -512,7 +457,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             _buildTextField(
                               controller: _passwordController,
                               icon: Icons.lock,
-                              label: 'パスワード',
+                              label: l10n.password,
                               obscureText: _obscurePassword,
                               onToggleVisibility: () {
                                 setState(() {
@@ -521,10 +466,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'パスワードを入力してください';
+                                  return l10n.pleaseEnterPassword;
                                 }
                                 if (!_isLogin && value.length < 6) {
-                                  return 'パスワードは6文字以上必要です';
+                                  return l10n.passwordMinLength;
                                 }
                                 return null;
                               },
@@ -553,7 +498,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: TextButton(
                                 onPressed: _isLoading ? null : _toggleAuthMode,
                                 child: Text(
-                                  _isLogin ? 'アカウント作成' : 'ログイン画面に戻る',
+                                  _isLogin
+                                      ? l10n.createAccount
+                                      : l10n.backToLoginScreen,
                                   style: TextStyle(
                                     color: Colors.blue.shade600,
                                     fontWeight: FontWeight.w500,
@@ -569,7 +516,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 24),
                   Text(
-                    'または',
+                    l10n.or,
                     style: TextStyle(
                       color: Colors.grey.shade700,
                       fontWeight: FontWeight.w500,
@@ -579,13 +526,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // ソーシャルログイン
                   _buildGoogleSignInButton(),
-                  const SizedBox(height: 12),
-                  _buildAppleSignInButton(),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: _isLoading ? null : _signInAnonymously,
                     child: Text(
-                      'ログインしない',
+                      l10n.continueWithoutLogin,
                       style: TextStyle(
                         color: Colors.grey.shade700,
                         fontWeight: FontWeight.w500,
@@ -597,7 +542,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Column(
                     children: [
                       Text(
-                        '登録することで、利用規約とプライバシーポリシーに同意したことになります',
+                        l10n.agreeToTerms,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade700,
@@ -608,7 +553,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextButton.icon(
                         icon: Icon(Icons.info_outline,
                             size: 16, color: Colors.blue.shade600),
-                        label: const Text('このアプリについて'),
+                        label: Text(l10n.aboutThisApp),
                         onPressed: () => _showLegalInfoModal(context),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
@@ -724,6 +669,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildSubmitButton() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       height: 50,
@@ -761,7 +707,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               )
             : Text(
-                _isLogin ? 'ログイン' : '登録',
+                _isLogin ? l10n.login : l10n.register,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -777,9 +723,9 @@ class _LoginScreenState extends State<LoginScreen> {
       height: 50,
       child: OutlinedButton.icon(
         icon: const Icon(Icons.login),
-        label: const Text(
-          'Googleでログイン',
-          style: TextStyle(
+        label: Text(
+          AppLocalizations.of(context)!.loginWithGoogle,
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
@@ -788,33 +734,6 @@ class _LoginScreenState extends State<LoginScreen> {
         style: OutlinedButton.styleFrom(
           backgroundColor: Colors.white,
           side: BorderSide(color: Colors.blue.shade400),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildAppleSignInButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: OutlinedButton.icon(
-        icon: const Icon(Icons.apple),
-        label: const Text(
-          'Appleでログイン',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        onPressed: _isLoading ? null : _signInWithApple,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
-          side: const BorderSide(color: Colors.black),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

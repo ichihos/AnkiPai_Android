@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import 'create_flash_card_screen.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FlashCardScreen extends StatefulWidget {
   const FlashCardScreen({super.key});
@@ -82,7 +83,7 @@ class _FlashCardScreenState extends State<FlashCardScreen> {
             
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('フラッシュカードの監視に失敗しました: $errorMessage'),
+                content: Text(AppLocalizations.of(context)!.flashCardMonitoringFailed(errorMessage)),
                 backgroundColor: Colors.red.shade400,
                 action: SnackBarAction(
                   label: 'ログイン',
@@ -115,7 +116,7 @@ class _FlashCardScreenState extends State<FlashCardScreen> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('フラッシュカードの監視設定に失敗しました: $errorMessage'),
+            content: Text(AppLocalizations.of(context)!.flashCardMonitoringSetupFailed(errorMessage)),
             backgroundColor: Colors.red.shade400,
             action: SnackBarAction(
               label: 'ログイン',
@@ -186,7 +187,7 @@ class _FlashCardScreenState extends State<FlashCardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('フラッシュカードの読み込みに失敗しました: $errorMessage'),
+            content: Text(AppLocalizations.of(context)!.flashCardLoadingFailed(errorMessage)),
             backgroundColor: Colors.red.shade400,
             action: SnackBarAction(
               label: 'ログイン',
@@ -602,7 +603,7 @@ class _FlashCardScreenState extends State<FlashCardScreen> {
                             Navigator.pop(context);
                           },
                           icon: const Icon(Icons.edit, size: 18),
-                          label: const Text('編集'),
+                          label: Text(AppLocalizations.of(context)!.edit),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.blue.shade700,
                             side: BorderSide(color: Colors.blue.shade200),
@@ -616,7 +617,7 @@ class _FlashCardScreenState extends State<FlashCardScreen> {
                             Navigator.pop(context);
                           },
                           icon: const Icon(Icons.delete, size: 18),
-                          label: const Text('削除'),
+                          label: Text(AppLocalizations.of(context)!.delete),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.red.shade400,
                             side: BorderSide(color: Colors.red.shade200),

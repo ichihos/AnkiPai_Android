@@ -4,6 +4,7 @@ import '../models/flash_card.dart';
 import '../services/flash_card_service.dart';
 import 'card_editor_screen.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CardDetailScreen extends StatefulWidget {
   final String cardId;
@@ -49,7 +50,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
       if (flashCard == null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('カードが見つかりませんでした'),
+            content: Text('カードが見つかりませんでした'), // TODO: 国際化完了後に修正
             backgroundColor: Colors.orange,
           ),
         );
@@ -62,7 +63,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('カードの読み込みに失敗しました: $e'),
+            content: Text(AppLocalizations.of(context)!.failedToLoadCard(e.toString())),
             backgroundColor: Colors.red.shade400,
           ),
         );
@@ -98,18 +99,18 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('カードを削除'),
-        content: const Text('このカードを削除してもよろしいですか？この操作は元に戻せません。'),
+        title: Text(AppLocalizations.of(context)!.deleteCard),
+        content: Text(AppLocalizations.of(context)!.deleteCardConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text(
-              '削除',
-              style: TextStyle(color: Colors.red),
+            child: Text(
+              AppLocalizations.of(context)!.delete,
+              style: const TextStyle(color: Colors.red),
             ),
           ),
         ],
@@ -127,7 +128,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('カードを削除しました')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.cardDeleted)),
           );
           Navigator.of(context).pop(true); // 削除完了を親画面に伝えるためにtrueを返す
         }
@@ -138,7 +139,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('カードの削除に失敗しました: $e'),
+              content: Text(AppLocalizations.of(context)!.failedToDeleteCard(e.toString())),
               backgroundColor: Colors.red.shade400,
             ),
           );
@@ -158,26 +159,26 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('カードの詳細'),
+        title: Text(AppLocalizations.of(context)!.cardDetails),
         actions: [
           if (!_isLoading && _flashCard != null)
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: _editCard,
-              tooltip: 'カードを編集',
+              tooltip: AppLocalizations.of(context)!.editCard,
             ),
           if (!_isLoading && _flashCard != null)
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: _deleteCard,
-              tooltip: 'カードを削除',
+              tooltip: AppLocalizations.of(context)!.deleteCard,
             ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _flashCard == null
-              ? const Center(child: Text('カードが見つかりません'))
+              ? Center(child: Text(AppLocalizations.of(context)!.cardNotFound))
               : Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -206,7 +207,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 16.0),
                         child: Text(
-                          'タップしてカードを裏返す',
+                          AppLocalizations.of(context)!.tapToFlipCard,
                           style: TextStyle(
                             color: Colors.grey.shade600,
                             fontStyle: FontStyle.italic,
@@ -245,7 +246,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
           children: [
             // カードのサイド表示
             Text(
-              _isFlipped ? '回答' : '質問',
+              _isFlipped ? AppLocalizations.of(context)!.answer : AppLocalizations.of(context)!.question,
               style: TextStyle(
                 color: _isFlipped ? Colors.blue.shade700 : Colors.grey.shade700,
                 fontWeight: FontWeight.bold,

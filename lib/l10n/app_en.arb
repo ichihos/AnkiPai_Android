@@ -1,0 +1,1066 @@
+{
+  "@@locale": "en",
+  "appTitle": "MemPie AI",
+  "languageSwitchedJapanese": "Changed to Japanese",
+  "languageSwitchedEnglish": "Switched to English",
+  "languageSwitchedChinese": "Switched to Chinese",
+  "chinese": "Chinese",
+  "aboutApp": "About this app",
+  "howToUse": "How to use",
+  "home": "Home",
+  "library": "Library",
+  "settings": "Settings",
+  "login": "Login",
+  "logout": "Logout",
+  "email": "Email",
+  "password": "Password",
+  "signIn": "Sign In",
+  "signUp": "Sign Up",
+  "createAccount": "Create Account",
+  "forgotPassword": "Forgot Password",
+  "resetPassword": "Reset Password",
+  "memoryItems": "Memory Items",
+  "memoryTechniques": "Memory Techniques",
+  "addMemoryItem": "Add Memory Item",
+  "addMemoryTechnique": "Add Memory Technique",
+  "publicTechniques": "Public Techniques",
+  "myTechniques": "My Techniques",
+  "search": "Search",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "edit": "Edit",
+  "name": "Name",
+  "description": "Description",
+  "type": "Type",
+  "tags": "Tags",
+  "isPublic": "Public",
+  "privateMemoryTechnique": "Private Memory Technique",
+  "publicMemoryTechnique": "Public Memory Technique",
+  "mnemonic": "Mnemonic",
+  "relationship": "Relationship",
+  "concept": "Concept",
+  "paymentSuccess": "Payment Success",
+  "paymentCancel": "Payment Cancelled",
+  "returnToHome": "Return to Home",
+  "waitingForPayment": "Waiting for payment processing...",
+  "paymentSuccessful": "Your payment was successful!",
+  "enjoyPremiumFeatures": "Enjoy premium features",
+  "paymentCancelled": "Your payment was cancelled",
+  "weHopeToSeeYouAgain": "We hope to see you again",
+  "subscription": "Subscription",
+  "premium": "Premium",
+  "free": "Free",
+  "unsubscribe": "Unsubscribe",
+  "confirmUnsubscribe": "Are you sure you want to unsubscribe?",
+  "yes": "Yes",
+  "no": "No",
+  "createMemPie": "Create Your MemPie!",
+  "memPieDescription": "Enter text or images and AI will suggest the best memory techniques for you.",
+  "addFailed": "Failed to add: {errorMessage}",
+  "takePhoto": "Take Photo",
+  "selectFromGallery": "Select from Gallery",
+  "ocrTextSet": "OCR text has been set in the input field. Please check the content and press the 'Submit' button.",
+  "close": "Close",
+  "howToUse": "How to Use",
+  "ichihosotsuji": "Ichi Hosotsuji",
+  "termsOfService": "Terms of Service",
+  "privacyPolicy": "Privacy Policy",
+  "commercialTransaction": "Commercial Transaction Information",
+  "remainingUses": "{count} Uses Left",
+  "unlimitedUses": "Unlimited",
+  "premiumFeature": "Premium Feature",
+  "permissionDeniedError": "You don't have permission to access the database. Please login again.",
+  "loginRequiredError": "Invalid login state. Please login again.",
+  "postingExamples": "View Posting Examples",
+  "languageNameEnglish": "English",
+  "languageNameJapanese": "Japanese",
+  "languageSwitchedJapanese": "Changed to Japanese",
+  "languageSwitchedEnglish": "Switched to English",
+  "tryPremium": "Try Premium",
+  "upgradeNeeded": "Upgrade required to use this mode",
+  "viewPlans": "View Plans",
+  "solarSystemPlanets": "Solar System Planets",
+  "threeNutrients": "Three Major Nutrients and Their Roles",
+  "democracyPrinciples": "Three Principles of Democracy",
+  "featureQuickMemorize": "Quick Memorization!",
+  "featureQuickMemorizeDesc": "Easily store knowledge in your brain!",
+  "featureScientificCycle": "Scientific Memory Cycle",
+  "featureScientificCycleDesc": "Get review reminders at optimal times based on the forgetting curve",
+  "featureFunContinuation": "Fun & Continuous!",
+  "featureFunContinuationDesc": "Continue memorizing with a gamified experience! Try various methods!",
+  "aboutThisApp": "About This App",
+  "signInCancelled": "Sign-in was cancelled. Please try again.",
+  "appCatchphrase": "Quick and Easy MemPie",
+  "login": "Login",
+  "createAccount": "Create Account",
+  "emailAddress": "Email Address",
+  "pleaseEnterEmail": "Please enter your email address",
+  "pleaseEnterValidEmail": "Please enter a valid email address",
+  "pleaseEnterPassword": "Please enter your password",
+  "passwordMinLength": "Password must be at least 6 characters",
+  "backToLoginScreen": "Back to Login Screen",
+  "or": "or",
+  "continueWithoutLogin": "Continue without Login",
+  "agreeToTerms": "By registering, you agree to the Terms of Service and Privacy Policy",
+  "register": "Register",
+  "invalidAuthState": "Invalid authentication state. Please login again.",
+  "permissionDenied": "You don't have permission to access the database. Please login again.",
+  "invalidLoginState": "Invalid login state. Please login again.",
+  "dataLoadFailed": "Failed to load data: {errorMessage}",
+  "recentMemoryMethodsFailed": "Failed to load recent memory methods: {errorMessage}",
+  "myPublishedMethods": "My Published Methods",
+  "noPublishedMethodsYet": "No published methods yet",
+  "publicMethodsLoadFailed": "Failed to load public methods: {errorMessage}",
+  "myMethodsLoadFailed": "Failed to load my memory methods: {errorMessage}",
+  "itemDeleted": "Item deleted",
+  "deleteFailed": "Failed to delete: {errorMessage}",
+  "searchMethodsHint": "Search methods...",
+  "publicMethods": "Public Methods",
+  "otherPeopleMethods": "Other People's Methods",
+  "myMethods": "My Methods",
+  "searchInOthersMethods": "Search for \"{query}\" in other people's methods",
+  "otherMethodsSearchResults": "Other People's Methods Search Results",
+  "noItemsInLibrary": "No items in your library yet",
+  "addNewMemoryItem": "Add new memory items from the Home screen!",
+  "tryDifferentKeyword": "Try searching with a different keyword",
+  "noMatchForSearchQuery": "No items matching \"{query}\"",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "recentlyPublishedMethods": "Recently Published Methods",
+  "viewOtherMethods": "View Other Methods",
+  "createdOn": "Created: {date}",
+  "confirmation": "Confirmation",
+  "deleteMemoryItemConfirm": "Delete this memory item?",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "publicMethodsSearchFailed": "Failed to search public methods: {errorMessage}",
+  "publishedMethodsError": "Failed to load published methods: {errorMessage}",
+  "thinkingMethod": "Thinking Method",
+  "pleaseEnterExplanation": "Please enter an explanation",
+  "methodIsHidden": "Memory method is hidden",
+  "aiEvaluatingExplanation": "AI is evaluating your explanation...",
+  "publicMethodDescription": "This method will be published. Press the Done button to add it to the public library.",
+  "feedbackError": "An error occurred while getting feedback. Please try again.",
+  "cardNotFound": "Card not found",
+  "failedToLoadCard": "Failed to load card: {error}",
+  "deleteCard": "Delete Card",
+  "deleteCardConfirmation": "Are you sure you want to delete this card? This action cannot be undone.",
+  "cardDeleted": "Card deleted",
+  "failedToDeleteCard": "Failed to delete card: {error}",
+  "cardDetails": "Card Details",
+  "editCard": "Edit Card",
+  "tapToFlipCard": "Tap to flip card",
+  "answer": "Answer",
+  "question": "Question",
+  "cardUpdated": "Card updated",
+  "newCardAdded": "New card added",
+  "failedToSaveCard": "Failed to save card: {error}",
+  "createNewCard": "Create New Card",
+  "saveCard": "Save Card",
+  "frontQuestion": "Front (Question)",
+  "enterQuestionOrWord": "Enter question or word",
+  "frontTextRequired": "Please enter front text",
+  "backAnswer": "Back (Answer)",
+  "enterAnswerOrDefinition": "Enter answer or definition",
+  "backTextRequired": "Please enter back text",
+  "updateCard": "Update Card",
+  "createCard": "Create Card",
+  "cardSetDeleted": "This card set has been deleted",
+  "failedToLoadCardSetInfo": "Failed to load card set info: {error}",
+  "failedToLoadCardInfo": "Failed to load card info: {error}",
+  "failedToLoadData": "Failed to load data: {error}",
+  "premiumUpgradeTitle": "Upgrade to Premium Plan",
+  "premiumBenefitsIntro": "Premium plan offers the following benefits:",
+  "unlimitedThinkingAndMultiAgent": "Unlimited thinking mode and multi-agent mode",
+  "unlimitedCardSets": "Unlimited card sets",
+  "unlimitedCardsPerSet": "Unlimited cards per set",
+  "noAds": "No advertisements",
+  "upgradedToPremium": "Upgraded to premium plan!",
+  "upgrade": "Upgrade",
+  "cardLimitTitle": "Card Limit",
+  "cardLimitMessage": "You have reached the maximum number of cards ({maxCards}) allowed in the free plan. Please upgrade to premium to add more cards.",
+  "@cardLimitMessage": {
+    "placeholders": {
+      "maxCards": {
+        "type": "int"
+      }
+    }
+  },
+  "close": "Close",
+  "deleteCardTitle": "Delete Card",
+  "deleteCardConfirmText": "Do you want to delete this card?",
+  "cardDeleted": "Card deleted",
+  "deleteFailed": "Failed to delete: {error}",
+  "cardSetDetails": "Card Set Details",
+  "premium": "Premium",
+  "startLearning": "Start Learning",
+  "cardSetNotFound": "Card set not found",
+  "start": "Start",
+  "searchCardsHint": "Search cards...",
+  "addCard": "Add Card",
+  "edit": "Edit",
+  "thinkingModeTitle": "Thinking Mode",
+  "thinkingNameFormat": "Thinking: {title}",
+  "@thinkingNameFormat": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "thinkingModeErrorMessage": "Could not get thinking mode explanation. Please try again later.",
+  "thinkingModeSuffix": "is a way to think about it",
+  "thinkingModeTag": "thinking",
+  "memoryTechniqueErrorFallback": "An error occurred, but repetitive learning is effective for this content.",
+  "displayError": "(Display Error)",
+  "otherItemsCount": "...and {count} more",
+  "@otherItemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recentPublicTechnique": "Recently Published Technique",
+  "myPublishedTechniques": "My Published Techniques",
+  "noPublishedTechniquesYet": "No published techniques yet",
+  "searchFromPublicTechniques": "Search from Public Techniques",
+  "failedToLoadRecentTechnique": "Failed to load recent technique: {error}",
+  "@failedToLoadRecentTechnique": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToLoadPublicTechniques": "Failed to load public techniques: {error}",
+  "@failedToLoadPublicTechniques": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToLoadMyTechniques": "Failed to load my techniques: {error}",
+  "@failedToLoadMyTechniques": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSearchPublicTechniques": "Failed to search public techniques: {error}",
+  "@failedToSearchPublicTechniques": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "standardMode": "Standard Mode",
+  "multiAgentMode": "Multi-Agent Mode",
+  "thinkingMode": "Thinking Mode", 
+  "standardModeDescription": "Regular memory technique generation",
+  "multiAgentModeDescription": "Multiple AI agents collaborate to create better techniques",
+  "thinkingModeDescription": "Generate a way of thinking about the content",
+  "generatingMemoryTechnique": "Generating memory technique...",
+  "generatingMultipleTechniques": "Generating multiple memory techniques...",
+  "generatingThinkingWay": "Generating thinking way...",
+  "aiTeamGeneratingTechnique": "AI team is developing memory techniques...",
+  "processingWithThinkingMode": "Processing with thinking mode",
+  "processingWithMultiAgentMode": "Processing with multi-agent mode",
+  "defaultMemoryMethodName": "Standard Learning Method",
+  "defaultMemoryMethodDescription": "Repetitive learning is effective for memorizing this content.",
+  "postingExamples": "Posting Examples",
+  "remainingUsesCount": "{count} remaining",
+  "@remainingUsesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unlimitedUses": "Unlimited",
+  "remainingUses": "Remaining: {count}",
+  "@remainingUses": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "memoryTechniqueLabel": "Memory Technique:",
+  "profile": "Profile",
+  "settings": "Settings",
+  "notificationSettings": "Notification Settings",
+  "editProfile": "Edit Profile",
+  "logout": "Logout",
+  "logoutConfirmation": "Do you really want to log out?",
+  "deleteAccount": "Delete Account",
+  "deleteAccountConfirmation": "Do you want to delete your account?\n\nWarning: If you delete your account, all your data (memory techniques, card sets, profile, etc.) will be permanently deleted and cannot be restored.",
+  "deleteProfilePicture": "Delete Profile Picture",
+  "profilePictureUpdated": "Profile picture updated",
+  "profilePictureDeleted": "Profile picture deleted",
+  "failedToDeleteProfilePicture": "Failed to delete profile picture: {error}",
+  "@failedToDeleteProfilePicture": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "camera": "Camera",
+  "gallery": "Gallery",
+  "chooseProfilePicture": "Choose Profile Picture",
+  "finalConfirmation": "Final Confirmation",
+  "finalDeleteConfirmationMessage": "This action cannot be undone.\n\nAre you sure you want to delete your account?",
+  "deletingAccount": "Deleting account...",
+  "failedToLoadInfo": "Failed to load information: {error}",
+  "@failedToLoadInfo": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "upgradeYourPlan": "Upgrade Your Plan",
+  "accountDeleted": "Account has been deleted",
+  "failedToDeleteAccount": "Failed to delete account: {error}",
+  "@failedToDeleteAccount": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateImage": "Failed to update image: {error}",
+  "@failedToUpdateImage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToGetCardInfo": "Failed to retrieve card information: {error}",
+  "@failedToGetCardInfo": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToLoadData": "Failed to load data: {error}",
+  "@failedToLoadData": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cardShuffled": "Cards have been shuffled",
+  "movedToNextCard": "Moved to the next card",
+  "tryAgain": "Try Again",
+  "back": "Back",
+  "close": "Close",
+  "studyCompleted": "Study Completed",
+  "completed": "Completed",
+  "studyResults": "Study Results",
+  "correctAnswers": "Correct Answers",
+  "difficulty": "Difficulty",
+  "timeSpent": "Time Spent",
+  "min": "min",
+  "sec": "sec",
+  "tapToFlip": "Tap to flip card",
+  "goodJob": "Good job!",
+  "correct": "Correct",
+  "incorrect": "Incorrect",
+  "finish": "Finish",
+  "study": "Study",
+  "studyHints": "Study Hints",
+  "addCardBeforeStudy": "Add cards before starting to study",
+  "tapToFlipCard": "Tap the card to flip between front and back sides",
+  "checkUnderstandingAfterAnswer": "After checking the answer, record your understanding using the 'Correct' or 'Incorrect' buttons",
+  "tryAgainAfterFinish": "When you're done studying, you can study again using the 'Try Again' button",
+  "shuffleCards": "Shuffle cards to study in random order",
+  "commercialTransactionAct": "Commercial Transaction Act",
+  "companyName": "Company Name",
+  "representative": "Representative",
+  "location": "Location",
+  "phoneNumber": "Phone Number",
+  "contact": "Contact",
+  "productPrice": "Product Price",
+  "additionalFees": "Additional Fees",
+  "paymentMethod": "Payment Method",
+  "deliveryTime": "Delivery Time",
+  "returnExchangePolicy": "Return and Exchange Policy",
+  "additionalFeesDescription": "None (Internet connection fees are the customer's responsibility)",
+  "paymentTiming": "Payment Timing",
+  "paymentTimingDescription": "Monthly Premium Plan: Automatic payment at the time of application and on the monthly contract anniversary date\nAnnual Premium Plan: Automatic payment at the time of application and on the annual contract anniversary date",
+  "cancellationRefundExchange": "Cancellation, Refund, and Exchange",
+  "cancellationRefundExchangeDescription": "Due to the nature of digital content, we do not accept cancellations, returns, or refunds after you have subscribed.\nSubscriptions can be canceled at any time, but no prorated refunds will be provided.\nAfter cancellation, you can continue to use the service until the end of your subscription period.",
+  "operatingEnvironment": "Operating Environment",
+  "operatingEnvironmentDescription": "iOS: iOS 14.0 or later\nAndroid: Android 6.0 or later\nWeb: Latest versions of Google Chrome, Safari, Firefox, Microsoft Edge",
+  "serviceSuspension": "Service Suspension",
+  "serviceSuspensionDescription": "The service may be suspended or interrupted in whole or in part without prior notice in the following cases:\n・When system maintenance or updates are performed regularly or urgently\n・When service provision becomes difficult due to force majeure such as earthquakes, lightning, fire, power outages, or natural disasters\n・When the operator otherwise deems it necessary to suspend or interrupt the service",
+  "lastUpdated": "Last updated: April 16, 2025",
+  "contact": "Contact",
+  "contactUs": "Contact Us",
+  "contactDescription": "If you have any questions, feedback, or bug reports about MemPie, please feel free to contact us.",
+  "contactOption1": "1. Contact us via email",
+  "contactOption2": "2. Report bugs via GitHub",
+  "contactOption3": "3. Suggest new features",
+  "openEmailApp": "Open Email App",
+  "openGitHub": "Open GitHub",
+  "openFeatureSuggestion": "Suggest a Feature",
+  "contactEmailSubject": "Contact",
+  "contactEmailBody": "If you have any questions, feedback, or bug reports about MemPie, please feel free to contact us.",
+  "emailCopied": "Email address copied",
+  "emailAddressLabel": "Email Address",
+  "webBrowserEmailError": "Cannot open email in web browser. Please copy the email address and send it using your email client.",
+  "sendEmail": "Send Email",
+  "copy": "Copy",
+  "contactNotes": "Important Notes for Contact",
+  "contactNotesContent": "• Depending on the nature of your inquiry, it may take some time to respond.\n• Providing information about your app version and device helps us solve issues more quickly.\n• When reporting bugs, please describe the circumstances in as much detail as possible.",
+  "dataLoadFailed": "Failed to load data: {error}",
+  "deletingCardSet": "Deleting \u201C{title}\u201D...",
+  "pleaseWait": "Please wait",
+  "cardSetDeleted": "Card set deleted",
+  "deleteFailed": "Delete failed: {error}",
+  "premiumUpgrade": "Premium Plan Upgrade",
+  "premiumBenefits": "Premium plan includes the following benefits:",
+  "thinkingModeUnlimited": "Unlimited Thinking Mode and Multi-Agent Mode",
+  "cardSetsUnlimited": "Unlimited Card Sets",
+  "cardsPerSetUnlimited": "Unlimited Cards per Set",
+  "noAdsDisplay": "No Advertisements",
+  "upgradedToPremium": "Upgraded to Premium Plan!",
+  "cardSetLimit": "Card Set Limit",
+  "cardSetLimitMessage": "Free plan allows up to {count} card sets. Upgrade to Premium for unlimited card sets.",
+  "@cardSetLimitMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "title": "Title",
+  "descriptionOptional": "Description (Optional)",
+  "titleExample": "e.g. English Vocabulary",
+  "descriptionExample": "e.g. Words used in daily conversation",
+  "close": "Close",
+  "newCardSet": "Create New Card Set",
+  "enterTitle": "Please enter a title",
+  "create": "Create",
+  "cardSetCreated": "Card set created",
+  "creationFailed": "Creation failed: {error}",
+  "editCardSet": "Edit Card Set",
+  "update": "Update",
+  "cardSetUpdated": "Card set updated",
+  "updateFailed": "Update failed: {error}",
+  "noCardsInSet": "No cards in this set",
+  "createNew": "Create New",
+  "profileEdit": "Edit Profile",
+  "takePhoto": "Take Photo",
+  "chooseFromGallery": "Choose from Gallery",
+  "removeProfileImage": "Remove Profile Image",
+  "profileImageUpdated": "Profile image updated",
+  "imageUpdateFailed": "Failed to update image: {error}",
+  "@imageUpdateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "profileUpdated": "Profile updated",
+  "profileUpdateFailed": "Failed to update profile: {error}",
+  "@profileUpdateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmation": "Confirmation",
+  "discardChangesConfirmation": "Changes have not been saved.\nDo you want to discard them?",
+  "discard": "Discard",
+  "premiumPlan": "Premium Plan",
+  "subscriptionPurchaseCompleted": "Subscription purchase completed",
+  "purchaseRestored": "Purchase restored",
+  "enterBothSides": "Please enter both front and back sides",
+  "flashCardSaveFailed": "Failed to save flash card: {error}",
+  "@flashCardSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationSettings": "Notification Settings",
+  "enableNotifications": "Enable Notifications",
+  "memorizationCompletedNotification": "Memorization Method Completion Notification",
+  "notifyWhenGenerationCompletes": "Notify when background generation completes",
+  "memorizationMethodReminder": "Memorization Method Reminder",
+  "notifyOptimalTimingForgeeting": "Notify optimal timing based on forgetting curve",
+  "flashcardLearningReminder": "Flashcard Learning Reminder",
+  "saveSettings": "Save Settings",
+  "notificationSettingsSaved": "Notification settings saved",
+  "flashCardMonitoringFailed": "Failed to monitor flash cards: {error}",
+  "@flashCardMonitoringFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "flashCardMonitoringSetupFailed": "Failed to set up flash card monitoring: {error}",
+  "@flashCardMonitoringSetupFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "flashCardLoadingFailed": "Failed to load flash cards: {error}",
+  "@flashCardLoadingFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "edit": "Edit",
+  "delete": "Delete",
+  "dataLoadingFailed": "Failed to load data: {error}",
+  "memorizationMethodGenerationFailed": "Failed to generate memorization method",
+  "memorizationMethodUnpublished": "Unpublished the memorization method",
+  "unpublishFailed": "Failed to unpublish: {error}",
+  "@unpublishFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "updatePublicStatusFailed": "Failed to update public status: {error}",
+  "@updatePublicStatusFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToRetrieveMemorizationMethod": "Failed to retrieve memorization method information",
+  "noContentForFlashcards": "No content available to create flashcards",
+  "createFlashcards": "Create Flashcards",
+  "selectCardSet": "Select Card Set:",
+  "createNewCardSet": "Create New Card Set",
+  "addToExistingCardSet": "Add to Existing Card Set",
+  "cancel": "Cancel",
+  "create": "Create",
+  "cardSetCreationFailed": "Failed to create card set: {error}",
+  "@cardSetCreationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "flashcardsCreated": "{count} flashcards created",
+  "@flashcardsCreated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "memorizationMethod": "Memorization Method",
+  "previousMethod": "Previous Method",
+  "nextMethod": "Next Method",
+  "memorizationMethodSaved": "Memorization method saved",
+  "memorizationMethodPublished": "Memorization method published",
+  "publishFailed": "Failed to publish memorization method: {error}",
+  "@publishFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "memorizationMethodSaveFailed": "Failed to save memorization method: {error}",
+  "@memorizationMethodSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "complete": "Complete",
+  "imageHint": "Image Hint",
+  "close": "Close",
+  "pleaseEnterTitle": "Please enter a title",
+  "languageSettings": "Language Settings",
+  "selectLanguage": "Select Language",
+  "japanese": "Japanese",
+  "english": "English",
+  "@dataLoadingFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "disclosureUponRequest": "Will be disclosed promptly upon request via email.",
+  "emailAddress": "Email address: {email}",
+  "@emailAddress": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "priceDescription": "MemPie Monthly Premium Plan: ¥380 (tax included)\nMemPie Annual Premium Plan: ¥3,800 (tax included)",
+  "paymentDescription": "Payment will be made through the App Store or Google Play Store payment system.",
+  "deliveryDescription": "After payment is completed, the service will be available immediately.",
+  "returnDescription": "Digital content that has already been provided cannot be returned or refunded except in cases stipulated by law.",
+  "aiGenerationMode": "AI Generation Mode",
+  "thinkingModeError": "Could not retrieve thinking mode explanation. Please try again later.",
+  "postContent": "Post Content",
+  "createFlashcards": "Create Flashcards",
+  "viewInput": "View Input",
+  "generatingThinkingMode": "Generating thinking method...",
+  "thinkingGenerationFailed": "Failed to generate thinking method.",
+  "regenerate": "Regenerate",
+  "standardLearningMethod": "Standard Learning Method",
+  "repeatedLearningEffective": "Repeated learning is effective for mastering this content.",
+  "multipleItemsDetected": "Multiple Items Detected",
+  "multipleItemsDetectedDescription": "The following multiple items were detected from your input:",
+  "multiAgentNotAvailable": "Multi-agent feature will not be used as multiple items were detected.",
+  "howToProcess": "How would you like to proceed?",
+  "cancel": "Cancel",
+  "generateAsSingle": "Generate as a Single Method",
+  "generateSeparately": "Generate Separately",
+  
+  "postingExamples": "Posting Examples",
+  "mnemonicType": "Mnemonic",
+  "solarSystemPlanets": "Solar System Planets",
+  "solarSystemPlanetsContent": "Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune",
+  "solarSystemPlanetsTechnique": "Remember the order using the first letter of each planet: My Very Educated Mother Just Served Us Nachos.",
+  
+  "relationshipType": "Relationship",
+  "macronutrientsAndRoles": "Macronutrients and Roles",
+  "macronutrientsContent": "Proteins: Building blocks for muscles and organs, Carbohydrates: Energy source, Lipids: Maintain body temperature and hormone production",
+  "macronutrientsTechnique": "Connect each nutrient with a body function: Proteins → muscles (building), Carbohydrates → battery (energy), Lipids → insulation (temperature).",
+  
+  "conceptType": "Concept",
+  "democracyPrinciples": "Three Principles of Democracy",
+  "democracyPrinciplesContent": "Popular sovereignty, Respect for basic human rights, Pacifism",
+  "democracyPrinciplesTechnique": "Remember with the acronym 'PRP' - People's Rule, Rights, and Peace.",
+  
+  "enterContentToMemorize": "Enter content to memorize...",
+  "addImage": "Add Image",
+  "send": "Send",
+  
+  "myCardSets": "My Card Sets",
+  "cardSetSubtitle": "Let's organize what you want to memorize into cards",
+  "noCardSets": "No card sets",
+  "createNewCardSetFromButton": "Create a new card set from the '+' button",
+  "loginButtonLabel": "Login",
+  "permissionDeniedError": "You don't have permission to access the database. Please log in again.",
+  "invalidLoginStateError": "Your login state is invalid. Please log in again.",
+  "searchCardSets": "Search card sets...",
+  "noSearchResults": "No search results found",
+  "changeSearchCriteria": "Try changing your search criteria",
+  
+  "appLogoShort": "MemPie",
+  "appLogoFull": "MemPie AI",
+  
+  "homeNavLabel": "Home",
+  "libraryNavLabel": "Library",
+  "settingsNavLabel": "Settings",
+  
+  "accountSectionTitle": "Account",
+  "aboutAppSectionTitle": "About App",
+  "planAndPricing": "Plan and Pricing",
+  "freePlan": "Free Plan",
+  "editProfile": "Edit Profile",
+  "deleteAccount": "Delete Account",
+  "anonymousUser": "Anonymous User",
+  "privacyPolicy": "Privacy Policy",
+  "upgradeButton": "Upgrade",
+  "termsOfService": "Terms of Service",
+  "contactUs": "Contact Us",
+  "commercialTransactionAct": "Commercial Transaction Act",
+  "versionInfo": "Version",
+  "loginWithGoogle": "Login with Google",
+  "loginWithApple": "Login with Apple",
+  
+  "privacyPolicyHeader": "Privacy Policy",
+  "privacyPolicyIntro": "This app 'MemPie' (hereinafter referred to as 'this app') recognizes the importance of properly handling personal information and establishes the following privacy policy (hereinafter referred to as 'this policy').",
+  "privacyPolicySection1Title": "Article 1 (Personal Information Collected)",
+  "privacyPolicySection1Content": "The personal information collected by this app includes the following:\n• Email address provided voluntarily by users\n• Information contained in memorization methods published by users (user names, post content, etc.)\n• Images uploaded by users (when using OCR function)\n• Device information (OS version, device type, etc.)\n• Usage statistics (app usage frequency, feature usage, etc.)",
+  
+  "termsHeader": "Terms of Service",
+  "termsIntro": "These Terms of Service (hereinafter referred to as 'these Terms') set out the terms of use of the app 'MemPie' (hereinafter referred to as 'this app'). Users are required to use this app in accordance with these Terms.",
+  "termsSection1Title": "Article 1 (Application)",
+  "termsSection1Content": "1. These Terms shall apply to all relationships regarding the use of this app between users and this app.\n2. In addition to these Terms, this app may establish rules regarding use. These rules shall constitute part of these Terms.",
+  
+  "subscriptionInfo": "Subscription Information",
+  "processingPayment": "Processing payment...",
+  "redirectingToPaymentPage": "Redirecting to payment page. Please wait until the process is complete...",
+  "paymentPageRedirected": "Redirected to payment page. Please return to this page after completing the payment.",
+  "paymentRedirectFailed": "Failed to redirect to payment page: {error}",
+  "processingInAppPurchase": "Processing in-app purchase.\nPlease wait until the store launches...",
+  "startingBillingProcess": "Starting billing process. The App Store screen will be displayed...",
+  "premiumPlanChanged": "Changed to {planName} All-You-Can-Eat (Premium) plan!",
+  "yearlyPlanBenefit": "With the advantageous annual plan, you save about 2 months worth compared to the monthly rate.",
+  "premiumPlanBenefits": "The All-You-Can-Eat (Premium) plan includes the following benefits:",
+  "planAndPrice": "{planName} Plan: {price}",
+  "purchase": "Purchase",
+  "unlimited": "Unlimited",
+  "remainingUses": "{count} uses remaining",
+  "refreshInfo": "Refresh Information",
+  "premiumPlanTitle": "MemPie All-You-Can-Eat (Premium) Plan",
+  "generatingMultipleItems": "Generating memory methods for multiple items",
+  "processing": "Processing: {current}/{total}",
+  "rankedMethodsTitle": "Ranked Memory Methods",
+  "memorabilityScore": "Memorability Score: {score}",
+  "effectiveness": "Effectiveness",
+  "seeNextMethod": "See Next Method",
+  "seeMore": "See More",
+  "rankedMemoryTipsTitle": "Memory Method Rankings",
+  "selectCardSetTitle": "Select Card Set",
+  "selectCardSetDescription": "Choose where to save your flashcards",
+  "newCardSet": "New Card Set",
+  "newCardSetNameHint": "Enter card set name",
+  "create": "Create",
+  "selectCardSetError": "Please select a card set or enter a name",
+  "flashcardsCreatedSuccess": "Flashcards created successfully!",
+  "flashcardsCreationFailed": "Failed to create flashcards: {error}",
+  "viewFlashcards": "View Flashcards",
+  "tryAnotherMethod": "Try Another Method",
+  "multiAgentMode": "Multi-Agent Mode",
+  "continueWithoutRanking": "Continue in Normal Mode",
+  "generateTechniques": "Generate Methods",
+  "loadingMultiAgentMode": "Loading Multi-Agent Mode...",
+  "upgradeToUsePremiumFeature": "Upgrade to use this feature",
+  "shareAsTip": "Share as Tip",
+  "makePublic": "Make Public",
+  "techniqueTags": "Tags",
+  "mainPoints": "Main Points",
+  "keyMemorizationTips": "Key Memorization Tips",
+  "moreDetails": "Show Details",
+  "hideDetails": "Hide Details",
+  "techniquesGenerationFailed": "Failed to generate memory techniques",
+  "unpublishedTechnique": "Unpublished memory technique",
+  "unpublishFailed": "Failed to unpublish: {error}",
+  "techniqueMadePublic": "Memory technique published",
+  "techniqueMadePrivate": "Memory technique set to private",
+  "updatePublicStatusFailed": "Failed to update public status: {error}",
+  "techniqueInfoRetrievalFailed": "Could not retrieve memory technique information",
+  "cannotCreateFlashcards": "No memory technique content available to create flashcards",
+  "createFlashcardTitle": "Create Flashcards",
+  "otherItemsCount": "...{count} more items",
+  "reminderToEnterExplanation": "Please enter the content or explanation you need to memorize to get feedback from AI.",
+  "aiTips": "AI Tips",
+  "togglePublic": "Make Public",
+  "confirmToLeaveTitle": "Leave this page?",
+  "confirmToLeaveContent": "Leaving this page may cause you to lose your input and generated memory techniques. Do you really want to leave?",
+  "stayOnPage": "Stay on this page",
+  "leavePage": "Leave",
+  "cardNotFound": "Card not found",
+  "failedToLoadCard": "Failed to load card: {error}",
+  "deleteCard": "Delete Card",
+  "deleteCardConfirmation": "Are you sure you want to delete this card? This action cannot be undone.",
+  "delete": "Delete",
+  "cardDeleted": "Card deleted",
+  "failedToDeleteCard": "Failed to delete card: {error}",
+  "cardDetails": "Card Details",
+  "editCard": "Edit Card",
+  "tapToFlipCard": "Tap to flip card",
+  "answer": "Answer",
+  "question": "Question",
+  "standardMode": "Standard Mode",
+  "standardModeDescription": "Generates transparent memory techniques",
+  "multiAgentMode": "Multi-Agent Mode",
+  "multiAgentModeDescription": "Multiple AIs collaborate to find the optimal memory technique",
+  "thinkingMode": "Thinking Mode",
+  "thinkingModeDescription": "Generate concise explanations capturing the essence and principles of the content",
+  "unsubscribing": "Unsubscribing...",
+  "unsubscribeSuccess": "Successfully unsubscribed",
+  "privacyPolicySection2Title": "Article 2 (Purpose of Use of Personal Information)",
+  "privacyPolicySection2Content": "• Email addresses collected are used for authentication in this app.\n• User names and post content may be used to promote communication within this app.\n• Uploaded images are used for OCR (Optical Character Recognition) and memory technique generation.\n• Device information and usage statistics are used to improve and customize the app.",
+  "privacyPolicySection3Title": "Article 3 (Management of Personal Information)",
+  "privacyPolicySection3Content": "Email addresses collected are stored in Firebase and accessible only to the users themselves and the developers of this app. Information included in published memory techniques and comments will be made available to users of this app. Uploaded images may be temporarily processed by Google Cloud Vision service for OCR processing.",
+  "privacyPolicySection4Title": "Article 4 (User Rights)",
+  "privacyPolicySection4Content": "Users have the right to change their personal information. This right can be exercised through the settings of this app. Users also have the right to edit or delete memory techniques and comments they have published.",
+  "privacyPolicySection5Title": "Article 5 (Account Deletion)",
+  "privacyPolicySection5Content": "Users have the right to delete their account at any time. To delete an account, tap the \"Delete Account\" button in the settings section of the profile screen.\n\nWhen you delete your account, the following information will be completely deleted:\n• User account information (email address, authentication information, etc.)\n• Profile information and profile picture\n• Memory techniques and card sets created by the user\n• All data related to the user\n\nThis operation cannot be undone, and data cannot be restored. After deleting your account, you can register again, but your previous data will not be carried over.",
+  "privacyPolicySection6Title": "Article 6 (Complaints)",
+  "privacyPolicySection6Content": "If you have any complaints about the handling of personal information in this app, please contact us at the following email address:\nAnkiPai.app@gmail.com",
+  "privacyPolicySection7Title": "Article 7 (Use of External Services)",
+  "privacyPolicySection7Content": "This app uses the following external services, and their respective privacy policies apply.\n\n• Firebase: User authentication, data storage\n• Google Cloud Vision API: Text recognition in images (OCR)\n• OpenAI API: Memory technique generation\n• Vertex AI Gemini: Memory technique generation\n• Google AdMob: Ad delivery\n\nThese services each have their own privacy policies which apply separately from this app's privacy policy.",
+  "privacyPolicySection8Title": "Article 8 (About Advertisements)",
+  "privacyPolicySection8Content": "This app uses Google AdMob to deliver advertisements. AdMob may collect information such as device ID, IP address, and location information to display ads. The collection and use of this information is subject to Google's Privacy Policy (https://policies.google.com/privacy). Ad IDs can be reset or opted out from settings.",
+  "privacyPolicySection9Title": "Article 9 (Changes to Privacy Policy)",
+  "privacyPolicySection9Content": "We may revise this policy without notifying users when we deem it necessary. Revisions to this policy shall take effect from the time they are notified to users by the method specified by the company.",
+  "policyRevisionDate": "Revised on April 25, 2025",
+    "termsSection2Title": "Article 2 (Registration)",
+  "termsSection2Content": "1. Those who wish to use this app shall apply for registration by the method specified by this app, and the registration shall be completed when this app approves it.\n2. This app may not approve the application for registration if it determines that the applicant falls under any of the following reasons.\n• When false information has been submitted in the application\n• When the application is from a person who has violated these terms in the past\n• In other cases where this app determines that registration is not appropriate",
+  "termsSection3Title": "Article 3 (Management of User ID and Password)",
+  "termsSection3Content": "1. Users shall properly manage their user ID and password for this app at their own responsibility.\n2. Except in cases of willful misconduct or gross negligence on the part of this app, this app shall not be responsible for any damage caused by the use of user ID and password by a third party.",
+  "termsSection4Title": "Article 4 (Prohibited Actions)",
+  "termsSection4Content": "The following actions are prohibited when using this app.\n• Actions that violate laws or public order and morals\n• Actions related to criminal activities\n• Actions that destroy or interfere with the functions of servers or networks of other users of this app or third parties\n• Actions that may interfere with the operation of this app's services\n• Actions to attempt or make unauthorized access\n• Actions to collect or accumulate personal information about other users\n• Actions to use this app for improper purposes\n• Actions that cause disadvantage, damage, or discomfort to other users of this app or other third parties\n• Actions to impersonate other users\n• Advertising, publicity, solicitation, or sales activities on this app that are not authorized by this app\n• Actions aimed at meeting members of the opposite sex whom one has never met\n• Actions that directly or indirectly provide benefits to antisocial forces in connection with this app\n• Other actions that this app deems inappropriate",
+  "termsSection5Title": "Article 5 (Suspension of App Service)",
+  "termsSection5Content": "1. This app may suspend or interrupt all or part of the provision of this app without prior notice to users if it determines that any of the following reasons exist.\n• When performing maintenance or updates of computer systems related to this app\n• When it becomes difficult to provide this app due to force majeure such as earthquakes, lightning, fire, power outage, or natural disasters\n• When computer or communication lines are stopped due to an accident\n• In other cases where this app determines that it is difficult to provide this app\n2. This app shall not be responsible for any disadvantage or damage suffered by users or third parties due to the suspension or interruption of the provision of this app.",
+  "termsSection6Title": "Article 6 (Restriction of Use and Cancellation of Registration)",
+  "termsSection6Content": "This app may restrict all or part of the use of this app or cancel the registration as a user without prior notice if the user falls under any of the following.\n• When the user has violated any of the provisions of these terms\n• When it is found that there is a false fact in the registration information\n• In other cases where this app determines that the use of this app is not appropriate",
+  "termsSection7Title": "Article 7 (Withdrawal)",
+  "termsSection7Content": "Users may withdraw from this app in accordance with the withdrawal procedure specified by this app.",
+  "termsSection8Title": "Article 8 (Disclaimer and Exemption)",
+  "termsSection8Content": "1. This app does not explicitly or implicitly guarantee that there are no defects in fact or law in this app (including defects in safety, reliability, accuracy, completeness, validity, fitness for a particular purpose, security, etc., errors or bugs, infringement of rights, etc.).\n2. This app shall not be responsible for any damage caused to users due to this app.",
+  "termsSection9Title": "Article 9 (Changes to Service Content)",
+  "termsSection9Content": "This app may change the content of this app or stop the provision of this app without notifying users, and shall not be responsible for any damage caused to users as a result.",
+  "termsSection10Title": "Article 10 (Changes to Terms of Service)",
+  "termsSection10Content": "This app may change these terms at any time without notifying users when it deems it necessary. In addition, if a user starts using this app after the change of these terms, the user shall be deemed to have agreed to the changed terms.",
+  "termsSection11Title": "Article 11 (Handling of Personal Information)",
+  "termsSection11Content": "Personal information acquired through the use of this app shall be handled appropriately in accordance with the \"Privacy Policy\" of this app.",
+  "termsSection12Title": "Article 12 (Notification or Communication)",
+  "termsSection12Content": "1. Notification or communication between users and this app shall be conducted by the method specified by this app.\n2. Unless there is a change notification from the user in accordance with the method separately specified by this app, this app will deem the currently registered contact information to be valid, make notifications or communications to that contact information, and these shall be deemed to have reached the user at the time of transmission.",
+  "termsSection13Title": "Article 13 (Prohibition of Transfer of Rights and Obligations)",
+  "termsSection13Content": "Users may not transfer their status under the usage contract or rights or obligations based on these terms to a third party, or provide them as collateral, without the prior written consent of this app.",
+  "termsSection14Title": "Article 14 (Governing Law and Jurisdiction)",
+  "termsSection14Content": "1. Japanese law shall be the governing law for the interpretation of these terms.\n2. In the event of a dispute regarding this app, the court having jurisdiction over the location of the operator of this app shall have exclusive agreed jurisdiction.",
+  "termsRevisionDate": "Revised on April 15, 2025",
+  "unsubscribeError": "Error unsubscribing",
+  "unsubscribeExplanation": "After unsubscribing, some memory features will be limited. You can continue using premium benefits until the end of your current billing period.",
+  "premiumUntil": "Premium until {date}",
+  "refreshUserInfo": "Refresh User Info",
+  "cardSetsLimit": "Card Sets Limit",
+  "cardSetsLimitDescription": "Maximum number of card sets you can create",
+  "cardsPerSetLimit": "Cards Per Set Limit",
+  "cardsPerSetLimitDescription": "Maximum number of cards per set",
+  "unlimited": "Unlimited",
+  "maxCardSets": "Maximum {count} sets",
+  "maxCardsPerSet": "Maximum {count} cards/set",
+  "usageResetDate": "Usage Reset Date",
+  "nextResetDate": "Next usage reset date: {date}",
+  "noResetDateSet": "No reset date set",
+  "@premiumUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "@maxCardSets": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "@maxCardsPerSet": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "@nextResetDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "aiLanguagePrompt": "Please answer in English",
+  
+  "howToUseTitle": "How to Use MemPie AI",
+  "howToUseIntro": "Introduction",
+  "howToUseIntroContent": "MemPie AI is an app that supports memorization learning using AI. It automatically generates memorization techniques from text and images to help you learn efficiently.",
+  
+  "howToUseFeature1Title": "Generate memory techniques from text input",
+  "howToUseFeature1Content": "AI suggests optimal memory techniques based on the content you want to memorize via text input.",
+  "howToUseFeature1Steps": "Enter text → Tap \"Generate Memory Technique\" button → AI suggests memory techniques",
+  
+  "howToUseFeature2Title": "Generate memory techniques from images (OCR function)",
+  "howToUseFeature2Content": "Automatically extract text from images and generate memory techniques based on the content.",
+  "howToUseFeature2Steps": "Tap the image icon → Select/take a photo → Extract text → Generate memory techniques",
+  
+  "howToUseFeature3Title": "Manage learning with card sets",
+  "howToUseFeature3Content": "Organize related memory items into card sets for easy management.",
+  "howToUseFeature3Steps": "Select the Card Sets tab → Tap \"Create New\" button → Add cards",
+  
+  "howToUseFeature4Title": "Use public memory techniques",
+  "howToUseFeature4Content": "View and use memory techniques published by other users.",
+  "howToUseFeature4Steps": "Select the Library tab → Search/browse public memory techniques → Add to your memory items",
+  
+  "howToUseFeature5Title": "Switch AI modes",
+  "howToUseFeature5Content": "Select different AI modes depending on your needs.",
+  "howToUseFeature5Steps": "Standard mode: Generate basic memory techniques\nMulti-agent mode: Multiple AIs collaborate to suggest optimal memory techniques\nThinking mode: Suggest memory techniques with explanations of why they are effective",
+  
+  "howToUseTipsTitle": "Memory Tips",
+  "howToUseTip1": "Spaced repetition with intervals enhances memory retention.",
+  "howToUseTip2": "Using images makes abstract content easier to remember.",
+  "howToUseTip3": "Writing or speaking aloud helps reinforce memory.",
+  "howToUseTip4": "Connecting new information to what you already know improves memorization.",
+  
+  "howToUseHowTo": "How to:",
+
+  "notificationSectionTitle": "Notifications",
+  "notificationSectionDescription": "Configure whether to receive notifications. When turned off, all notifications will be disabled.",
+  "notificationsOn": "Notifications are on",
+  "notificationsOff": "Notifications are off",
+  "techniqueGenerationNotificationTitle": "Memory Technique Generation Completion",
+  "techniqueGenerationNotificationDescription": "Notifies you when memory technique generation is completed in the background.",
+  "memoryMethodReminderTitle": "Memory Method Learning Reminder",
+  "memoryMethodReminderDescription": "Notifies you of the optimal review timing for created memory techniques based on the forgetting curve.",
+  "flashcardReminderTitle": "Flashcard Learning Reminder",
+  "flashcardReminderDescription": "Notifies you of the optimal review timing for created flashcards based on the forgetting curve.",
+  "aboutForgettingCurve": "About the Forgetting Curve",
+  "forgettingCurveDescription": "The forgetting curve shows how human memory decays over time. For effective learning, it is important to review at appropriate times.",
+  "reviewRecommendation": "The following review timing is recommended:",
+  "firstReview": "1st review: 1 day after learning",
+  "secondReview": "2nd review: 3 days after the previous review",
+  "thirdReview": "3rd review: 1 week after the previous review",
+  "fourthReview": "4th review: 2 weeks after the previous review",
+  "fifthReview": "5th review: 1 month after the previous review",
+
+  "displayNameLabel": "Display Name",
+  "displayNameHint": "Enter display name",
+  "displayNameDescription": "This name will be shown to other users",
+  "saveChanges": "Save Changes",
+
+  "plansAndPricing": "Plans and Pricing",
+  "monthlyLabel": "Monthly",
+  "yearlyLabel": "Yearly",
+  "currentlyUsingPremium": "You are currently using the All-You-Can-Eat (Premium) plan",
+  "currentlyUsingFree": "You are currently using the Free plan",
+  "monthlyPremiumPlan": "Monthly All-You-Can-Eat (Premium)",
+  "yearlyPremiumPlan": "Yearly All-You-Can-Eat (Premium)",
+  "taxIncluded": "Tax included",
+  "monthlyPremiumDescription": "Access to the All-You-Can-Eat (Premium) plan for one month",
+  "yearlyPremiumDescription": "Access to the All-You-Can-Eat (Premium) plan for one year",
+  "switchToMonthlyPlan": "Switch to Monthly Plan",
+  "switchToYearlyPlan": "Switch to Advantageous Yearly Plan",
+  "bestValue": "Best Value",
+  "monthlyConversion": "Monthly equivalent $1.66 (4 months free)",
+  "premiumPlanBenefitsDescription": "With the All-You-Can-Eat (Premium) plan, ads are removed and the following feature restrictions are lifted:\n• Memory card limit\n• Card set limit\n• Multi-agent mode usage limit\n• Thinking mode usage limit",
+  "usageStatus": "Usage Status",
+  "multiAgentMode": "Multi-Agent Mode",
+  "multiAgentDescription": "Multiple AI agents collaborate to create memory techniques",
+  "thinkingMode": "Thinking Mode",
+  "thinkingModeDescription": "Generate concise explanations capturing the essence and principles of content",
+  "unlimitedUsage": "Unlimited",
+  "remainingUses": "{count} Uses Left",
+  "subscriptionUpgradePlanTitle": "{planType} All-You-Can-Eat (Premium Plan Upgrade)",
+  "planDiscount": "Discount",
+  "premiumPlanCancellationPending": "Your subscription is scheduled for cancellation. It will switch to the free plan after {date}. If you reactivate, your current plan will continue.",
+  "premiumPlanCancelled": "Your subscription is currently cancelled. To use the All-You-Can-Eat (Premium) plan again, please reactivate your subscription.",
+  "cancelSubscriptionConfirmation": "Are you sure you want to cancel your subscription?\n\nAfter cancellation, you will no longer be able to use the All-You-Can-Eat (Premium) plan after the current billing period ends.",
+
+  "aboutCardSets": "About Card Sets",
+  "cardSetHelpTitle": "What are Card Sets?",
+  "cardSetHelpDescription": "Card sets are collections of memory cards that help you learn and remember information effectively through spaced repetition. Here's how to use them:\n\n• Create sets for different subjects\n• Add memory cards to your sets\n• Practice regularly for best retention\n• Track your progress with stats",
+  "cardSetHelpConfirm": "Got it",
+
+  "studyResultExcellent": "Excellent result! You have a great understanding of the material.",
+  "studyResultGood": "Good job! Just a bit more review and you'll master it.",
+  "studyResultFair": "Fair result. Some additional review might be needed.",
+  "studyResultOkay": "You have a basic understanding. Regular review will help.",
+  "studyResultNeedsWork": "Needs more review. Take your time and practice regularly.",
+
+  "loadingCardSets": "Loading card sets...",
+  "lastStudyTime": "Last Study Time",
+  "cardEditTooltip": "Edit cards",
+  "setEditTooltip": "Edit",
+  "deleteTooltip": "Delete",
+  "studyTooltip": "Study",
+  "deleteCardSetTitle": "Delete Card Set",
+  "deleteCardSetConfirm": "Are you sure you want to delete this card set? This action cannot be undone.",
+  "cancelButton": "Cancel",
+  "deleteButton": "Delete",
+  "noCardSetsYet": "No card sets yet",
+  "createFirstCardSet": "Create your first card set to start studying!",
+  "reactivateSubscription": "Reactivate Subscription",
+  "refreshSubscriptionInfo": "Subscription information updated",
+  "nextBillingDate": "next billing date",
+  "subscriptionCancellation": "Subscription Cancellation",
+  "subscriptionManagement": "Subscription Management",
+  "reactivateSubscriptionTitle": "Reactivate Subscription",
+  "reactivateSubscriptionConfirmation": "Do you want to reactivate your subscription?\n\nThis will reactivate your currently canceling or canceled subscription.",
+  "reactivatingSubscription": "Reactivating subscription...",
+  "subscriptionReactivated": "Subscription has been reactivated",
+  "unknownError": "Unknown error",
+  "reactivateSubscriptionError": "Failed to reactivate subscription: {error}",
+  "reactivateSubscriptionProcessError": "An error occurred while reactivating subscription: {error}",
+  "completeCancellationInSettings": "To completely cancel your subscription, please complete the process in the settings page that has opened.",
+  "logoShortName": "MemPie",
+  "logoFullName": "MemPie AI",
+
+  "imageLoadingText": "Loading image...",
+  
+  "cardCount": "Card count: {count}",
+  "@cardCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "startLearningWithSet": "Start learning with this set",
+
+  "checkMemorization": "Check if memorized",
+  "showMethod": "Show the method",
+  "explainToAI": "Explain to AI",
+  "explainInstructions": "Try to explain in your own words. AI will comment on your answer.",
+  "explainHint": "Enter your explanation here",
+  "wordTab": "Words",
+  "timeTab": "Time",
+  "cardSetNameLabel": "Card set name",
+  "generatingMemoryCards": "Generating memory cards...",
+  "existingCardSets": "Existing card sets",
+  "generateAnotherMethod": "Generate Another Method",
+  "createMemoryCards": "Create Memory Cards",
+  "autoGenerateCards": "This will automatically generate memory cards from this method. If there are multiple items, multiple cards will be created.",
+  "createFlashcardsButton": "Create Flashcards",
+  "publishThisMethod": "Publish This Method",
+  "publishMethodExplanation": "When published, other users can reference your memory method.",
+  "privateLabel": "Private",
+  "publishedLabel": "Published",
+  "viewInput": "View Input",
+  "fileLoadError": "Failed to load the file. Please try a different image.",
+  "imageSelectionError": "An error occurred while selecting the image: {error}",
+  "imageLoaded": "Image loaded. Please trim or perform OCR analysis as needed.",
+  "detectingOcrMode": "Detecting OCR mode automatically...",
+  "modeDetectionFailed": "Mode detection failed. Using default photo mode.",
+  "trimmingInProgress": "Trimming in progress. Please wait.",
+  "preparingTrimming": "Preparing to trim...",
+  "adjustThenTrimPrompt": "Adjust the size then press the Trim button.",
+  "trimmingExecutionError": "Trimming execution error: {error}",
+  "manualTrimmingSuccess": "Manual trimming successful!",
+  "missingTrimmingInfo": "Missing information needed for trimming.",
+  "trimmingError": "Trimming error: {error}",
+  "structuringVocabularyData": "Structuring vocabulary data...",
+  "vocabularyAndMathDetected": "Vocabulary list and formulas detected. Formatted appropriately.",
+  "vocabularyDetected": "Vocabulary list detected. Formatted automatically.",
+  "mathDetected": "Formulas detected. Output in TeX format.",
+  "ocrCompleted": "OCR analysis completed. Closing widget...",
+  "ocrAnalysisError": "Error occurred during OCR analysis: {error}",
+  "trimmingSuccess": "Trimming successful. Image has been updated.",
+  "trimmingFailed": "Trimming failed: {error}",
+  "trimmingProcessingError": "There was a problem processing the trimming result.",
+  "trimmingCancelled": "Trimming cancelled.",
+  
+  "executeTrimmingButton": "Execute Trim",
+  "trimmingButton": "Trim",
+  "readButton": "Read and Send",
+  "readOnlyButton": "Read",
+  "cancelButton": "Cancel",
+  "reselectImageButton": "Reselect Image",
+  "showNextRecommendedMethod": "Show Next Recommended Method",
+  "multipleItemsDetected": "Multiple items detected (standard detection)"
+}

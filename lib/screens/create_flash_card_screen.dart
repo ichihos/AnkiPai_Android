@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/flash_card_service.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CreateFlashCardScreen extends StatefulWidget {
   const CreateFlashCardScreen({super.key});
@@ -31,7 +32,7 @@ class _CreateFlashCardScreenState extends State<CreateFlashCardScreen> {
     if (frontText.isEmpty || backText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('表面と裏面の両方を入力してください'),
+          content: Text(AppLocalizations.of(context)!.enterBothSides),
           backgroundColor: Colors.red.shade400,
         ),
       );
@@ -55,7 +56,7 @@ class _CreateFlashCardScreenState extends State<CreateFlashCardScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('暗記カードの保存に失敗しました: $e'),
+          content: Text(AppLocalizations.of(context)!.flashCardSaveFailed(e.toString())),
           backgroundColor: Colors.red.shade400,
         ),
       );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// アプリの使い方画面
 class HowToUseScreen extends StatelessWidget {
@@ -8,7 +9,7 @@ class HowToUseScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('暗記パイの使い方'),
+        title: Text(AppLocalizations.of(context)!.howToUseTitle),
         elevation: 0,
         backgroundColor: const Color.fromARGB(255, 53, 152, 71),
         foregroundColor: Colors.white,
@@ -20,52 +21,52 @@ class HowToUseScreen extends StatelessWidget {
           children: [
             _buildSection(
               context,
-              'はじめに',
-              '暗記パイは、AIを活用して暗記学習をサポートするアプリです。テキストや画像から暗記法を自動生成し、効率的な学習をお手伝いします。',
+              AppLocalizations.of(context)!.howToUseIntro,
+              AppLocalizations.of(context)!.howToUseIntroContent,
               Icons.lightbulb_outline,
               Colors.amber,
             ),
             _buildFeature(
               context,
-              'テキスト入力からの暗記法生成',
-              '覚えたい内容をテキスト入力すると、AIが最適な暗記法を提案します。',
-              'テキストを入力 → 「暗記法を生成」ボタンをタップ → AIが暗記法を提案',
+              AppLocalizations.of(context)!.howToUseFeature1Title,
+              AppLocalizations.of(context)!.howToUseFeature1Content,
+              AppLocalizations.of(context)!.howToUseFeature1Steps,
               Icons.text_fields,
               Colors.blue,
               // const AssetImage('assets/images/how_to_1.png'),
             ),
             _buildFeature(
               context,
-              '画像からの暗記法生成（OCR機能）',
-              '画像からテキストを自動抽出し、その内容に基づいた暗記法を生成します。',
-              '画像アイコンをタップ → 画像を選択・撮影 → テキストを抽出 → 暗記法を生成',
+              AppLocalizations.of(context)!.howToUseFeature2Title,
+              AppLocalizations.of(context)!.howToUseFeature2Content,
+              AppLocalizations.of(context)!.howToUseFeature2Steps,
               Icons.image_search,
               Colors.green,
               // const AssetImage('assets/images/how_to_2.png'),
             ),
             _buildFeature(
               context,
-              'カードセットでの学習管理',
-              '関連する暗記項目をカードセットとしてまとめて管理できます。',
-              'カードセットタブを選択 → 「新規作成」ボタンをタップ → カードを追加',
+              AppLocalizations.of(context)!.howToUseFeature3Title,
+              AppLocalizations.of(context)!.howToUseFeature3Content,
+              AppLocalizations.of(context)!.howToUseFeature3Steps,
               Icons.folder_copy,
               Colors.orange,
               // const AssetImage('assets/images/how_to_3.png'),
             ),
             _buildFeature(
               context,
-              '公開暗記法の活用',
-              '他のユーザーが公開した暗記法を閲覧・利用することができます。',
-              'ライブラリタブを選択 → 公開暗記法を検索・閲覧 → 自分の暗記項目に追加',
+              AppLocalizations.of(context)!.howToUseFeature4Title,
+              AppLocalizations.of(context)!.howToUseFeature4Content,
+              AppLocalizations.of(context)!.howToUseFeature4Steps,
               Icons.public,
               Colors.purple,
               // const AssetImage('assets/images/how_to_4.png'),
             ),
             _buildFeature(
               context,
-              'AIモードの切り替え',
-              '用途に応じて異なるAIモードを選択できます。',
-              '標準モード：基本的な暗記法を生成\nマルチエージェントモード：複数のAIが協力して最適な暗記法を提案\n考え方モード：なぜその暗記法が効果的かの解説も含めて提案',
+              AppLocalizations.of(context)!.howToUseFeature5Title,
+              AppLocalizations.of(context)!.howToUseFeature5Content,
+              AppLocalizations.of(context)!.howToUseFeature5Steps,
               Icons.psychology,
               Colors.teal,
               // const AssetImage('assets/images/how_to_5.png'),
@@ -193,9 +194,9 @@ class HowToUseScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  '使い方：',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)!.howToUseHowTo,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -246,9 +247,9 @@ class HowToUseScreen extends StatelessWidget {
             children: [
               Icon(Icons.lightbulb_outline, color: Colors.amber.shade700),
               const SizedBox(width: 8),
-              const Text(
-                '暗記のコツ',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.howToUseTipsTitle,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -259,22 +260,22 @@ class HowToUseScreen extends StatelessWidget {
           _buildTipItem(
             context,
             Icons.repeat,
-            '間隔を空けて繰り返し復習することで記憶の定着率が上がります。',
+            AppLocalizations.of(context)!.howToUseTip1,
           ),
           _buildTipItem(
             context,
             Icons.image_outlined,
-            'イメージを使うと抽象的な内容も覚えやすくなります。',
+            AppLocalizations.of(context)!.howToUseTip2,
           ),
           _buildTipItem(
             context,
             Icons.touch_app_outlined,
-            '実際に書いたり、声に出すと記憶が定着しやすくなります。',
+            AppLocalizations.of(context)!.howToUseTip3,
           ),
           _buildTipItem(
             context,
             Icons.psychology_outlined,
-            '自分の既知の情報と関連付けると覚えやすくなります。',
+            AppLocalizations.of(context)!.howToUseTip4,
           ),
         ],
       ),

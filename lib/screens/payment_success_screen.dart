@@ -22,6 +22,9 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
   }
 
   Future<void> _refreshSubscription() async {
+    // マウント状態の安全性を確保
+    if (!mounted) return;
+
     try {
       setState(() {
         _isLoading = true;
@@ -31,9 +34,24 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
       print(
           'Payment Success Screen - Refreshing subscription with session ID: ${widget.sessionId}');
 
+      // 非同期処理を実行する前にコンテキストを保存（より安全な方法）
+      SubscriptionService? subscriptionService;
+      try {
+        subscriptionService =
+            Provider.of<SubscriptionService>(context, listen: false);
+      } catch (contextError) {
+        print('コンテキスト取得エラー: $contextError');
+        // Providerエラーが発生した場合は処理を終了
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'サブスクリプション情報の更新に失敗しました';
+          });
+        }
+        return;
+      }
+
       // 最初にキャッシュをクリア
-      final subscriptionService =
-          Provider.of<SubscriptionService>(context, listen: false);
       subscriptionService.clearCache();
 
       // サブスクリプション情報を更新（強制的に再読み込み）
@@ -45,8 +63,15 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         // エラーが発生しても処理を続行
       }
 
-      // 3秒待機してから再度取得を試みる
-      await Future.delayed(const Duration(seconds: 3));
+      // マウント状態を再確認
+      if (!mounted) return;
+
+      // 1秒待機してから再度取得を試みる（遅延を短縮）
+      await Future.delayed(const Duration(seconds: 1));
+
+      // マウント状態を再確認
+      if (!mounted) return;
+
       try {
         await subscriptionService.refreshSubscription();
         print('Second subscription refresh attempt completed');
@@ -54,6 +79,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
         print('Error on second refresh attempt: $secondError');
       }
 
+      // 最終的なマウント状態確認
       if (mounted) {
         setState(() {
           _isLoading = false;

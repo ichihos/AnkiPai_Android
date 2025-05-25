@@ -25,8 +25,11 @@ class FirebaseFunctionsService implements FirebaseFunctionsInterface {
         throw Exception('Firebase Functions not initialized');
       }
       
-      // Call the httpsCallable method
-      final callable = js_util.callMethod(functions, 'httpsCallable', [functionName]);
+      // Create timeout options object (5 minutes = 300000 milliseconds)
+      final timeoutOptions = js_util.jsify({'timeout': 300000});
+
+      // Call the httpsCallable method with timeout options
+      final callable = js_util.callMethod(functions, 'httpsCallable', [functionName, timeoutOptions]);
       
       // Call the function and handle the promise
       final promise = js_util.callMethod(callable, 'call', [jsData]);

@@ -1,0 +1,51 @@
+buildscript {
+    ext.kotlin_version = '1.9.22' // Updated Kotlin version for better compatibility
+    ext.agp_version = '8.1.4' // More compatible AGP version for plugin compatibility
+    
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "com.android.tools.build:gradle:$agp_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.google.gms:google-services:4.4.0' // Google Services plugin
+        classpath 'com.android.tools.build:gradle:8.1.4' // Explicitly define AGP version
+    }
+}
+
+// Enhanced namespace handling for all plugins
+gradle.beforeProject { project ->
+    // Google Mobile Ads plugin namespace handling
+    project.afterEvaluate {
+        if (project.plugins.hasPlugin('com.android.library') && project.name.contains('google_mobile_ads')) {
+            println("Setting namespace for Google Mobile Ads plugin: ${project.name}")
+            // 明示的にネームスペースを設定
+            project.android {
+                namespace 'io.flutter.plugins.googlemobileads'
+            }
+        }
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' } // JitPack repository for 3rd party dependencies
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}

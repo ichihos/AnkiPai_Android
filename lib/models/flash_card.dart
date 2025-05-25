@@ -42,6 +42,19 @@ class FlashCard {
     };
   }
 
+  // ローカルストレージに保存するためのMap
+  // DateTimeオブジェクトを文字列に変換する
+  Map<String, dynamic> toJson() {
+    return {
+      'frontText': frontText,
+      'backText': backText,
+      'createdAt': createdAt.toIso8601String(),
+      'lastStudiedAt': lastStudiedAt?.toIso8601String(),
+      'masteryLevel': masteryLevel,
+      'setId': setId,
+    };
+  }
+
   // 既存のFlashCardから新しいFlashCardを作成（プロパティの一部を変更）
   FlashCard copyWith({
     String? id,

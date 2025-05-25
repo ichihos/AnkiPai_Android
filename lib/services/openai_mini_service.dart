@@ -12,8 +12,9 @@ class OpenAIMiniService {
       'gemini-2.5-flash-preview-04-17'; // Gemini Flash モデル
 
   // Firebase Functionsの参照
-  final HttpsCallable _geminiFunction = FirebaseFunctions.instance
-      .httpsCallable('proxyGemini'); // Geminiプロキシー関数を使用
+  final HttpsCallable _geminiFunction =
+      FirebaseFunctions.instanceFor(region: 'asia-northeast1')
+          .httpsCallable('ankiPaiGeminiProxy'); // 新しい関数名を使用
 
   /// サービスの初期化状態を確認
   Future<bool> initialize() async {
@@ -46,8 +47,8 @@ class OpenAIMiniService {
       // システムプロンプト：OCRと特別な形式の検出
       const systemPrompt = '''
 あなたは記憶法生成の専門家に情報を渡すOCRアシスタントです。画像内のテキストを正確に抽出し、暗記法生成に適した形で返してください。
-読み取った情報量が多い場合は、重要でユーザーが暗記したい部分だけを返してください。
-以下の特別な形式があれば検出し、フォーマットを保持してください：
+読み取った情報量が多い場合やOCRでのノイズを多く含む場合は、重要でユーザーが暗記したい部分だけを返してください。
+以下の特別な形式があれば検出し、フォーマットを保持してください（【重要】必ず全体の内容を把握してから特別な内容が含まれているかを確認すること。）：
 
 1. 単語リスト（例：英単語：意味：追加情報）
 2. 数式（必ず \$ 記号で数式を囲むLaTeX形式で表記してください。例: \$E=mc^2\$ や \$\\frac{a}{b}\$ など）
@@ -65,7 +66,8 @@ class OpenAIMiniService {
           'role': 'user',
           'parts': [
             {
-              'text': '$systemPrompt\n\n画像内のテキストを抽出してください。単語リストや数式があれば適切に構造化してください。'
+              'text':
+                  '$systemPrompt\n\n画像内のテキストを抽出してください。単語リストや数式があれば適切に構造化してください。'
             },
             {
               'inline_data': {'mime_type': 'image/jpeg', 'data': base64Image}
@@ -94,7 +96,7 @@ class OpenAIMiniService {
         final result = await _geminiFunction.call({'data': requestData});
         final responseData = result.data;
 
-        print('レスポンス受信成功');
+        print('vvv222レスポンス受信成功');
 
         // レスポンスからテキストを抽出 (Geminiの形式に合わせて変更)
         if (responseData != null && responseData['text'] is String) {
@@ -149,23 +151,7 @@ class OpenAIMiniService {
     bool isVocabularyList = false;
     bool hasMathFormula = false;
 
-    // 単語リストの検出
-    // コロンで区切られた行が複数ある、または単語：意味の形式がある
-    final lines = text.split('\n');
-    int colonLines = 0;
-
-    for (final line in lines) {
-      if (line.contains(':') && line.split(':').length >= 2) {
-        colonLines++;
-      }
-    }
-
-    // 複数の行にコロンがある場合、単語リストと判断
-    if (colonLines >= 3) {
-      isVocabularyList = true;
-    }
-
-    // 数式の検出
+    // 数式の検出（先に数式検出を行う）
     // TEX記法のパターン
     if (text.contains('\\frac') ||
         text.contains('\\sum') ||
@@ -174,8 +160,95 @@ class OpenAIMiniService {
         text.contains('\\end{') ||
         text.contains('\\mathbb') ||
         text.contains('\\sqrt') ||
-        (text.contains('\$') && text.contains('^'))) {
+        text.contains('\\Omega') ||
+        (text.contains('\$') && text.contains('^')) ||
+        RegExp(r'\$[^\$]+\$').hasMatch(text) ||
+        // 物理学/数学特有の表記パターン
+        text.contains('d^2') ||
+        (text.contains('=') && RegExp(r'[A-Z]\([A-Z]').hasMatch(text)) ||
+        RegExp(r'[A-Z]_[a-z]').hasMatch(text) ||
+        RegExp(r'\([0-9]\.[0-9]\)').hasMatch(text)) {
       hasMathFormula = true;
+    }
+
+    // 論文や教科書の特徴を検出（決め打ちにならないよう決定因子を増やす）
+    bool isAcademicText = false;
+
+    // 数式マークアップが存在する場合は数式テキストの可能性が高い
+    if (hasMathFormula) {
+      // 引用、参考文献、脚注の存在を検出
+      if (RegExp(r'\([0-9]{1,2}\)').hasMatch(text) || // 参照番号など (1), (2) など
+          RegExp(r'[0-9]\.[0-9]').hasMatch(text) || // 章節番号 1.2 など
+          RegExp(r'[0-9]\s*\.').hasMatch(text)) {
+        // 章節引用 1. 2. など
+        isAcademicText = true;
+      }
+
+      // 段落構造を分析（学術文書は段落が複数ある傾向）
+      int paragraphCount =
+          text.split('\n\n').where((p) => p.trim().isNotEmpty).length;
+      if (paragraphCount >= 2) {
+        isAcademicText = true;
+      }
+
+      // サンプルテキストに数式が含まれていて、空白と一緒に綴られている場合は、学術的なテキストの可能性が高い
+      if ((text.contains('=') && text.trim().split('\n').length > 5) ||
+          text.length > 200) {
+        // 長い文章と数式があれば学術的
+        isAcademicText = true;
+      }
+    }
+
+    // 単語リストの検出
+    final lines = text.split('\n');
+    int vocabularyPatternLines = 0;
+    int totalLines = lines.where((line) => line.trim().isNotEmpty).length;
+
+    // より厳密な単語リスト検出パターン
+    RegExp vocabPattern = RegExp(r'^[^:：]+[:：][^:：]+$');
+    RegExp dashPattern = RegExp(r'^[-・]\s+[^:：]+[:：]');
+
+    for (final line in lines) {
+      final trimmedLine = line.trim();
+      if (trimmedLine.isEmpty) continue;
+
+      // 単語: 意味 パターンを検出
+      if (vocabPattern.hasMatch(trimmedLine) ||
+          dashPattern.hasMatch(trimmedLine)) {
+        vocabularyPatternLines++;
+      }
+    }
+
+    // 判定ロジック改善：
+    // 1. 数式が検出された場合は、単語リストの可能性を大幅に下げる
+    // 2. 学術的テキストが検出された場合は、単語リストの可能性を下げる
+    // 3. 空でない行の単語リストパターンの割合に基づいて判断
+
+    // 数式がある場合は、原則的に単語リストではないと判断
+    // 特に処理している画像が教科書や論文の場合、数式の存在は単語リストでない最も強い指標
+    if (hasMathFormula) {
+      // 例外的に単語リストと判断する条件（非常に高い閾値）
+      // 単語パターンが90%以上ある場合のみ単語リストの可能性を考慮
+      if (vocabularyPatternLines > 5 &&
+          totalLines > 0 &&
+          vocabularyPatternLines / totalLines >= 0.9) {
+        isVocabularyList = true;
+      } else {
+        // それ以外は学術的テキストと判断
+        isVocabularyList = false;
+      }
+    }
+    // 学術的テキストの特徴がある場合も単語リストと判断する閾値を高める
+    else if (isAcademicText) {
+      isVocabularyList = vocabularyPatternLines > 3 &&
+          totalLines > 0 &&
+          vocabularyPatternLines / totalLines >= 0.7;
+    }
+    // 通常の単語リスト判定（数式や学術的テキストの特徴がない場合）
+    else if (vocabularyPatternLines > 0 &&
+        (vocabularyPatternLines >= 3 ||
+            (totalLines > 0 && vocabularyPatternLines / totalLines >= 0.4))) {
+      isVocabularyList = true;
     }
 
     return {

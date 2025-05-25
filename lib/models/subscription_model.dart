@@ -13,11 +13,11 @@ class SubscriptionModel {
   final DateTime? startDate;
   final DateTime? endDate;
   final DateTime? lastUpdated;
-  
+
   // 利用回数の追跡
   final int thinkingModeUsed;
   final int multiAgentModeUsed;
-  final DateTime? usageResetDate;  // 利用回数がリセットされる日（月初など）
+  final DateTime? usageResetDate; // 利用回数がリセットされる日（月初など）
 
   // サブスクリプションの状態
   // 'active': 有効なサブスクリプション
@@ -25,7 +25,7 @@ class SubscriptionModel {
   // 'canceled': 解約済み
   // null: 状態不明（デフォルトをactiveとみなす）
   final String? status;
-  
+
   // キャンセル予定日（解約が適用される日付）
   final DateTime? cancelAt;
 
@@ -42,7 +42,7 @@ class SubscriptionModel {
     this.status,
     this.cancelAt,
   });
-  
+
   // コピーコンストラクタ - 特定のフィールドを変更して新しいインスタンスを作成
 
   // フリープランの制限値
@@ -53,41 +53,42 @@ class SubscriptionModel {
 
   // Stripeから取得したデータに含まれるかもしれない追加フィールド
   final DateTime? currentPeriodEnd;
-  
+
   // サブスクリプションが有効かどうかを確認
   bool get isActive {
     // フリープランは常に有効
     if (type == SubscriptionType.free) return true;
-    
+
     // premium_*プランでtypeが設定されている場合は有効とみなす
     // Stripeからデータを強制満了した場合でも動作するようにする
-    if (type == SubscriptionType.premium_monthly || 
+    if (type == SubscriptionType.premium_monthly ||
         type == SubscriptionType.premium_yearly) {
       // 日付情報が存在する場合は日付で判定
       final now = DateTime.now();
-      
+
       // 1. 通常の終了日チェック
       if (endDate != null && endDate!.isAfter(now)) {
         return true;
       }
-      
+
       // 2. Stripe APIから取得した現在の期間チェック
       if (currentPeriodEnd != null && currentPeriodEnd!.isAfter(now)) {
         return true;
       }
-      
+
       // 3. 日付情報がない場合、タイプのpremium_*判定のみで有効とみなす
       // Stripeから強制更新された場合はここで動作する
       return true;
     }
-    
+
     return false;
   }
 
   // プレミアムプランかどうか
-  bool get isPremium => (type == SubscriptionType.premium_monthly || 
-                     type == SubscriptionType.premium_yearly) && 
-                     isActive;
+  bool get isPremium =>
+      (type == SubscriptionType.premium_monthly ||
+          type == SubscriptionType.premium_yearly) &&
+      isActive;
 
   // カードセット数の制限を確認
   bool get hasReachedCardSetLimit => !isPremium && true; // 実装は後で行います
@@ -120,7 +121,7 @@ class SubscriptionModel {
   factory SubscriptionModel.fromMap(Map<String, dynamic> data) {
     SubscriptionType type;
     final typeStr = data['type'] as String? ?? 'free';
-    
+
     // サブスクリプションタイプをマッピング
     switch (typeStr) {
       case 'premium_monthly':
@@ -135,20 +136,18 @@ class SubscriptionModel {
       default:
         type = SubscriptionType.free;
     }
-    
+
     // Stripe APIで使用されるフィールドをチェック
     DateTime? currentPeriodEnd;
     if (data['current_period_end'] != null) {
       try {
         currentPeriodEnd = (data['current_period_end'] as Timestamp).toDate();
-      } catch (e) {
-
-      }
+      } catch (e) {}
     }
-    
+
     // サブスクリプションの状態を取得
     String? status = data['status'] as String?;
-    
+
     // 解約予定日を取得
     DateTime? cancelAt;
     if (data['cancel_at'] != null) {
@@ -158,23 +157,23 @@ class SubscriptionModel {
         print('解約予定日のパースエラー: $e');
       }
     }
-    
+
     return SubscriptionModel(
       userId: data['userId'],
       type: type,
-      startDate: data['startDate'] != null 
-          ? (data['startDate'] as Timestamp).toDate() 
+      startDate: data['startDate'] != null
+          ? (data['startDate'] as Timestamp).toDate()
           : null,
-      endDate: data['endDate'] != null 
-          ? (data['endDate'] as Timestamp).toDate() 
+      endDate: data['endDate'] != null
+          ? (data['endDate'] as Timestamp).toDate()
           : null,
-      lastUpdated: data['lastUpdated'] != null 
-          ? (data['lastUpdated'] as Timestamp).toDate() 
+      lastUpdated: data['lastUpdated'] != null
+          ? (data['lastUpdated'] as Timestamp).toDate()
           : null,
       thinkingModeUsed: data['thinkingModeUsed'] ?? 0,
       multiAgentModeUsed: data['multiAgentModeUsed'] ?? 0,
-      usageResetDate: data['usageResetDate'] != null 
-          ? (data['usageResetDate'] as Timestamp).toDate() 
+      usageResetDate: data['usageResetDate'] != null
+          ? (data['usageResetDate'] as Timestamp).toDate()
           : null,
       currentPeriodEnd: currentPeriodEnd,
       status: status,
@@ -185,7 +184,7 @@ class SubscriptionModel {
   // FirestoreにデータをMapとして返す
   Map<String, dynamic> toMap() {
     String typeStr;
-    
+
     switch (type) {
       case SubscriptionType.premium_monthly:
         typeStr = 'premium_monthly';
@@ -196,7 +195,7 @@ class SubscriptionModel {
       default:
         typeStr = 'free';
     }
-    
+
     return {
       'userId': userId,
       'type': typeStr,
@@ -205,19 +204,16 @@ class SubscriptionModel {
       'lastUpdated': Timestamp.fromDate(DateTime.now()),
       'thinkingModeUsed': thinkingModeUsed,
       'multiAgentModeUsed': multiAgentModeUsed,
-      'usageResetDate': usageResetDate != null 
-          ? Timestamp.fromDate(usageResetDate!) 
-          : null,
-      'currentPeriodEnd': currentPeriodEnd != null 
-          ? Timestamp.fromDate(currentPeriodEnd!) 
+      'usageResetDate':
+          usageResetDate != null ? Timestamp.fromDate(usageResetDate!) : null,
+      'currentPeriodEnd': currentPeriodEnd != null
+          ? Timestamp.fromDate(currentPeriodEnd!)
           : null,
       'status': status,
-      'cancel_at': cancelAt != null 
-          ? Timestamp.fromDate(cancelAt!) 
-          : null,
+      'cancel_at': cancelAt != null ? Timestamp.fromDate(cancelAt!) : null,
     };
   }
-  
+
   // サブスクリプションプランの表示名を取得
   String get subscriptionName {
     switch (type) {
@@ -229,7 +225,7 @@ class SubscriptionModel {
         return '無料プラン';
     }
   }
-  
+
   // サブスクリプションの価格を取得
   String get subscriptionPrice {
     switch (type) {
@@ -282,7 +278,7 @@ class SubscriptionModel {
   factory SubscriptionModel.defaultFree(String userId) {
     final now = DateTime.now();
     final resetDate = DateTime(now.year, now.month + 1, 1); // 翌月1日
-    
+
     return SubscriptionModel(
       userId: userId,
       type: SubscriptionType.free,

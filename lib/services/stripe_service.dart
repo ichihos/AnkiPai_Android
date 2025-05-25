@@ -8,7 +8,8 @@ import 'package:anki_pai/models/subscription_model.dart';
 
 /// Stripe決済サービスクラス
 class StripeService {
-  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  final FirebaseFunctions _functions =
+      FirebaseFunctions.instanceFor(region: 'asia-northeast1');
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -46,11 +47,24 @@ class StripeService {
           throw Exception('無効なサブスクリプションタイプです');
       }
 
+      // プラットフォーム情報の取得
+      String platform;
+      if (kIsWeb) {
+        platform = 'web';
+      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+        platform = 'ios';
+      } else if (defaultTargetPlatform == TargetPlatform.android) {
+        platform = 'android';
+      } else {
+        platform = 'other';
+      }
+
       // Firebase Functionsを呼び出してチェックアウトセッションを作成
       final result =
-          await _functions.httpsCallable('createCheckoutSession').call({
+          await _functions.httpsCallable('ankiPaiCreateStripeCheckout').call({
         'plan': plan,
         'priceId': priceId,
+        'platform': platform, // プラットフォーム情報を送信
       });
 
       final sessionId = result.data['sessionId'];
@@ -88,7 +102,7 @@ class StripeService {
       }
 
       final result =
-          await _functions.httpsCallable('createCustomerPortal').call({});
+          await _functions.httpsCallable('ankiPaiCreateStripePortal').call({});
 
       final url = result.data['url'];
       if (url != null && url.isNotEmpty) {
@@ -117,7 +131,8 @@ class StripeService {
       }
 
       // Firebase Functionsを呼び出してサブスクリプション情報を取得
-      final result = await _functions.httpsCallable('getSubscription').call({});
+      final result =
+          await _functions.httpsCallable('ankiPaiGetStripeSubscription').call({});
 
       if (!result.data['active']) {
         return SubscriptionModel.defaultFree(user.uid);

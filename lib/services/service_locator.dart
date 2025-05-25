@@ -56,6 +56,9 @@ void setupServiceLocator() {
     // main.dartで初期化され登録される
     print('ℹ️ AdServiceは初期化が必要なためmain.dartで登録されます');
   }
+  
+  // 言語サービスの登録（静的クラスなのでインスタンス登録不要）
+  print('✔️ LanguageServiceを使用可能にしました');
 
   // 初期化完了をマーク
   _serviceLocatorInitialized = true;

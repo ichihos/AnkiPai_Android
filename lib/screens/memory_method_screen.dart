@@ -1,4 +1,4 @@
-import '../services/auth_service.dart';
+import 'package:anki_pai/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,7 +14,7 @@ import '../models/memory_item.dart';
 import '../models/memory_technique.dart';
 import '../models/ranked_memory_technique.dart';
 import '../services/memory_service.dart';
-import 'card_set_detail_screen.dart';
+import '../screens/card_set_detail_screen.dart';
 import '../widgets/loading_animation_dialog.dart';
 import '../services/ad_service.dart';
 // Removed unused import: '../services/subscription_service.dart';
@@ -23,6 +23,7 @@ import '../services/ad_service.dart';
 // AnimationTypeを明示的にインポート
 
 import 'package:get_it/get_it.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 // 複数項目検出時のアクション選択用enum
 enum MultipleItemsAction {
@@ -84,6 +85,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
   // 考え方モード関連
   String? _thinkingModeExplanation;
   bool _isLoadingThinkingMode = false;
+  bool _showThinkingModeUI = true; // 考え方モードのUIを表示するか通常の暗記法を表示するかの切り替え用
 
   // 説明入力関連
   bool _showExplanationInput = false;
@@ -101,7 +103,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
     final text = _explanationController.text.trim();
     if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('説明を入力してください')),
+        SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.pleaseEnterExplanation)),
       );
       return;
     }
@@ -172,15 +176,22 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
               0, formattedExplanation.length - 1);
         }
         // 「〜と考えよう」形式に変換
-        formattedExplanation = '$formattedExplanation と考えよう';
+        formattedExplanation =
+            '$formattedExplanation ${AppLocalizations.of(context)!.thinkingModeError.isEmpty ? "と考えよう" : AppLocalizations.of(context)!.thinkingModeSuffix}';
       }
 
       // 生成された考え方モードの説明をMemoryTechniqueオブジェクトに変換
       final thinkingModeTechnique = MemoryTechnique(
-        name: '考え方: ${_memoryItem.title}',
+        name:
+            AppLocalizations.of(context)!.thinkingNameFormat(_memoryItem.title),
         description: formattedExplanation,
         type: 'thinking', // 考え方モードを示す特殊なタイプ
-        tags: ['thinking', '考え方'],
+        tags: [
+          'thinking',
+          AppLocalizations.of(context)!.thinkingModeError.isEmpty
+              ? "考え方"
+              : AppLocalizations.of(context)!.thinkingModeTag
+        ],
         contentKeywords: [_memoryItem.title],
         isPublic: false, // デフォルトでは非公開
         itemContent: _memoryItem.content, // 元の投稿内容を保存
@@ -207,7 +218,8 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
       print('考え方モードの説明取得エラー: $e');
       if (mounted) {
         setState(() {
-          _thinkingModeExplanation = '考え方モードの説明を取得できませんでした。後で再度お試しください。';
+          _thinkingModeExplanation =
+              AppLocalizations.of(context)!.thinkingModeError;
           _isLoadingThinkingMode = false;
         });
       }
@@ -389,8 +401,8 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  '入力を見る',
+                Text(
+                  AppLocalizations.of(context)!.viewInput,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -478,11 +490,12 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
               ),
             ),
             Text(
-              '（表示エラー）',
+              AppLocalizations.of(context)!.displayError,
               style: TextStyle(
                 fontSize: fontSize - 4,
                 fontStyle: FontStyle.italic,
                 color: Colors.red.shade800,
+                fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
               ),
             ),
           ],
@@ -503,7 +516,10 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
         spans.add(TextSpan(
           text: text.substring(lastEnd, match.start),
           style: TextStyle(
-              fontSize: fontSize, height: 1.4, color: Colors.grey.shade900),
+              fontSize: fontSize,
+              height: 1.5,
+              color: Colors.grey.shade900,
+              fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily),
         ));
       }
 
@@ -518,11 +534,12 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
       } catch (e) {
         // 万が一のエラー発生時に別の方法でフォールバック
         spans.add(TextSpan(
-          text: '$mathText（表示エラー）',
+          text: '$mathText${AppLocalizations.of(context)!.displayError}',
           style: TextStyle(
             fontSize: fontSize - 2,
             color: Colors.red.shade800,
             fontStyle: FontStyle.italic,
+            fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
           ),
         ));
       }
@@ -535,7 +552,10 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
       spans.add(TextSpan(
         text: text.substring(lastEnd),
         style: TextStyle(
-            fontSize: fontSize, height: 1.5, color: Colors.grey.shade900),
+            fontSize: fontSize,
+            height: 1.5,
+            color: Colors.grey.shade900,
+            fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily),
       ));
     }
 
@@ -607,7 +627,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
               ),
             )
           else
-            const Text('考え方の生成に失敗しました。'),
+            Text(AppLocalizations.of(context)!.thinkingGenerationFailed),
           const SizedBox(height: 8),
           // 再生成ボタン
           if (!_isLoadingThinkingMode)
@@ -615,7 +635,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 icon: const Icon(Icons.refresh),
-                label: const Text('再生成'),
+                label: Text(AppLocalizations.of(context)!.regenerate),
                 onPressed: _fetchThinkingModeExplanation,
               ),
             ),
@@ -647,6 +667,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
   }
 
   // AIに説明するテキストを設定するヘルパーメソッド
+  // 説明テキストのみを設定する（他の副作用を持たない）ように最適化
   void _setExplanationText() {
     // 暗記法がある場合、「○は」の部分を自動入力
     if (_memoryItem.memoryTechniques.isNotEmpty) {
@@ -675,7 +696,10 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
       // 暗記法がない場合は空にする
       _explanationController.text = '';
     }
+  }
 
+  // 画面の初期設定を行うメソッド - 以前に_setExplanationText内にあった初期化処理を分離
+  void _initializeScreenState() {
     // ウィジェットプロパティからAIモード設定を取得
     _useMultiAgentMode = widget.useMultiAgentMode;
     _useThinkingMode = widget.useThinkingMode;
@@ -739,11 +763,35 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
         print('考え方モードの暗記法を検出しました - 考え方モードで表示します');
       }
 
-      // AIに説明するテキストを初期化
+      // AIに説明するテキストを初期化（単純に説明テキストのみ設定）
       _setExplanationText();
 
-      // 考え方モードが有効な場合、説明を取得
-      if (_useThinkingMode) {
+      // thinkingタイプのMemoryTechniqueが存在するか確認
+      MemoryTechnique? thinkingTechnique;
+
+      // _memoryItem.memoryTechniquesからthinkingタイプの暗記法を探す
+      for (final technique in _memoryItem.memoryTechniques) {
+        // typeがthinkingまたは説明に「考え方」が含まれる場合
+        if (technique.type == 'thinking' ||
+            technique.name.contains('考え方') ||
+            technique.tags.contains('thinking')) {
+          thinkingTechnique = technique;
+          print('既存のthinkingタイプの暗記法を発見: ${technique.name}');
+          break;
+        }
+      }
+
+      // thinkingタイプの暗記法が見つかった場合はその説明を使用
+      if (thinkingTechnique != null) {
+        setState(() {
+          _useThinkingMode = true;
+          _thinkingModeExplanation = thinkingTechnique!.description;
+        });
+        print('考え方モード: 既存のthinkingタイプの暗記法から説明を取得しました');
+      }
+      // 既存のthinkingタイプが見つからず、かつ考え方モードが有効な場合は新たにAPI呼び出し
+      else if (_useThinkingMode && _thinkingModeExplanation == null) {
+        print('考え方モード: thinkingタイプの暗記法が見つからないため、APIリクエストを行います');
         _fetchThinkingModeExplanation();
       }
     } else {
@@ -791,8 +839,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
       // 広告表示の準備が整うまで遅延
       await Future.delayed(const Duration(seconds: 3));
 
-      final banner = await adService.loadBannerAd();
-      if (banner != null && mounted) {
+      // スタブ実装では返り値は使用しない
+      await adService.loadBannerAd();
+      if (mounted) {
         setState(() {
           _isBannerAdLoaded = true;
         });
@@ -995,7 +1044,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                   .take(2)
             ];
 
-            // 暗記法が変更されたので、AIに説明するテキストを更新
+            // 暗記法が変更されたので、AIに説明するテキストのみ更新
             _setExplanationText();
           });
         }
@@ -1032,11 +1081,12 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('複数の項目が検出されました'),
+          title: Text(AppLocalizations.of(context)!.multipleItemsDetected),
           content: SingleChildScrollView(
             child: ListBody(
               children: [
-                const Text('入力内容から以下の複数の項目が検出されました：'),
+                Text(AppLocalizations.of(context)!
+                    .multipleItemsDetectedDescription),
                 const SizedBox(height: 8),
                 // 検出された項目のリスト（最大5件まで表示）
                 ...items.take(5).map((item) => Padding(
@@ -1046,31 +1096,33 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     )),
-                if (items.length > 5) Text('...他 ${items.length - 5} 件'),
+                if (items.length > 5)
+                  Text(AppLocalizations.of(context)!
+                      .otherItemsCount(items.length - 5)),
                 const SizedBox(height: 12),
-                const Text('複数の項目が検出されたため、マルチエージェント機能は使用されません。'),
+                Text(AppLocalizations.of(context)!.multiAgentNotAvailable),
                 const SizedBox(height: 8),
-                const Text('どのように処理しますか？'),
+                Text(AppLocalizations.of(context)!.howToProcess),
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('キャンセル'),
+              child: Text(AppLocalizations.of(context)!.cancel),
               onPressed: () {
                 result = MultipleItemsAction.cancel;
                 Navigator.of(dialogContext).pop();
               },
             ),
             TextButton(
-              child: const Text('一つの覚え方として生成'),
+              child: Text(AppLocalizations.of(context)!.generateAsSingle),
               onPressed: () {
                 result = MultipleItemsAction.generateSingle;
                 Navigator.of(dialogContext).pop();
               },
             ),
             TextButton(
-              child: const Text('個別に覚え方を生成'),
+              child: Text(AppLocalizations.of(context)!.generateSeparately),
               onPressed: () {
                 result = MultipleItemsAction.generateSeparate;
                 Navigator.of(dialogContext).pop();
@@ -1147,7 +1199,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
             _isLoading = false;
             // 複数項目検出フラグは維持 - UIの一貫性のため
 
-            // 暗記法が変更されたので、AIに説明するテキストを更新
+            // 暗記法が変更されたので、AIに説明するテキストのみ更新
             _setExplanationText();
           });
         }
@@ -1198,7 +1250,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
           hasMultipleItems = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('暗記法の生成に失敗しました')),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)!
+                  .memorizationMethodGenerationFailed)),
         );
       }
     }
@@ -1266,7 +1320,8 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
       if (mounted) {
         final defaultTechnique = MemoryTechnique(
           name: '標準学習法',
-          description: 'エラーが発生しましたが、この内容は繰り返し学習が効果的です。',
+          description:
+              AppLocalizations.of(context)!.memoryTechniqueErrorFallback,
           type: 'concept',
           isPublic: false, // デフォルトでは非公開
         );
@@ -1314,7 +1369,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
         );
         _loadingNextTechnique = false;
 
-        // 暗記法が変更されたので、AIに説明するテキストを更新
+        // 暗記法が変更されたので、AIに説明するテキストのみ更新
         _setExplanationText();
       });
     } catch (e) {
@@ -1373,7 +1428,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
 
         // 成功メッセージを表示
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('暗記法の公開を取り消しました')),
+          SnackBar(
+              content: Text(
+                  AppLocalizations.of(context)!.memorizationMethodUnpublished)),
         );
       }
     } catch (e) {
@@ -1385,7 +1442,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
 
         // エラーメッセージを表示
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('公開の取り消しに失敗しました: $e')),
+          SnackBar(
+              content: Text(
+                  AppLocalizations.of(context)!.unpublishFailed(e.toString()))),
         );
       }
     }
@@ -1440,7 +1499,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
 
         // 成功メッセージを表示
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(value ? '暗記法を公開しました' : '暗記法を非公開にしました')),
+          SnackBar(
+              content: Text(
+                  value ? '暗記法を公開しました' : '暗記法を非公開にしました')), // TODO: 国際化対応後に修正
         );
       }
     } catch (e) {
@@ -1448,7 +1509,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
       if (mounted) {
         // エラーメッセージを表示
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('公開状態の更新に失敗しました: $e')),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)!
+                  .updatePublicStatusFailed(e.toString()))),
         );
       }
     }
@@ -1463,7 +1526,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
     // 暗記法が空の場合は処理終了
     if (_memoryItem.memoryTechniques.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('暗記法の情報が取得できませんでした')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context)!
+                .failedToRetrieveMemorizationMethod)),
       );
       return;
     }
@@ -1522,7 +1587,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
     // フラッシュカードが作成できない場合
     if (flashcardDataList.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('暗記カードを作成できる暗記法の内容がありません')),
+        SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.noContentForFlashcards)),
       );
       return;
     }
@@ -1559,20 +1626,20 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('暗記カードの作成'),
+              title: Text(AppLocalizations.of(context)!.createFlashcards),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${flashcardDataList.length}枚の暗記カードを作成します。',
+                      '${flashcardDataList.length}枚の暗記カードを作成します。', // TODO: 国際化対応後に修正
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
 
                     // 新規作成か既存セットかの選択
-                    const Text('カードセットの選択：'),
+                    Text(AppLocalizations.of(context)!.selectCardSet),
                     Row(
                       children: [
                         Radio<bool>(
@@ -1584,16 +1651,17 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                             });
                           },
                         ),
-                        const Text('新規カードセットを作成'),
+                        Text(AppLocalizations.of(context)!.createNewCardSet),
                       ],
                     ),
                     if (isCreatingNew)
                       Padding(
                         padding: const EdgeInsets.only(left: 32),
                         child: TextField(
-                          decoration: const InputDecoration(
-                            labelText: 'カードセット名',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText:
+                                AppLocalizations.of(context)!.cardSetNameLabel,
+                            border: const OutlineInputBorder(),
                           ),
                           controller: TextEditingController(text: newSetName),
                           onChanged: (value) {
@@ -1616,16 +1684,18 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                               });
                             },
                           ),
-                          const Text('既存のカードセットに追加'),
+                          Text(AppLocalizations.of(context)!
+                              .addToExistingCardSet),
                         ],
                       ),
                       if (!isCreatingNew)
                         Padding(
                           padding: const EdgeInsets.only(left: 32),
                           child: DropdownButtonFormField<String>(
-                            decoration: const InputDecoration(
-                              labelText: '既存カードセット',
-                              border: OutlineInputBorder(),
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!
+                                  .existingCardSets,
+                              border: const OutlineInputBorder(),
                             ),
                             value: selectedSetId ?? existingSets.first.id,
                             items: existingSets.map((set) {
@@ -1647,11 +1717,11 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
               ),
               actions: [
                 TextButton(
-                  child: const Text('キャンセル'),
+                  child: Text(AppLocalizations.of(context)!.cancel),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 ElevatedButton(
-                  child: const Text('作成'),
+                  child: Text(AppLocalizations.of(context)!.create),
                   onPressed: () {
                     Navigator.of(context).pop({
                       'isNewSet': isCreatingNew,
@@ -1685,7 +1755,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('カードセットの作成に失敗しました: $e')),
+            SnackBar(
+                content: Text(AppLocalizations.of(context)!
+                    .cardSetCreationFailed(e.toString()))),
           );
         }
         return;
@@ -1699,7 +1771,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
       // フラッシュカード生成中のローディングアニメーションを表示
       LoadingAnimationDialog.show(
         context,
-        message: '暗記カードを生成中...',
+        message: AppLocalizations.of(context)!.generatingMemoryCards,
         animationType: AnimationType.flashcard,
       );
 
@@ -1737,15 +1809,21 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
         // 成功メッセージを表示
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('$successCount枚の暗記カードを作成しました'),
+            content: Text(
+                AppLocalizations.of(context)!.flashcardsCreated(successCount)),
             duration: const Duration(seconds: 2),
           ),
         );
 
         // アニメーション開始から3秒後に広告を表示
-        Future.delayed(const Duration(seconds: 3), () {
+        Future.delayed(const Duration(seconds: 3), () async {
           if (mounted) {
-            adService.showRewardedAd();
+            // 新しいAPIでは非同期で結果を受け取る
+            final bool result = await adService.showRewardedAd();
+            if (result && mounted) {
+              // リワード広告の視聴が完了した場合の処理
+              print('リワード広告視聴完了');
+            }
           }
         });
 
@@ -1779,16 +1857,8 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
     _memoryItem = widget.memoryItem;
     _isFromPublishedLibrary = widget.isFromPublishedLibrary;
 
-    // ウィジェットプロパティからAIモード設定を取得
-    _useMultiAgentMode = widget.useMultiAgentMode;
-    _useThinkingMode = widget.useThinkingMode;
-
-    // ページコントローラーの初期化
-    pageController = PageController(viewportFraction: 0.95);
-    _initialPageJumpDone = false; // 新しいコントローラー作成時にフラグをリセット
-
-    // SharedPreferencesからマルチエージェントモードの設定を読み込む
-    _loadMultiAgentModeSetting();
+    // 画面の初期設定を行う
+    _initializeScreenState();
 
     // 公開状態の設定
     if (_isFromPublishedLibrary) {
@@ -1796,31 +1866,6 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
     } else if (_memoryItem.memoryTechniques.isNotEmpty) {
       _isPublicTechnique = _memoryItem.memoryTechniques[0].isPublic;
     }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    // 暗記法がまだ生成されていない場合は自動的に取得
-    if (_memoryItem.memoryTechniques.isEmpty) {
-      _fetchMemoryTechniques().then((_) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      });
-    } else {
-      // 暗記法が既に存在する場合はローディング状態を解除
-      setState(() {
-        _isLoading = false;
-      });
-    }
-
-    // 類似コンテンツの暗記法を取得
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadSimilarTechniques();
-    });
 
     // UI描画後に広告表示の準備が整うタイミングでステートを更新
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1836,8 +1881,6 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
         });
       }
     });
-
-    _initialPageJumpDone = false; // ページジャンプフラグを初期化
   }
 
   @override
@@ -1851,6 +1894,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // UI描画後に広告表示の準備が整うタイミングでステートを更新
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // バナー広告をロード
@@ -1863,7 +1907,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
       // iOSとAndroidではバナー広告をコンテンツ内に配置するため、bottomNavigationBarは使用しない
       appBar: AppBar(
         title: Text(
-          '暗記パイで覚えよう！',
+          AppLocalizations.of(context)!.appTitle,
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,
@@ -1958,7 +2002,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                                     : Icons.visibility_off,
                                 size: 28),
                             label: Text(
-                              _hideMemoryTips ? '覚え方を表示する' : '覚えたか確認する',
+                              _hideMemoryTips
+                                  ? l10n.showMethod
+                                  : l10n.checkMemorization,
                               style: const TextStyle(fontSize: 18),
                             ),
                             style: ElevatedButton.styleFrom(
@@ -2042,8 +2088,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                     ? _showNextRankedTechnique
                     : _fetchMemoryTechniques,
                 icon: const Icon(Icons.refresh),
-                label:
-                    Text(isMultiAgentAvailable ? '次のおすすめの覚え方を表示' : '別の暗記法を生成'),
+                label: Text(isMultiAgentAvailable
+                    ? AppLocalizations.of(context)!.showNextRecommendedMethod
+                    : AppLocalizations.of(context)!.generateAnotherMethod),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.blue.shade600,
                 ),
@@ -2080,32 +2127,245 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
     return Column(children: children);
   }
 
+  // モード切り替えボタンを生成する共通メソッド
+  Widget _buildModeSwitchButton({required bool showThinkingMode}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: showThinkingMode ? Colors.blue.shade50 : Colors.purple.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: showThinkingMode
+                  ? Colors.blue.shade200
+                  : Colors.purple.shade200),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  showThinkingMode ? '現在の表示: 考え方モード' : '現在の表示: 通常の暗記法',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: showThinkingMode
+                        ? Colors.blue.shade900
+                        : Colors.purple.shade900,
+                  ),
+                ),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _showThinkingModeUI = !showThinkingMode; // モードを切り替え
+                });
+              },
+              icon: Icon(
+                  showThinkingMode ? Icons.switch_right : Icons.switch_left,
+                  color: showThinkingMode
+                      ? Colors.purple.shade700
+                      : Colors.blue.shade700),
+              label: Text(showThinkingMode ? '通常の暗記法を表示' : '考え方モードを表示',
+                  style: TextStyle(
+                      color: showThinkingMode
+                          ? Colors.purple.shade700
+                          : Colors.blue.shade700)),
+              style: TextButton.styleFrom(
+                backgroundColor: showThinkingMode
+                    ? Colors.purple.shade50
+                    : Colors.blue.shade50,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            const SizedBox(width: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
   // 暗記法表示用ウィジェットを構築する
   Widget _buildMemoryTips() {
-    // 考え方モードの場合は暗記法カードを表示せず、考え方のみを表示
+    // 考え方モードの場合の処理
     if (_useThinkingMode) {
-      // デバッグログ
-      print('考え方モード: 暗記法カードを非表示にし、考え方のみを表示します');
+      // 考え方モードUIを表示する場合
+      if (_showThinkingModeUI) {
+        // デバッグログ
+        print('考え方モード: 考え方モードUIを表示します');
 
-      // ダミーの暗記法が必要な場合は作成
-      if (_memoryItem.memoryTechniques.isEmpty) {
-        _memoryItem.memoryTechniques.add(
-          MemoryTechnique(
-            name: '考え方モード',
-            description: '内容の本質や原理を捕えた簡潔な説明を生成します。',
-            type: 'thinking',
-            tags: ['考え方モード'],
+        // ダミーの暗記法が必要な場合は作成
+        if (_memoryItem.memoryTechniques.isEmpty) {
+          _memoryItem.memoryTechniques.add(
+            MemoryTechnique(
+              name: '考え方モード',
+              description: '内容の本質や原理を捕えた簡潔な説明を生成します。',
+              type: 'thinking',
+              tags: ['考え方モード'],
+            ),
+          );
+        }
+
+        // 考え方モードの説明が未取得の場合は取得
+        if (_thinkingModeExplanation == null && !_isLoadingThinkingMode) {
+          _fetchThinkingModeExplanation();
+        }
+
+        // 表示切り替えボタンを含めたコンテンツを作成
+        return Column(
+          children: [
+            // 切り替えボタン
+            _buildModeSwitchButton(showThinkingMode: true),
+            // 考え方モードのコンテンツ
+            _buildThinkingModeContent(),
+          ],
+        );
+      } else {
+        // 考え方モードが有効だが、通常の暗記法表示を選択した場合
+        print('考え方モード: 通常の暗記法表示に切り替えました');
+
+        // 切り替えボタンを生成
+        final switchButtonContainer =
+            _buildModeSwitchButton(showThinkingMode: false);
+
+        // 真の複数項目モードか確認 - 検出された項目のコンテンツがあるか確認
+        bool hasDetectedItems =
+            _memoryItem.memoryTechniques.any((t) => t.itemContent.isNotEmpty);
+
+        // 実際に複数項目を検出しているか再確認
+        if (hasDetectedItems) {
+          hasMultipleItems = true; // クラス変数を更新
+        }
+
+        // ページコントローラーの確認とリセット
+        if (!_initialPageJumpDone) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (pageController.hasClients) {
+              pageController.jumpToPage(0);
+              // 初期ジャンプが完了したのでフラグを設定
+              _initialPageJumpDone = true;
+            }
+          });
+        }
+
+        // 暗記法が空の場合、デフォルトの暗記法を追加
+        if (_memoryItem.memoryTechniques.isEmpty) {
+          _memoryItem.memoryTechniques.add(
+            MemoryTechnique(
+              name: '標準学習法',
+              description: '繰り返し学習することで記憶を定着させる方法です。',
+              type: 'concept',
+            ),
+          );
+        }
+
+        // 非thinkingタイプの暗記法を抽出
+        List<MemoryTechnique> nonThinkingTechniques = _memoryItem
+            .memoryTechniques
+            .where((technique) =>
+                technique.type != 'thinking' &&
+                !technique.tags.contains('thinking'))
+            .toList();
+
+        // 非thinkingタイプの暗記法がない場合はデフォルトの暗記法を追加
+        if (nonThinkingTechniques.isEmpty) {
+          final defaultTechnique = MemoryTechnique(
+            name: '標準学習法',
+            description: '繰り返し学習することで記憶を定着させる方法です。',
+            type: 'concept',
+          );
+          nonThinkingTechniques.add(defaultTechnique);
+
+          // _memoryItem.memoryTechniquesにも追加する（存在しない場合）
+          if (!_memoryItem.memoryTechniques.contains(defaultTechnique)) {
+            _memoryItem.memoryTechniques.add(defaultTechnique);
+          }
+        }
+
+        // ページ管理用の状態変数
+        final ValueNotifier<int> currentPageNotifier = ValueNotifier<int>(0);
+
+        // ページ変更時に通知するリスナーを追加
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          pageController.addListener(() {
+            if (pageController.page != null) {
+              final currentPage = pageController.page!.round();
+              if (currentPageNotifier.value != currentPage) {
+                currentPageNotifier.value = currentPage;
+              }
+            }
+          });
+        });
+
+        // ページビューで暗記法カードを表示
+        final cardsWidget = Container(
+          height: 520, // 高さを固定
+          child: PageView.builder(
+            controller: pageController,
+            itemCount: nonThinkingTechniques.length,
+            onPageChanged: (index) {
+              currentPageNotifier.value = index;
+            },
+            itemBuilder: (context, index) {
+              final technique = nonThinkingTechniques[index];
+              return _buildMemoryTipCard(
+                title: technique.name,
+                content: technique.description,
+                icon: Icons.lightbulb,
+                color: Colors.amber,
+                hideContent: _hideMemoryTips,
+                isMainTechnique: true,
+                tags: technique.tags,
+                image: technique.image,
+              );
+            },
           ),
         );
-      }
 
-      // 考え方モードの説明が未取得の場合は取得
-      if (_thinkingModeExplanation == null && !_isLoadingThinkingMode) {
-        _fetchThinkingModeExplanation();
-      }
+        // ページインジケータを生成
+        final pageIndicator = nonThinkingTechniques.length > 1
+            ? ValueListenableBuilder<int>(
+                valueListenable: currentPageNotifier,
+                builder: (context, currentPage, _) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        nonThinkingTechniques.length,
+                        (index) => Container(
+                          width: 8,
+                          height: 8,
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: currentPage == index
+                                ? Colors.blue.shade600
+                                : Colors.grey.shade300,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              )
+            : const SizedBox.shrink();
 
-      // 投稿内容と考え方のみを表示する特別なウィジェットを返す
-      return _buildThinkingModeContent();
+        // 切り替えボタンと暗記法カードを組み合わせたレイアウトを返す
+        return Column(
+          children: [
+            switchButtonContainer,
+            cardsWidget,
+            pageIndicator,
+          ],
+        );
+      }
     }
 
     // 通常モードの場合の以下の処理
@@ -2202,7 +2462,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                         Icon(Icons.memory,
                             size: 16, color: Colors.orange.shade700),
                         const SizedBox(width: 6),
-                        Text('暗記法',
+                        Text(AppLocalizations.of(context)!.memorizationMethod,
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -2230,54 +2490,68 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
 
                   // 暗記法の水平スクロール表示
 
-                  // ナビゲーションボタン表示（複数カードの場合のみ）
+                  // ナビゲーションボタン表示（複数カードの場合のみ）- コンパクト版
                   if (_memoryItem.memoryTechniques.length > 1)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              if (pageController.page! > 0) {
-                                pageController.previousPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                );
-                              }
-                            },
-                            icon: const Icon(Icons.arrow_back),
-                            label: const Text('前の暗記法'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange.shade50,
-                              foregroundColor: Colors.orange.shade700,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                          // 前へボタン
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.4,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                if (pageController.page! > 0) {
+                                  pageController.previousPage(
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeInOut,
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.arrow_back, size: 16),
+                              label: Text(
+                                AppLocalizations.of(context)!.previousMethod,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.orange.shade700,
                                 side: BorderSide(color: Colors.orange.shade200),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 1, vertical: 4),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 20),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              if (pageController.page! <
-                                  _memoryItem.memoryTechniques.length - 1) {
-                                pageController.nextPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                );
-                              }
-                            },
-                            icon: const Text('次の暗記法'),
-                            label: const Icon(Icons.arrow_forward),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange.shade50,
-                              foregroundColor: Colors.orange.shade700,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+
+                          // 次へボタン
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.4,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                if (pageController.page! <
+                                    _memoryItem.memoryTechniques.length - 1) {
+                                  pageController.nextPage(
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeInOut,
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.arrow_forward, size: 16),
+                              label: Text(
+                                AppLocalizations.of(context)!.nextMethod,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.orange.shade700,
                                 side: BorderSide(color: Colors.orange.shade200),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 1, vertical: 4),
                               ),
                             ),
                           ),
@@ -2422,7 +2696,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      '覚え方は隠されています',
+                      AppLocalizations.of(context)!.methodIsHidden,
                       style: TextStyle(
                         color: Colors.grey.shade700,
                         fontStyle: FontStyle.italic,
@@ -2516,7 +2790,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'AIに説明してみる',
+                AppLocalizations.of(context)!.explainToAI,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -2536,7 +2810,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '自分の言葉で説明してみてください。AIがコメントしてくれます。',
+                AppLocalizations.of(context)!.explainInstructions,
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey.shade700,
@@ -2554,7 +2828,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        hintText: 'ここに説明を入力してください',
+                        hintText: AppLocalizations.of(context)!.explainHint,
                         filled: true,
                         fillColor: Colors.grey.shade50,
                       ),
@@ -2601,7 +2875,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                           const SizedBox(height: 8),
                           const CircularProgressIndicator(strokeWidth: 2),
                           const SizedBox(height: 8),
-                          Text('AIがあなたの説明を評価しています...',
+                          Text(
+                              AppLocalizations.of(context)!
+                                  .aiEvaluatingExplanation,
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey.shade600,
@@ -2677,7 +2953,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '暗記カードを作成',
+                      AppLocalizations.of(context)!.createMemoryCards,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -2688,13 +2964,13 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'この暗記法から暗記カードを自動生成します。複数項目がある場合は複数のカードが作成されます。',
+                  AppLocalizations.of(context)!.autoGenerateCards,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade700,
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: _createFlashcardsFromTechnique,
                   style: ElevatedButton.styleFrom(
@@ -2704,12 +2980,12 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.add_card),
-                      SizedBox(width: 8),
-                      Text('暗記カード作成'),
+                      const Icon(Icons.add_card),
+                      const SizedBox(width: 8),
+                      Text(AppLocalizations.of(context)!.createFlashcards),
                     ],
                   ),
                 ),
@@ -2742,7 +3018,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'この覚え方を公開する',
+                      AppLocalizations.of(context)!.publishThisMethod,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -2753,7 +3029,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '公開すると、他のユーザーがあなたの覚え方を参考にできます。',
+                  AppLocalizations.of(context)!.publishMethodExplanation,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade700,
@@ -2764,7 +3040,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      _isPublicTechnique ? '公開中' : '非公開',
+                      _isPublicTechnique
+                          ? AppLocalizations.of(context)!.publishedLabel
+                          : AppLocalizations.of(context)!.privateLabel,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -2789,7 +3067,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      'この覚え方は公開されます。完了ボタンを押すと公開ライブラリに追加されます。',
+                      AppLocalizations.of(context)!.publicMethodDescription,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.green.shade700,
@@ -2812,7 +3090,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
 
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('覚え方を保存しました')),
+                      SnackBar(
+                          content: Text(AppLocalizations.of(context)!
+                              .memorizationMethodSaved)),
                     );
                   }
 
@@ -2860,14 +3140,18 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                       }
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('覚え方を公開しました')),
+                          SnackBar(
+                              content: Text(AppLocalizations.of(context)!
+                                  .memorizationMethodPublished)),
                         );
                       }
                     } catch (e) {
                       print('暗記法の公開に失敗しました: $e');
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('暗記法の公開に失敗しました: $e')),
+                          SnackBar(
+                              content: Text(AppLocalizations.of(context)!
+                                  .publishFailed(e.toString()))),
                         );
                       }
                     }
@@ -2876,7 +3160,9 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                   print('暗記法の保存に失敗しました: $e');
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('暗記法の保存に失敗しました: $e')),
+                      SnackBar(
+                          content: Text(AppLocalizations.of(context)!
+                              .memorizationMethodSaveFailed(e.toString()))),
                     );
                   }
                 } finally {
@@ -2884,7 +3170,8 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                 }
               },
               icon: const Icon(Icons.check_circle, size: 28),
-              label: const Text('完了', style: TextStyle(fontSize: 18)),
+              label: Text(AppLocalizations.of(context)!.complete,
+                  style: const TextStyle(fontSize: 18)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade600,
                 foregroundColor: Colors.white,
@@ -2941,7 +3228,7 @@ class _MemoryMethodScreenState extends State<MemoryMethodScreen> {
                       size: 16,
                       color: Colors.blue.shade800),
                   const SizedBox(width: 6),
-                  Text('イメージヒント',
+                  Text(AppLocalizations.of(context)!.imageHint,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,

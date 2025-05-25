@@ -3,14 +3,19 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get_it/get_it.dart';
+import 'package:uuid/uuid.dart';
 import '../models/memory_item.dart';
 import '../models/memory_technique.dart';
 import '../models/ranked_memory_technique.dart';
-import 'gemini_service.dart';
-import 'ai_service_interface.dart';
-import 'ai_agent_service.dart';
-import 'notification_service.dart';
-import 'background_processor.dart';
+import '../services/gemini_service.dart';
+import '../services/ai_service_interface.dart';
+import '../services/ai_agent_service.dart';
+import '../services/notification_service.dart';
+import '../services/background_processor.dart';
+import '../services/connectivity_service.dart';
+import '../services/offline_storage_service.dart';
 import '../utils/spaced_repetition_scheduler.dart';
 import 'package:get_it/get_it.dart';
 import 'package:uuid/uuid.dart';
@@ -18,8 +23,13 @@ import 'package:uuid/uuid.dart';
 class MemoryService with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  // GeminiServiceをメインのAIサービスとして使用
-  final AIServiceInterface _aiService = GetIt.instance<GeminiService>();
+  // インターフェースを使用してAIサービスを取得（オンライン時はGeminiService、オフライン時はDummyAIService）
+  final AIServiceInterface _aiService = GetIt.instance<AIServiceInterface>();
+  // オフライン状態を確認するためのConnectivityService
+  final ConnectivityService _connectivityService =
+      GetIt.instance<ConnectivityService>();
+  // OfflineStorageServiceのインスタンスを取得
+  final OfflineStorageService _offlineStorage = OfflineStorageService();
   // 後方互換性のため一時的に保持
   // final OpenAiService _openAIService = OpenAiService();
   late final AIAgentService _aiAgentService;
@@ -27,6 +37,10 @@ class MemoryService with ChangeNotifier {
   final SpacedRepetitionScheduler _scheduler = SpacedRepetitionScheduler();
   // バックグラウンド処理用のプロセッサー
   final BackgroundProcessor _backgroundProcessor = BackgroundProcessor();
+
+  // オフライン時のキャッシュ
+  List<MemoryTechnique>? _cachedUserTechniques;
+  MemoryTechnique? _cachedPublicTechnique;
 
   // ストリームコントローラーのマップ（複数のリスナーをサポート）
   final Map<String, StreamController<List<MemoryItem>>> _memoryItemControllers =
@@ -202,11 +216,14 @@ class MemoryService with ChangeNotifier {
     });
 
     // バックグラウンドタスクをキューに追加
-    final result =
-        await _backgroundProcessor.runTaskInForeground('techniqueGeneration', {
+    final result = await _backgroundProcessor.startTask({
       'taskId': taskId,
+      'type': 'techniqueGeneration',
       'content': content,
+      'userId': user.uid,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
     });
+
     if (result.isEmpty) {
       // バックグラウンドサービスが開始できなかった場合
       await _firestore
@@ -264,9 +281,9 @@ class MemoryService with ChangeNotifier {
     });
 
     // バックグラウンドタスクをキューに追加
-    final result =
-        await _backgroundProcessor.runTaskInForeground('flashcardCreation', {
+    final result = await _backgroundProcessor.startTask({
       'taskId': taskId,
+      'type': 'flashcardCreation',
       'cardSetId': cardSetId,
       'cardSetName': cardSetName,
       'flashcardsData': flashcardDataList,
@@ -334,7 +351,7 @@ class MemoryService with ChangeNotifier {
 
       if (!taskDoc.exists) {
         // バックグラウンドプロセッサーから取得を試みる
-        return await _backgroundProcessor.getTaskStatus(taskId);
+        return await _backgroundProcessor.getTaskProgress(taskId);
       }
 
       final taskData = taskDoc.data()!;
@@ -347,7 +364,7 @@ class MemoryService with ChangeNotifier {
     } catch (e) {
       print('タスク進捗の取得に失敗しました: $e');
       // バックグラウンドプロセッサーから取得を試みる
-      return await _backgroundProcessor.getTaskStatus(taskId);
+      return await _backgroundProcessor.getTaskProgress(taskId);
     }
   }
 
@@ -420,10 +437,34 @@ class MemoryService with ChangeNotifier {
 
   // 最近公開された暗記法を1件取得
   Future<MemoryTechnique?> getRecentPublicTechnique() async {
+    // オフラインかどうかを確認
+    final isOffline = _connectivityService.isOffline;
+
+    // キャッシュがあれば返す
+    if (isOffline && _cachedPublicTechnique != null) {
+      print('📱 オフラインモード: キャッシュから公開暗記法を返します');
+      return _cachedPublicTechnique;
+    }
+
     try {
       final user = _auth.currentUser;
       if (user == null) {
+        if (isOffline) {
+          // オフラインモードでユーザーがない場合はダミーデータを返す
+          print('📱 オフラインモード: ダミーの公開暗記法を返します');
+          final dummyTechnique = _createDummyPublicTechnique();
+          _cachedPublicTechnique = dummyTechnique;
+          return dummyTechnique;
+        }
         throw 'ユーザーがログインしていません';
+      }
+
+      // オフラインモードの場合はダミーデータを返す
+      if (isOffline) {
+        print('📱 オフラインモード: ダミーの公開暗記法を返します');
+        final dummyTechnique = _createDummyPublicTechnique();
+        _cachedPublicTechnique = dummyTechnique;
+        return dummyTechnique;
       }
 
       // 最新の暗記法を取得（作成日時の降順で並べ替え）
@@ -445,42 +486,702 @@ class MemoryService with ChangeNotifier {
       final doc = snapshot.docs[randomIndex];
       final data = doc.data() as Map<String, dynamic>;
 
-      return MemoryTechnique.fromMap(data);
+      final technique = MemoryTechnique.fromMap(data);
+      // キャッシュを更新
+      _cachedPublicTechnique = technique;
+
+      // 公開暗記法はローカルストレージに保存しない
+      // オンライン時に取得すれば良いため
+
+      return technique;
     } catch (e) {
       print('最近の暗記法の取得に失敗しました: $e');
-      throw '最近の暗記法の取得に失敗しました: $e';
+
+      // キャッシュがあれば返す
+      if (_cachedPublicTechnique != null) {
+        print('📱 取得失敗: キャッシュから公開暗記法を返します');
+        return _cachedPublicTechnique;
+      }
+
+      // キャッシュがない場合はダミーデータを返す
+      print('📱 取得失敗: ダミーの公開暗記法を返します');
+      final dummyTechnique = _createDummyPublicTechnique();
+      _cachedPublicTechnique = dummyTechnique;
+      return dummyTechnique;
     }
+  }
+
+  // ダミーの公開暗記法を作成
+  MemoryTechnique _createDummyPublicTechnique() {
+    return MemoryTechnique(
+      id: 'offline_public_technique',
+      name: 'オフラインモードの暗記法',
+      description: 'これはオフラインモードで表示されるダミーの暗記法です。オンラインに接続すると、実際の暗記法が表示されます。',
+      type: 'イメージ法',
+      content: 'イメージを使って記憶する方法です。鮮やかなイメージを作ることで記憶が定着します。',
+      isPublic: true,
+    );
   }
 
   // ユーザーの暗記法を取得
   Future<List<MemoryTechnique>> getUserMemoryTechniques() async {
+    // オフラインかどうかを確認
+    final isOffline = _connectivityService.isOffline;
+    print('📱 getUserMemoryTechniques: オフラインモード = $isOffline');
+
+    // ユーザーIDを取得
+    String? userId;
+    final user = _auth.currentUser;
+
+    if (user != null) {
+      userId = user.uid;
+      print('👤 現在のユーザーID: $userId');
+
+      // 最後に使用したユーザーIDを保存
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('last_user_id', userId);
+        print('💾 ユーザーIDを保存しました: $userId');
+      } catch (e) {
+        print('⚠️ ユーザーIDの保存に失敗: $e');
+      }
+    } else if (isOffline) {
+      // オフラインモードでユーザーがない場合は、保存されたユーザーIDを使用
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        userId = prefs.getString('last_user_id');
+        if (userId != null) {
+          print('📱 オフラインモード: 保存されたユーザーID($userId)を使用します');
+        } else {
+          print('⚠️ 保存されたユーザーIDが見つかりません');
+          
+          // ユーザーIDが見つからない場合、キャッシュから探す
+          if (_cachedUserTechniques != null && _cachedUserTechniques!.isNotEmpty) {
+            for (var technique in _cachedUserTechniques!) {
+              if (technique.userId != null) {
+                userId = technique.userId;
+                print('📱 オフラインモード: キャッシュからユーザーID($userId)を取得しました');
+                
+                // 見つかったユーザーIDを保存
+                try {
+                  await prefs.setString('last_user_id', userId!);
+                  print('💾 キャッシュから取得したユーザーIDを保存しました: $userId');
+                } catch (e) {
+                  print('⚠️ ユーザーIDの保存に失敗: $e');
+                }
+                
+                break;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        print('⚠️ 保存されたユーザーIDの取得に失敗: $e');
+      }
+      
+      // ユーザーIDがまだ見つからない場合は、ローカルストレージから直接暗記法を読み込んで探す
+      if (userId == null) {
+        try {
+          print('📱 オフラインモード: ユーザーIDが見つからないため、ローカルストレージから直接暗記法を読み込みます');
+          final techniques = await _offlineStorage.getMemoryTechniques();
+          
+          for (var technique in techniques) {
+            if (technique.userId != null) {
+              userId = technique.userId;
+              print('📱 オフラインモード: ローカルストレージからユーザーID($userId)を取得しました');
+              
+              // 見つかったユーザーIDを保存
+              try {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('last_user_id', userId!);
+                print('💾 ローカルストレージから取得したユーザーIDを保存しました: $userId');
+              } catch (e) {
+                print('⚠️ ユーザーIDの保存に失敗: $e');
+              }
+              
+              break;
+            }
+          }
+        } catch (e) {
+          print('⚠️ ローカルストレージからのユーザーID取得に失敗: $e');
+        }
+      }
+    } else {
+      print('⚠️ ユーザーがログインしていません');
+    }
+
+    // キャッシュがあれば返す
+    if (isOffline &&
+        _cachedUserTechniques != null &&
+        _cachedUserTechniques!.isNotEmpty) {
+      print(
+          '📱 オフラインモード: キャッシュから${_cachedUserTechniques!.length}個のユーザー暗記法を返します');
+      return _cachedUserTechniques!;
+    }
+
     try {
+      // オフラインモードの場合
+      if (isOffline) {
+        print('📱 オフラインモード: ローカルストレージから暗記法を読み込みます');
+        try {
+          // まずユーザーIDでフィルタリングして取得
+          List<MemoryTechnique> techniques = [];
+          
+          if (userId != null) {
+            print('📱 オフラインモード: ユーザーID($userId)でフィルタリングして暗記法を取得します');
+            techniques = await _offlineStorage.getMemoryTechniques(userId: userId);
+          } else {
+            // ユーザーIDがない場合は、すべての暗記法を取得
+            print('📱 オフラインモード: ユーザーIDがないため、すべての暗記法を取得します');
+            techniques = await _offlineStorage.getMemoryTechniques();
+          }
+          
+          print('✅ ローカルストレージから${techniques.length}個の暗記法を読み込みました');
+          
+          // 暗記法が見つからない場合は、フィルタリングなしで再試行
+          if (techniques.isEmpty && userId != null) {
+            print('📱 オフラインモード: 暗記法が見つからないため、フィルタリングなしで再試行します');
+            techniques = await _offlineStorage.getMemoryTechniques();
+            print('✅ フィルタリングなしで${techniques.length}個の暗記法を読み込みました');
+          }
+
+          // 暗記法の名前が正しく設定されているか確認し、必要に応じて修正
+          List<MemoryTechnique> validatedTechniques = [];
+          for (var i = 0; i < techniques.length; i++) {
+            final technique = techniques[i];
+            
+            // デバッグ用に暗記法の情報を表示
+            print('📱 暗記法[$i]: id=${technique.id}, name=${technique.name}, userId=${technique.userId}');
+            
+            if (technique.name.isEmpty) {
+              // 名前が空の場合は、データから名前を取得して設定
+              final Map<String, dynamic> data = technique.toMap();
+              final name = data['title'] ?? '暗記法${i + 1}';
+              print('🔄 暗記法の名前を修正します: 空 -> ${name}');
+              data['name'] = name;
+              validatedTechniques.add(MemoryTechnique.fromMap(data));
+
+              // 修正した暗記法をローカルストレージに保存
+              await _offlineStorage.saveMemoryTechnique(
+                  MemoryTechnique.fromMap(data));
+            } else {
+              print('✅ 暗記法「${technique.name}」の名前は正しく設定されています');
+              validatedTechniques.add(technique);
+            }
+          }
+
+          // キャッシュを更新
+          _cachedUserTechniques = validatedTechniques;
+
+          // 空のリストでもそのまま返す（ダミーデータは返さない）
+          return validatedTechniques;
+        } catch (offlineError) {
+          print('❌ ローカルストレージからの暗記法読み込みエラー: $offlineError');
+          
+          // エラーの詳細を表示
+          print('❌ エラーの詳細: ${offlineError.toString()}');
+
+          // キャッシュがあれば使用
+          if (_cachedUserTechniques != null && _cachedUserTechniques!.isNotEmpty) {
+            print('📱 オフラインモードエラー時: キャッシュから${_cachedUserTechniques!.length}個の暗記法を返します');
+            return _cachedUserTechniques!;
+          }
+
+          // エラーの場合は空のリストを返す（ダミーデータは返さない）
+          return [];
+        }
+      }
+
+      // オンラインモードの場合
       final user = _auth.currentUser;
       if (user == null) {
+        print('⚠️ ユーザーがログインしていません');
         throw 'ユーザーがログインしていません';
       }
 
+      print('🔍 Firestoreからユーザーの暗記法を取得します: ${user.uid}');
+
+      // ユーザーの暗記法を取得するためのクエリを修正
+      // まず、ユーザードキュメントからユーザーの暗記法を取得する
+      try {
+        // users/{userId}/memoryItemsコレクションから暗記法を取得
+        print('🔍 users/${user.uid}/memoryItemsから暗記法を取得します');
+        final userMemoryItemsSnapshot = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('memoryItems')
+            .orderBy('createdAt', descending: true)
+            .get();
+
+        if (userMemoryItemsSnapshot.docs.isNotEmpty) {
+          print(
+              '✅ users/${user.uid}/memoryItemsから${userMemoryItemsSnapshot.docs.length}個の暗記法が見つかりました');
+
+          // ドキュメントを直接暗記法として処理
+          print('🔍 ドキュメントを暗記法として変換します');
+          List<MemoryTechnique> techniques = [];
+
+          for (var doc in userMemoryItemsSnapshot.docs) {
+            try {
+              final data = doc.data();
+
+              // 暗記法の名前を取得
+              final name = data['title'] ?? '無名の暗記法';
+              print('🔖 暗記法「${name}」を処理しています');
+
+              // 必要なフィールドを設定したMapを作成
+              final Map<String, dynamic> techniqueData = {
+                'id': doc.id,
+                'userId': user.uid,
+                'name': name,
+                'description': data['content'] ?? '',
+                'content': data['content'] ?? '',
+                'contentType': data['contentType'] ?? 'text',
+                'type': data['type'] ?? 'unknown',
+                'isPublic': data['isPublic'] ?? false,
+                'tags': data['tags'] ?? [],
+                'contentKeywords': data['contentKeywords'] ?? [],
+                'itemContent': data['itemContent'] ?? '',
+                'itemDescription': data['itemDescription'] ?? '',
+                'image': data['image'] ?? '',
+                'taskId': data['taskId'] ?? '',
+                'flashcards': data['flashcards'] ?? [],
+                'createdAt':
+                    data['createdAt'] ?? DateTime.now().millisecondsSinceEpoch,
+                'mastery': data['mastery'] ?? 0,
+              };
+
+              // 元のデータのフィールドを追加
+              data.forEach((key, value) {
+                if (!techniqueData.containsKey(key)) {
+                  techniqueData[key] = value;
+                }
+              });
+
+              // MemoryTechniqueオブジェクトに変換
+              final technique = MemoryTechnique.fromMap(techniqueData);
+              techniques.add(technique);
+            } catch (e) {
+              print('⚠️ 暗記法の変換エラー: $e');
+            }
+          }
+
+          // 暗記法をローカルストレージに保存
+          for (var technique in techniques) {
+            await saveMemoryTechniqueToLocalStorage(technique);
+          }
+
+          // キャッシュを更新
+          _cachedUserTechniques = techniques;
+
+          return techniques;
+        }
+
+        // memoryItemsコレクションに暗記法がない場合は、他の方法を試す
+        print('⚠️ users/${user.uid}/memoryItemsに暗記法が見つかりませんでした');
+
+        // ユーザードキュメントから暗記法を取得
+        final userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+
+        if (userDoc.exists) {
+          print('✅ ユーザードキュメントが見つかりました');
+
+          // ユーザーの暗記法を取得するための様々なクエリを試す
+          List<MemoryTechnique> techniques = [];
+
+          // 1. まず、ユーザーの暗記法サブコレクションを試す
+          try {
+            final userTechniquesSnapshot = await _firestore
+                .collection('users')
+                .doc(user.uid)
+                .collection('memoryTechniques')
+                .orderBy('createdAt', descending: true)
+                .get();
+
+            if (userTechniquesSnapshot.docs.isNotEmpty) {
+              print(
+                  '✅ ユーザーの暗記法サブコレクションから${userTechniquesSnapshot.docs.length}個の暗記法が見つかりました');
+              techniques = userTechniquesSnapshot.docs
+                  .map((doc) => MemoryTechnique.fromMap({
+                        ...doc.data() as Map<String, dynamic>,
+                        'id': doc.id,
+                        'userId': user.uid,
+                      }))
+                  .toList();
+              return techniques;
+            }
+          } catch (e) {
+            print('⚠️ ユーザーの暗記法サブコレクションの取得エラー: $e');
+          }
+
+          // 2. 次に、メインの暗記法コレクションからユーザーIDでフィルタリング
+          final snapshot = await _memoryTechniquesCollection
+              .where('userId', isEqualTo: user.uid)
+              .orderBy('createdAt', descending: true)
+              .get();
+
+          if (snapshot.docs.isNotEmpty) {
+            print('✅ userIdフィールドで${snapshot.docs.length}個の暗記法が見つかりました');
+            techniques = snapshot.docs
+                .map((doc) => MemoryTechnique.fromMap({
+                      ...doc.data() as Map<String, dynamic>,
+                      'id': doc.id,
+                    }))
+                .toList();
+            return techniques;
+          }
+
+          // 3. user_idフィールドで試す
+          final alternativeSnapshot = await _memoryTechniquesCollection
+              .where('user_id', isEqualTo: user.uid)
+              .orderBy('createdAt', descending: true)
+              .get();
+
+          if (alternativeSnapshot.docs.isNotEmpty) {
+            print(
+                '✅ user_idフィールドで${alternativeSnapshot.docs.length}個の暗記法が見つかりました');
+            techniques = alternativeSnapshot.docs
+                .map((doc) => MemoryTechnique.fromMap({
+                      ...doc.data() as Map<String, dynamic>,
+                      'id': doc.id,
+                      'userId': user.uid,
+                    }))
+                .toList();
+            return techniques;
+          }
+
+          // 4. creatorフィールドで試す
+          final creatorSnapshot = await _memoryTechniquesCollection
+              .where('creator', isEqualTo: user.uid)
+              .orderBy('createdAt', descending: true)
+              .get();
+
+          if (creatorSnapshot.docs.isNotEmpty) {
+            print('✅ creatorフィールドで${creatorSnapshot.docs.length}個の暗記法が見つかりました');
+            techniques = creatorSnapshot.docs
+                .map((doc) => MemoryTechnique.fromMap({
+                      ...doc.data() as Map<String, dynamic>,
+                      'id': doc.id,
+                      'userId': user.uid,
+                    }))
+                .toList();
+            return techniques;
+          }
+
+          // 5. authorフィールドで試す
+          final authorSnapshot = await _memoryTechniquesCollection
+              .where('author', isEqualTo: user.uid)
+              .orderBy('createdAt', descending: true)
+              .get();
+
+          if (authorSnapshot.docs.isNotEmpty) {
+            print('✅ authorフィールドで${authorSnapshot.docs.length}個の暗記法が見つかりました');
+            techniques = authorSnapshot.docs
+                .map((doc) => MemoryTechnique.fromMap({
+                      ...doc.data() as Map<String, dynamic>,
+                      'id': doc.id,
+                      'userId': user.uid,
+                    }))
+                .toList();
+            return techniques;
+          }
+
+          // 6. ownerフィールドで試す
+          final ownerSnapshot = await _memoryTechniquesCollection
+              .where('owner', isEqualTo: user.uid)
+              .orderBy('createdAt', descending: true)
+              .get();
+
+          if (ownerSnapshot.docs.isNotEmpty) {
+            print('✅ ownerフィールドで${ownerSnapshot.docs.length}個の暗記法が見つかりました');
+            techniques = ownerSnapshot.docs
+                .map((doc) => MemoryTechnique.fromMap({
+                      ...doc.data() as Map<String, dynamic>,
+                      'id': doc.id,
+                      'userId': user.uid,
+                    }))
+                .toList();
+            return techniques;
+          }
+
+          // 7. uidフィールドで試す
+          final uidSnapshot = await _memoryTechniquesCollection
+              .where('uid', isEqualTo: user.uid)
+              .orderBy('createdAt', descending: true)
+              .get();
+
+          if (uidSnapshot.docs.isNotEmpty) {
+            print('✅ uidフィールドで${uidSnapshot.docs.length}個の暗記法が見つかりました');
+            techniques = uidSnapshot.docs
+                .map((doc) => MemoryTechnique.fromMap({
+                      ...doc.data() as Map<String, dynamic>,
+                      'id': doc.id,
+                      'userId': user.uid,
+                    }))
+                .toList();
+            return techniques;
+          }
+
+          // どのフィールドでも見つからなかった場合は空のリストを返す
+          print('⚠️ どのフィールドでもユーザーの暗記法が見つかりませんでした');
+          return [];
+        }
+      } catch (firestoreError) {
+        print('❌ Firestoreからの暗記法取得エラー: $firestoreError');
+      }
+
+      // ユーザーの暗記法を直接取得するクエリを試す
       final snapshot = await _memoryTechniquesCollection
           .where('userId', isEqualTo: user.uid)
           .orderBy('createdAt', descending: true)
           .get();
 
-      return snapshot.docs
-          .map((doc) =>
-              MemoryTechnique.fromMap(doc.data() as Map<String, dynamic>))
+      final techniques = snapshot.docs
+          .map((doc) => MemoryTechnique.fromMap({
+                ...doc.data() as Map<String, dynamic>,
+                'id': doc.id, // ドキュメントIDを追加
+              }))
           .toList();
+
+      print('✅ Firestoreから${techniques.length}個のユーザー暗記法を取得しました');
+
+      // キャッシュを更新
+      _cachedUserTechniques = techniques;
+
+      // ローカルストレージに保存
+      print('💾 ユーザー暗記法をローカルストレージに保存します: ${techniques.length}個');
+      for (final technique in techniques) {
+        // userIdフィールドがない場合は、ユーザーIDを含む新しいマップを作成して保存
+        if (technique.userId == null) {
+          // データを一旦マップに変換
+          final Map<String, dynamic> data = technique.toMap();
+          // ユーザーIDを追加
+          data['userId'] = user.uid;
+          // 新しいデータで保存
+          await _offlineStorage.saveMemoryTechnique(
+              MemoryTechnique.fromMap(data),
+              isPublic: technique.isPublic);
+        } else {
+          // userIdがあればそのまま保存
+          await saveMemoryTechniqueToLocalStorage(technique);
+        }
+      }
+
+      return techniques;
     } catch (e) {
-      print('ユーザーの暗記法の取得に失敗しました: $e');
-      throw 'ユーザーの暗記法の取得に失敗しました: $e';
+      print('❌ ユーザーの暗記法の取得に失敗しました: $e');
+
+      // オフラインモードの場合は空のリストを返す
+      if (isOffline) {
+        print('📱 オフラインモード: 空のリストを返します');
+        return [];
+      }
+
+      // キャッシュがあれば返す
+      if (_cachedUserTechniques != null && _cachedUserTechniques!.isNotEmpty) {
+        print('📱 取得失敗: キャッシュから${_cachedUserTechniques!.length}個のユーザー暗記法を返します');
+        return _cachedUserTechniques!;
+      }
+
+      // キャッシュがない場合は空のリストを返す
+      print('📱 取得失敗: 空のリストを返します');
+      return [];
+    }
+  }
+
+  // ダミーのユーザー暗記法リストを作成
+  List<MemoryTechnique> _createDummyUserTechniques() {
+    return [
+      MemoryTechnique(
+        id: 'offline_user_technique_1',
+        name: 'オフラインモードの暗記法1',
+        description: 'これはオフラインモードで表示されるダミーの暗記法です。オンラインに接続すると、実際の暗記法が表示されます。',
+        type: 'イメージ法',
+        content: 'イメージを使って記憶する方法です。鮮やかなイメージを作ることで記憶が定着します。',
+        isPublic: false,
+      ),
+      MemoryTechnique(
+        id: 'offline_user_technique_2',
+        name: 'オフラインモードの暗記法2',
+        description: 'これはオフラインモードで表示されるダミーの暗記法です。オンラインに接続すると、実際の暗記法が表示されます。',
+        type: '連想法',
+        content: '連想を使って記憶する方法です。関連性を見つけることで記憶が定着します。',
+        isPublic: false,
+      ),
+      MemoryTechnique(
+        id: 'offline_user_technique_3',
+        name: '公開用オフライン暗記法',
+        description: 'これはオフラインモードで表示される公開用ダミーの暗記法です。オンラインに接続すると、実際の暗記法が表示されます。',
+        type: 'キーワード法',
+        content: '重要なキーワードを抜き出して記憶する方法です。キーワードを組み合わせることで記憶が定着します。',
+        isPublic: true,
+      ),
+    ];
+  }
+
+  /// ローカルストレージから暗記法を読み込む
+  /// オフラインモードで使用される
+  Future<List<MemoryTechnique>> loadMemoryTechniquesFromLocalStorage() async {
+    try {
+      print('📱 ローカルストレージから暗記法を読み込みます...');
+
+      // ユーザーの暗記法を読み込む
+      final userTechniques = await _offlineStorage.getMemoryTechniques();
+      print('📱 ローカルストレージから${userTechniques.length}個のユーザー暗記法を読み込みました');
+
+      // 公開暗記法も読み込む
+      final publicTechniques =
+          await _offlineStorage.getMemoryTechniques(publicOnly: true);
+      print('📱 ローカルストレージから${publicTechniques.length}個の公開暗記法を読み込みました');
+
+      // キャッシュを更新
+      _cachedUserTechniques = userTechniques;
+      if (publicTechniques.isNotEmpty) {
+        _cachedPublicTechnique = publicTechniques.first;
+      }
+
+      return userTechniques;
+    } catch (e) {
+      print('❌ ローカルストレージからの暗記法読み込みエラー: $e');
+      // エラーが発生した場合はダミーデータを返す
+      final dummyTechniques = _createDummyUserTechniques();
+      _cachedUserTechniques = dummyTechniques;
+      return dummyTechniques;
+    }
+  }
+
+  /// 暗記法をローカルストレージに保存する
+  Future<void> saveMemoryTechniqueToLocalStorage(
+      MemoryTechnique technique) async {
+    try {
+      // オフラインかどうかを確認
+      final isOffline = _connectivityService.isOffline;
+      print('📱 saveMemoryTechniqueToLocalStorage: オフラインモード = $isOffline');
+
+      // 現在のユーザーIDを取得
+      String? userId;
+      final user = _auth.currentUser;
+
+      if (user != null) {
+        userId = user.uid;
+        print('👤 現在のユーザーID: $userId');
+        
+        // 常にユーザーIDを保存（オンライン時）
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('last_user_id', userId);
+          print('💾 ユーザーIDを保存しました: $userId');
+        } catch (e) {
+          print('⚠️ ユーザーIDの保存に失敗: $e');
+        }
+      } else if (isOffline) {
+        // オフラインモードでユーザーがない場合は、保存されたユーザーIDを使用
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          userId = prefs.getString('last_user_id');
+          if (userId != null) {
+            print('📱 オフラインモード: 保存されたユーザーID($userId)を使用します');
+          } else {
+            // 保存されたユーザーIDがない場合は暗記法のユーザーIDを使用
+            userId = technique.userId;
+            if (userId != null) {
+              print('📱 オフラインモード: 暗記法のユーザーID($userId)を使用します');
+              
+              // 見つかったユーザーIDを保存して一貫性を確保
+              try {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('last_user_id', userId);
+                print('💾 暗記法から取得したユーザーIDを保存しました: $userId');
+              } catch (e) {
+                print('⚠️ ユーザーIDの保存に失敗: $e');
+              }
+            } else {
+              print('⚠️ オフラインモード: ユーザーIDが見つかりません');
+              return; // ユーザーIDがない場合は保存しない
+            }
+          }
+        } catch (e) {
+          print('⚠️ 保存されたユーザーIDの取得に失敗: $e');
+          // エラーが発生した場合は暗記法のユーザーIDを使用
+          userId = technique.userId;
+          if (userId == null) {
+            print('⚠️ オフラインモード: 暗記法にユーザーIDがありません');
+            return; // ユーザーIDがない場合は保存しない
+          }
+        }
+      } else {
+        print('⚠️ ユーザーがログインしていないため、暗記法「${technique.name}」の保存をスキップします');
+        return;
+      }
+
+      // 暗記法のユーザーIDを確認
+      final techniqueUserId = technique.userId;
+
+      // 他のユーザーの公開暗記法は保存しない（自分の暗記法は公開設定に関わらず保存）
+      if (techniqueUserId != null && techniqueUserId != userId) {
+        print('⚠️ 他のユーザーの暗記法「${technique.name}」はローカルストレージに保存しません');
+        return;
+      }
+
+      // 暗記法にユーザーIDがない場合は、現在のユーザーIDを設定する
+      Map<String, dynamic> techniqueData;
+      if (techniqueUserId == null) {
+        print('🔄 暗記法にユーザーIDを設定します: $userId');
+        // データを一旦マップに変換
+        techniqueData = technique.toMap();
+        // ユーザーIDを追加
+        techniqueData['userId'] = userId;
+      } else {
+        // ユーザーIDが既に設定されている場合はそのまま使用
+        techniqueData = technique.toMap();
+      }
+
+      // ローカルストレージに保存
+      await _offlineStorage.saveMemoryTechnique(
+          MemoryTechnique.fromMap(techniqueData));
+      print('✅ 暗記法「${technique.name}」をオフラインストレージに保存しました');
+    } catch (e) {
+      print('❌ 暗記法のローカルストレージ保存エラー: $e');
     }
   }
 
   // ユーザーが公開した暗記法を取得
   Future<List<MemoryTechnique>> getUserPublishedTechniques() async {
+    // オフラインかどうかを確認
+    final isOffline = _connectivityService.isOffline;
+
+    // キャッシュがあれば、公開フラグがtrueのものだけフィルタリングして返す
+    if (isOffline && _cachedUserTechniques != null) {
+      print('📱 オフラインモード: キャッシュからユーザーの公開暗記法を返します');
+      return _cachedUserTechniques!
+          .where((technique) => technique.isPublic)
+          .toList();
+    }
+
     try {
       final user = _auth.currentUser;
       if (user == null) {
+        if (isOffline) {
+          // オフラインモードでユーザーがない場合はダミーデータを返す
+          print('📱 オフラインモード: ダミーのユーザー公開暗記法を返します');
+          // ダミーの公開暗記法を作成（公開フラグがtrueのものだけ）
+          final dummyTechniques = _createDummyUserTechniques()
+              .where((technique) => technique.isPublic)
+              .toList();
+          return dummyTechniques;
+        }
         throw 'ユーザーがログインしていません';
+      }
+
+      // オフラインモードの場合はダミーデータを返す
+      if (isOffline) {
+        print('📱 オフラインモード: ダミーのユーザー公開暗記法を返します');
+        // ダミーの公開暗記法を作成（公開フラグがtrueのものだけ）
+        final dummyTechniques = _createDummyUserTechniques()
+            .where((technique) => technique.isPublic)
+            .toList();
+        return dummyTechniques;
       }
 
       final snapshot = await _memoryTechniquesCollection
@@ -495,7 +1196,22 @@ class MemoryService with ChangeNotifier {
           .toList();
     } catch (e) {
       print('ユーザーの公開暗記法の取得に失敗しました: $e');
-      throw 'ユーザーの公開暗記法の取得に失敗しました: $e';
+
+      // キャッシュがあれば、公開フラグがtrueのものだけフィルタリングして返す
+      if (_cachedUserTechniques != null) {
+        print('📱 取得失敗: キャッシュからユーザーの公開暗記法を返します');
+        return _cachedUserTechniques!
+            .where((technique) => technique.isPublic)
+            .toList();
+      }
+
+      // キャッシュがない場合はダミーデータを返す
+      print('📱 取得失敗: ダミーのユーザー公開暗記法を返します');
+      // ダミーの公開暗記法を作成（公開フラグがtrueのものだけ）
+      final dummyTechniques = _createDummyUserTechniques()
+          .where((technique) => technique.isPublic)
+          .toList();
+      return dummyTechniques;
     }
   }
 
@@ -951,6 +1667,8 @@ class MemoryService with ChangeNotifier {
         final items = multipleItemsDetection.containsKey('items')
             ? multipleItemsDetection['items']
             : [];
+        final rawContent = multipleItemsDetection['rawContent'];
+        final itemCount = multipleItemsDetection['itemCount'];
         print('複数項目が検出されました。項目数: ${items?.length ?? 0}');
 
         // 複数項目の処理を開始することを通知
@@ -988,13 +1706,17 @@ class MemoryService with ChangeNotifier {
         } else {
           // 通常の処理
           print('標準検出による複数項目の暗記法を生成します');
-          newTechniques = await generateTechniquesForMultipleItems(items,
-              progressCallback: (progress, processed, total) {
-            progressCallback?.call(progress, processed, total, true);
-            if (progress >= 0.98 && processed >= total - 1) {
-              _sendTechniqueGenerationCompletedNotification('複数項目の暗記法');
-            }
-          });
+          newTechniques = await generateTechniquesForMultipleItems(
+            items,
+            progressCallback: (progress, processed, total) {
+              progressCallback?.call(progress, processed, total, true);
+              if (progress >= 0.98 && processed >= total - 1) {
+                _sendTechniqueGenerationCompletedNotification('複数項目の暗記法');
+              }
+            },
+            rawContent: rawContent,
+            itemCount: itemCount,
+          );
         }
       } else {
         // 単一項目の場合
@@ -1072,10 +1794,38 @@ class MemoryService with ChangeNotifier {
                 );
               }).toList();
 
+              // 3. 考え方モードの結果を特殊な「thinking」タイプのMemoryTechniqueとして保存
+              final String title =
+                  rawTechniques.isNotEmpty && rawTechniques[0]['name'] != null
+                      ? rawTechniques[0]['name']
+                      : '理解法';
+
+              // thinkingExplanationを使って特殊な「thinking」タイプのMemoryTechniqueを作成
+              final thinkingTechnique = MemoryTechnique(
+                id: const Uuid().v4(),
+                name: '考え方モード: $title',
+                description: thinkingExplanation, // 考え方の説明
+                type: 'thinking', // 特殊な種類として「thinking」を設定
+                tags: ['thinking', '考え方'],
+                contentKeywords: [content],
+                content: content,
+                itemContent: content,
+                // 考え方モード用のフラッシュカード
+                flashcards: [
+                  Flashcard(
+                    question: content,
+                    answer: thinkingExplanation,
+                  ),
+                ],
+              );
+
+              print('考え方モード: thinkingタイプのMemoryTechniqueを生成しました');
+
               progressCallback?.call(1.0, 1, 1, true); // 完了通知
               _sendTechniqueGenerationCompletedNotification(content); // 生成完了を通知
 
-              return memoryTechniques;
+              // 生成した暗記法と考え方を合わせて返す
+              return [...memoryTechniques, thinkingTechnique];
             } catch (e) {
               print('考え方モードの並行処理中にエラーが発生しました: $e');
               // エラー時は通常の考え方モードだけで対応
@@ -1801,8 +2551,7 @@ class MemoryService with ChangeNotifier {
         taskData['notificationBody'] = notificationBody;
 
         // バックグラウンドタスクを開始
-        final result =
-            await backgroundProcessor.runTaskInForeground(taskType, taskData);
+        final result = await backgroundProcessor.startTask(taskData);
 
         if (result.isEmpty) {
           // タスクの完了を待機
@@ -1818,7 +2567,7 @@ class MemoryService with ChangeNotifier {
 
             // タスクの状態を確認
             final taskProgress =
-                await backgroundProcessor.getTaskStatus(taskId);
+                await backgroundProcessor.getTaskProgress(taskId);
             final status = taskProgress['status'] as String? ?? 'unknown';
 
             print('バックグラウンドタスク状態: $status');

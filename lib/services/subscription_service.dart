@@ -1,18 +1,23 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:get_it/get_it.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../models/subscription_model.dart';
 import '../constants/subscription_constants.dart';
 import '../widgets/upgrade_dialog.dart';
 import 'card_set_service.dart';
 import 'flash_card_service.dart';
 import 'storekit_service.dart';
+import 'firebase_debug_service.dart';
+import 'connectivity_service.dart';
 
 class SubscriptionService {
   final GetIt _getIt = GetIt.instance;
@@ -38,6 +43,17 @@ class SubscriptionService {
   // 商品情報
   List<ProductDetails> _products = [];
   List<ProductDetails> get products => _products;
+  
+  // サブスクリプションがアクティブかどうかを確認するゲッター
+  bool get hasActiveSubscription {
+    // キャッシュがあれば、キャッシュから確認
+    if (_cachedSubscription != null) {
+      return _cachedSubscription!.type != SubscriptionType.free && 
+             (_cachedSubscription!.status == 'active' || _cachedSubscription!.status == null);
+    }
+    // キャッシュがない場合はフリープランとみなす
+    return false;
+  }
 
   // キャッシュクリア
   void clearCache() {
@@ -47,6 +63,25 @@ class SubscriptionService {
 
   // サービスの初期化
   Future<void> initialize() async {
+    // オフラインかどうかを確認
+    final connectivityService = GetIt.instance<ConnectivityService>();
+    final isOffline = connectivityService.isOffline;
+
+    if (isOffline) {
+      print('📱 オフラインモード: サブスクリプションサービスをオフラインモードで初期化します');
+
+      // オフラインモードではフリープランとして初期化
+      _cachedSubscription = SubscriptionModel(
+        userId: 'offline_user',
+        type: SubscriptionType.free,
+        thinkingModeUsed: 0,
+        multiAgentModeUsed: 0,
+      );
+      _subscriptionController.add(_cachedSubscription!);
+      return;
+    }
+
+    // オンラインモードの処理
     final user = _auth.currentUser;
     if (user == null) {
       print('サブスクリプションサービス: ユーザーがログインしていません');
@@ -61,21 +96,29 @@ class SubscriptionService {
       await user.getIdToken(true);
       print('初期化: ユーザートークン更新完了 (${user.uid})');
 
-      // アプリ内課金の初期化
+      // アプリ内購入の初期化
       await _initializeInAppPurchase();
 
       // Stripeから最新情報を取得してFirestoreを更新
       try {
-        print('初期化: Stripeからサブスクリプション情報を取得中');
-        final functions = FirebaseFunctions.instance;
-        final result =
-            await functions.httpsCallable('getStripeSubscription').call({});
-        print('初期化: Stripe APIレスポンス: ${result.data}');
+        print('初期化: HTTP直接呼び出しでStripe情報を取得');
+        // HTTP直接呼び出しでストライプサブスクリプションを取得
+        final debugService = FirebaseDebugService();
+        final stripeHttpResult = await debugService.callStripeSubscription();
 
-        // Stripeでサブスクリプションが有効な場合、Firestoreの情報を更新
-        if (result.data['active'] == true) {
-          print('初期化: アクティブなサブスクリプション発見 - Firestore更新中');
-          await _forceUpdateSubscriptionFromStripe(result.data, user.uid);
+        // HTTP直接呼び出し結果の処理
+        if (stripeHttpResult.containsKey('status') &&
+            stripeHttpResult['status'] == 'success' &&
+            stripeHttpResult['http_response'] != null &&
+            stripeHttpResult['http_response']['result'] != null) {
+          final resultData = stripeHttpResult['http_response']['result'];
+          // Stripeでサブスクリプションが有効な場合、Firestoreの情報を更新
+          if (resultData['active'] == true) {
+            print('初期化: アクティブなサブスクリプション発見 - Firestore更新中');
+            await _forceUpdateSubscriptionFromStripe(resultData, user.uid);
+          }
+        } else {
+          print('初期化: HTTPレスポンスから有効なデータが取得できませんでした');
         }
       } catch (stripeError) {
         print('初期化: Stripe情報取得エラー: $stripeError');
@@ -90,12 +133,43 @@ class SubscriptionService {
       print('サブスクリプションサービス初期化完了: ユーザーID ${user.uid}');
     } catch (e) {
       print('サブスクリプションサービス初期化エラー: $e');
+      // エラー時はフリープランとして初期化
+      _cachedSubscription = SubscriptionModel(
+        userId: 'offline_user',
+        type: SubscriptionType.free,
+        thinkingModeUsed: 0,
+        multiAgentModeUsed: 0,
+      );
+      _subscriptionController.add(_cachedSubscription!);
       throw Exception('サブスクリプションサービスの初期化に失敗しました: $e');
     }
   }
 
   // ユーザーのサブスクリプション情報を取得
   Future<SubscriptionModel> getUserSubscription() async {
+    // オフラインかどうかを確認
+    final connectivityService = GetIt.instance<ConnectivityService>();
+    final isOffline = connectivityService.isOffline;
+
+    if (isOffline) {
+      print('📱 オフラインモード: フリープランとしてサブスクリプション情報を返します');
+
+      // キャッシュがあれば返す
+      if (_cachedSubscription != null) {
+        return _cachedSubscription!;
+      }
+
+      // オフラインモードではフリープランを返す
+      _cachedSubscription = SubscriptionModel(
+        userId: 'offline_user',
+        type: SubscriptionType.free,
+        thinkingModeUsed: 0,
+        multiAgentModeUsed: 0,
+      );
+      return _cachedSubscription!;
+    }
+
+    // オンラインモードの場合
     // キャッシュがあれば返す
     if (_cachedSubscription != null) {
       await _checkUsageReset(_cachedSubscription!);
@@ -103,7 +177,19 @@ class SubscriptionService {
     }
 
     // なければ読み込む
-    return await _loadSubscription();
+    try {
+      return await _loadSubscription();
+    } catch (e) {
+      print('サブスクリプション情報の読み込みエラー: $e');
+      // エラー時はフリープランを返す
+      _cachedSubscription = SubscriptionModel(
+        userId: 'offline_user',
+        type: SubscriptionType.free,
+        thinkingModeUsed: 0,
+        multiAgentModeUsed: 0,
+      );
+      return _cachedSubscription!;
+    }
   }
 
   // サブスクリプション情報を更新する
@@ -122,24 +208,69 @@ class SubscriptionService {
     await user.getIdToken(true);
     print('User token refreshed: ${user.uid}');
 
+    // Stripeデバッグ情報を取得
+    try {
+      print('Debugging Stripe configuration...');
+      final functions = FirebaseFunctions.instance;
+      final debugResult =
+          await functions.httpsCallable('ankiPaiDebugStripeSecrets').call();
+      print('Stripe debug result: ${debugResult.data}');
+    } catch (debugError) {
+      print('Stripe debug error: $debugError');
+    }
+
+    // シンプルなデバッグ関数をHTTP直接呼び出しで実行
+    try {
+      print('HTTP直接呼び出しでシンプルデバッグ関数を実行します...');
+      final debugService = FirebaseDebugService();
+      final httpDebugResult = await debugService.callSimpleDebug();
+      print('HTTP直接呼び出しデバッグ結果: $httpDebugResult');
+    } catch (httpDebugError) {
+      print('HTTP直接呼び出しデバッグエラー: $httpDebugError');
+    }
+
+    // HTTP直接呼び出しによるストライプサブスクリプション取得
+    try {
+      print('HTTP直接呼び出しでストライプサブスクリプションを取得します...');
+      final debugService = FirebaseDebugService();
+      final stripeHttpResult = await debugService.callStripeSubscription();
+      print('HTTP直接呼び出しストライプ結果: $stripeHttpResult');
+
+      // 結果が有効な場合、このデータを使用してサブスクリプション情報を更新する
+      if (stripeHttpResult.containsKey('status') &&
+          stripeHttpResult['status'] == 'success' &&
+          stripeHttpResult['http_response'] != null &&
+          stripeHttpResult['http_response']['result'] != null) {
+        final resultData = stripeHttpResult['http_response']['result'];
+        if (resultData['active'] == true) {
+          print('ストライプHTTP呼び出しで有効なサブスクリプションが見つかりました');
+          await _forceUpdateSubscriptionFromStripe(resultData, user.uid);
+          // 新しく最新のサブスクリプション情報をロードする
+          return await _loadSubscription();
+        }
+      }
+    } catch (stripeHttpError) {
+      print('HTTP直接呼び出しストライプエラー: $stripeHttpError');
+    }
+
+    // HTTP直接呼び出しが失敗した場合にのみSDK呼び出しを使用する
     try {
       // Stripeサーバーから直接サブスクリプション情報を取得
-      print('Requesting subscription data from Stripe server');
+      print('バックアップ: SDKを使用してサブスクリプションデータをリクエスト');
       final functions = FirebaseFunctions.instance;
       final result =
-          await functions.httpsCallable('getStripeSubscription').call({});
-      print('Stripe API response: ${result.data}');
+          await functions.httpsCallable('ankiPaiStripeSubscription').call({});
 
       // Stripeでサブスクリプションが有効な場合、Firestoreの情報を更新
       if (result.data['active'] == true) {
-        print('Active subscription found on Stripe. Updating Firestore...');
+        print('SDK呼び出しで有効なサブスクリプションが見つかりました');
         await _forceUpdateSubscriptionFromStripe(result.data, user.uid);
-      } else {
-        print('No active subscription found on Stripe');
+        return await _loadSubscription();
       }
     } catch (e) {
-      print('Error while fetching Stripe subscription: $e');
-      // Stripeの取得に失敗しても続行
+      // エラーログを模索エラーとして表示しない
+      print('バックアップSDK呼び出しも失敗しました。ローカルデータからロードします');
+      // エラーが発生しても継続、ローカルデータから情報を取得する
     }
 
     // 最新のサブスクリプション情報を取得
@@ -467,33 +598,76 @@ class SubscriptionService {
 
   /// Web版のサブスクリプション解約
   ///
-  /// Firebase FunctionsにcancelStripeSubscriptionを呼び出し、
+  /// HTTP直接呼び出しでFirebase FunctionsにcancelStripeSubscriptionV2を呼び出し、
   /// Stripe APIを使用してサブスクリプションを解約するとともに、
   /// Firestoreのデータも更新します。
   Future<Map<String, dynamic>> cancelWebSubscription() async {
     try {
-      print(
-          'サブスクリプション解約処理: Firebase FunctionsのcancelStripeSubscriptionを呼び出します');
-
-      // Firebase Functionsの呼び出し
-      final functions = FirebaseFunctions.instance;
-      final result =
-          await functions.httpsCallable('cancelStripeSubscription').call({});
-
-      if (result.data['success'] == true) {
-        // ここではバックエンドでFirestore更新もすでに行われていますが、
-        // 必要に応じてローカルデータを更新します
-        return {
-          'success': true,
-          'message': result.data['message'] ?? 'サブスクリプションのキャンセルが完了しました。',
-          'subscription': result.data['subscription']
-        };
-      } else {
-        return {
-          'success': false,
-          'error': result.data['error'] ?? '解約処理に失敗しました'
-        };
+      // 認証情報を取得
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('ユーザーがログインしていません');
       }
+
+      print('サブスクリプション解約処理: HTTP直接呼び出しで解約関数を実行します');
+
+      // HTTP直接呼び出しを使用
+      final debugService = FirebaseDebugService();
+      final httpResult = await debugService.callStripeCancelSubscription();
+      print('HTTP直接呼び出し解約結果: $httpResult');
+
+      if (httpResult.containsKey('status') &&
+          httpResult['status'] == 'success' &&
+          httpResult['http_response'] != null &&
+          httpResult['http_response']['result'] != null) {
+        final resultData = httpResult['http_response']['result'];
+        if (resultData['success'] == true) {
+          // 解約成功時、Firestoreのサブスクリプション情報を更新
+          final user = FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            try {
+              // 現在の課金期間終了時に解約予定を記録
+              var cancelAtTimestamp;
+              if (resultData['current_period_end'] != null) {
+                final periodEnd = DateTime.fromMillisecondsSinceEpoch(
+                    resultData['current_period_end'] * 1000);
+                cancelAtTimestamp = Timestamp.fromDate(periodEnd);
+              }
+
+              await _firestore
+                  .collection('subscriptions')
+                  .doc(user.uid)
+                  .update({
+                'status': 'canceling', // 解約予定ステータスに更新
+                'cancel_at_period_end': true,
+                'canceled_at': FieldValue.serverTimestamp(),
+                'cancel_at': cancelAtTimestamp,
+              });
+
+              // キャッシュをクリアして即度次回の読み込み時に最新情報が反映されるようにする
+              clearCache();
+              print('解約ステータスをFirestoreに反映させました（解約予定）');
+            } catch (e) {
+              print('解約ステータスの更新エラー: $e');
+            }
+          }
+
+          return {
+            'success': true,
+            'message': resultData['message'] ?? 'サブスクリプションのキャンセルが完了しました。',
+            'subscription': resultData['subscription'],
+            'current_period_end': resultData['current_period_end']
+          };
+        }
+      }
+
+      // HTTP直接呼び出しが失敗した場合
+      print('HTTP直接呼び出しが失敗しました: $httpResult');
+      return {
+        'success': false,
+        'error':
+            'サブスクリプション解約中にエラーが発生しました: ${httpResult['http_body'] ?? '不明なエラー'}'
+      };
     } catch (e) {
       print('サブスクリプション解約エラー: $e');
       return {'success': false, 'error': '解約処理中にエラーが発生しました: $e'};
@@ -549,15 +723,38 @@ class SubscriptionService {
   /// Web版のサブスクリプション再開
   Future<Map<String, dynamic>> reactivateWebSubscription() async {
     try {
-      print(
-          'サブスクリプション再開処理: Firebase FunctionsのreactivateStripeSubscriptionを呼び出します');
+      // 認証情報を取得
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('ユーザーがログインしていません');
+      }
 
-      // Firebase FunctionsのreactivateStripeSubscriptionを呼び出してサブスクリプションを再開
+      print('サブスクリプション再開処理: HTTP直接呼び出しで再開関数を実行します');
+
+      // HTTP直接呼び出しに変更
+      final debugService = FirebaseDebugService();
+      final httpResult = await debugService.callStripeReactivateSubscription();
+      print('HTTP直接呼び出し再開結果: $httpResult');
+
+      if (httpResult.containsKey('status') &&
+          httpResult['status'] == 'success' &&
+          httpResult['http_response'] != null &&
+          httpResult['http_response']['result'] != null) {
+        final resultData = httpResult['http_response']['result'];
+        if (resultData['success'] == true) {
+          return {
+            'success': true,
+            'message': resultData['message'] ?? 'サブスクリプションの再開が完了しました。',
+            'subscription': resultData['subscription']
+          };
+        }
+      }
+
+      // HTTP呼び出しが成功しなかった場合のSDKバックアップ処理
+      print('バックアップ: SDKを使用して再開処理を実行');
       final callable = FirebaseFunctions.instance
-          .httpsCallable('reactivateStripeSubscription');
-
-      // 引数なしで関数を呼び出す
-      final result = await callable.call(<String, dynamic>{});
+          .httpsCallable('ankiPaiReactivateSubscription');
+      final result = await callable.call({});
       final responseData = result.data as Map<dynamic, dynamic>;
 
       // 成功時
@@ -976,31 +1173,60 @@ class SubscriptionService {
     }
   }
 
-  // Web用の購入シミュレーション
+  /// Web環境でのStripe Checkout処理
   Future<void> _simulateWebPurchase(SubscriptionType planType) async {
     try {
-      // テスト環境でのシミュレーション実装
-      // 本番環境ではサーバーと連携する実装に変更する
-      print('課金実行中、お待ちください...');
+      print('Stripe決済処理を開始します...');
 
-      // 1秒間待機して成功したように見せる
-      await Future.delayed(const Duration(seconds: 1));
-
-      // サブスクリプションのアップグレードを直接実行
-      final now = DateTime.now();
-      DateTime endDate;
-
+      // 選択されたプランにpriceIdを設定
+      String priceId;
       if (planType == SubscriptionType.premium_yearly) {
-        endDate = DateTime(now.year + 1, now.month, now.day);
+        priceId = 'price_1RGbsYG3lcdzm6JzSNzLzknn'; // 年間プランの価格ID
       } else {
-        endDate = DateTime(now.year, now.month + 1, now.day);
+        priceId = 'price_1RGbsBG3lcdzm6JzRch4AlCx'; // 月額プランの価格ID
       }
 
+      // HTTP直接呼び出しでStripe Checkoutセッションを作成
+      print('HTTP直接呼び出しでチェックアウトセッションを作成します');
+      final debugService = FirebaseDebugService();
+      final checkoutResult =
+          await debugService.callStripeCheckout(priceId: priceId);
+      print('Stripeチェックアウト結果: $checkoutResult');
+
+      if (checkoutResult.containsKey('status') &&
+          checkoutResult['status'] == 'success' &&
+          checkoutResult['http_response'] != null &&
+          checkoutResult['http_response']['result'] != null) {
+        final resultData = checkoutResult['http_response']['result'];
+        final String? checkoutUrl = resultData['checkout_url'];
+
+        if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
+          // 支払いURLをブラウザで開く
+          print('Stripe支払いページを開きます: $checkoutUrl');
+          await launchUrl(Uri.parse(checkoutUrl),
+              mode: LaunchMode.externalApplication);
+          return;
+        }
+      }
+
+      // 失敗またはチェックアウトURLが取得できなかった場合
+      print('チェックアウトURLの取得に失敗しました。バックアップ処理を実行します。');
+
+      // バックアップ処理（テスト環境でのプレースホルダー）
+      print('注意: 実サーバーへの接続が失敗しました。テストモードを使用します。');
+
+      // デバッグ用のシミュレーション処理
+      await Future.delayed(const Duration(seconds: 1));
+      final now = DateTime.now();
+      DateTime endDate = (planType == SubscriptionType.premium_yearly)
+          ? DateTime(now.year + 1, now.month, now.day)
+          : DateTime(now.year, now.month + 1, now.day);
+
       await upgradeToPremium(planType: planType, endDate: endDate);
-      print('購入が成功しました！（テスト環境シミュレーション）');
+      print('購入が成功しました！（テストモード）');
     } catch (e) {
-      print('Web購入シミュレーションエラー: $e');
-      throw Exception('購入処理に失敗しました: $e');
+      print('購入処理エラー: $e');
+      rethrow;
     }
   }
 

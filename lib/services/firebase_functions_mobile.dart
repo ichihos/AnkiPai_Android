@@ -8,8 +8,14 @@ class FirebaseFunctionsService implements FirebaseFunctionsInterface {
     try {
       print('Mobile: Calling Firebase Function: $functionName');
       
-      // Call Firebase Function using the native plugin
-      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(functionName);
+      // Set timeout to 300 seconds (5 minutes)
+      final FirebaseFunctions functions = FirebaseFunctions.instance;
+      
+      // Call Firebase Function using the native plugin with increased timeout
+      final HttpsCallable callable = functions.httpsCallable(
+        functionName,
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 300))
+      );
       final result = await callable.call(data);
       
       return result.data as Map<String, dynamic>;

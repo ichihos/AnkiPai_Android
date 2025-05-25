@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   final String initialDisplayName;
@@ -27,9 +28,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   @override
   void initState() {
     super.initState();
-    _displayNameController = TextEditingController(text: widget.initialDisplayName);
+    _displayNameController =
+        TextEditingController(text: widget.initialDisplayName);
     _profilePhotoUrl = widget.profilePhotoUrl;
-    
+
     // 変更を監視
     _displayNameController.addListener(_checkChanges);
   }
@@ -42,9 +44,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   // 変更があるかチェック
   void _checkChanges() {
-    final hasNameChange = _displayNameController.text != widget.initialDisplayName;
+    final hasNameChange =
+        _displayNameController.text != widget.initialDisplayName;
     final hasPhotoChange = _profilePhotoUrl != widget.profilePhotoUrl;
-    
+
     setState(() {
       _hasChanges = hasNameChange || hasPhotoChange;
     });
@@ -63,7 +66,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera),
-              title: const Text('カメラで撮影'),
+              title: Text(AppLocalizations.of(context)!.takePhoto),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
@@ -71,7 +74,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('ギャラリーから選択'),
+              title: Text(AppLocalizations.of(context)!.chooseFromGallery),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.gallery);
@@ -80,7 +83,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             if (_profilePhotoUrl != null && _profilePhotoUrl!.isNotEmpty)
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: const Text('プロフィール画像を削除',
+                title: Text(AppLocalizations.of(context)!.removeProfileImage,
                     style: TextStyle(color: Colors.red)),
                 onTap: () {
                   Navigator.pop(context);
@@ -113,7 +116,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       }
 
       // 画像のアップロード
-      final photoUrl = await authService.uploadProfileImage(imageFile: pickedFile);
+      final photoUrl =
+          await authService.uploadProfileImage(imageFile: pickedFile);
 
       // 結果を表示
       if (mounted) {
@@ -124,8 +128,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         _checkChanges();
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('プロフィール画像を更新しました'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.profileImageUpdated),
             backgroundColor: Colors.green,
           ),
         );
@@ -139,7 +143,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('画像の更新に失敗しました: $e'),
+            content: Text(
+                AppLocalizations.of(context)!.imageUpdateFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -166,12 +171,12 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      
+
       // 表示名の更新
       if (_displayNameController.text != widget.initialDisplayName) {
         await authService.updateDisplayName(_displayNameController.text);
       }
-      
+
       // プロフィール画像の更新
       if (_profilePhotoUrl != widget.profilePhotoUrl) {
         if (_profilePhotoUrl == null) {
@@ -188,8 +193,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('プロフィールを更新しました'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.profileUpdated),
             backgroundColor: Colors.green,
           ),
         );
@@ -208,7 +213,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('プロフィールの更新に失敗しました: $e'),
+            content: Text(AppLocalizations.of(context)!
+                .profileUpdateFailed(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -219,16 +225,16 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   // 変更を破棄する前に確認
   Future<bool> _confirmDiscard() async {
     if (!_hasChanges) return true;
-    
+
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('確認'),
-        content: const Text('変更内容が保存されていません。\n破棄してもよろしいですか？'),
+        title: Text(AppLocalizations.of(context)!.confirmation),
+        content: Text(AppLocalizations.of(context)!.discardChangesConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -236,12 +242,12 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
               backgroundColor: Colors.red.shade400,
               foregroundColor: Colors.white,
             ),
-            child: const Text('破棄する'),
+            child: Text(AppLocalizations.of(context)!.discard),
           ),
         ],
       ),
     );
-    
+
     return result ?? false;
   }
 
@@ -251,7 +257,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       onWillPop: _confirmDiscard,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('プロフィール編集'),
+          title: Text(AppLocalizations.of(context)!.profileEdit),
           elevation: 0,
           foregroundColor: Colors.white,
           flexibleSpace: Container(
@@ -271,7 +277,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             TextButton(
               onPressed: _hasChanges && !_isLoading ? _saveChanges : null,
               child: Text(
-                '保存',
+                AppLocalizations.of(context)!.save,
                 style: TextStyle(
                   color: _hasChanges && !_isLoading
                       ? Colors.white
@@ -290,14 +296,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 24),
-                    
+
                     // プロフィール画像エリア
                     Center(
                       child: Stack(
                         children: [
                           // プロフィール画像またはデフォルトアイコン
                           GestureDetector(
-                            onTap: () => _isUpdatingPhoto ? null : _showPhotoOptions(),
+                            onTap: () =>
+                                _isUpdatingPhoto ? null : _showPhotoOptions(),
                             child: CircleAvatar(
                               radius: 60,
                               backgroundColor: Colors.grey.shade200,
@@ -327,7 +334,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                                                   return child;
                                                 }
                                                 return const Center(
-                                                  child: CircularProgressIndicator(),
+                                                  child:
+                                                      CircularProgressIndicator(),
                                                 );
                                               },
                                             )
@@ -339,15 +347,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                                     ),
                             ),
                           ),
-                          
+
                           // 編集ボタン
                           Positioned(
                             bottom: 0,
                             right: 0,
                             child: GestureDetector(
-                              onTap: () => _isUpdatingPhoto
-                                  ? null
-                                  : _showPhotoOptions(),
+                              onTap: () =>
+                                  _isUpdatingPhoto ? null : _showPhotoOptions(),
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
@@ -369,9 +376,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 32),
-                    
+
                     // 表示名編集フォーム
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -390,7 +397,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '表示名',
+                            AppLocalizations.of(context)!.displayNameLabel,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -401,10 +408,12 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                           TextFormField(
                             controller: _displayNameController,
                             decoration: InputDecoration(
-                              hintText: '表示名を入力',
+                              hintText:
+                                  AppLocalizations.of(context)!.displayNameHint,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(color: Colors.grey.shade300),
+                                borderSide:
+                                    BorderSide(color: Colors.grey.shade300),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -425,7 +434,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '他のユーザーに表示される名前です',
+                            AppLocalizations.of(context)!
+                                .displayNameDescription,
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade600,
@@ -434,16 +444,18 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 32),
-                    
+
                     // 保存ボタン（下部）
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _hasChanges && !_isLoading ? _saveChanges : null,
+                        onPressed:
+                            _hasChanges && !_isLoading ? _saveChanges : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 53, 152, 71),
+                          backgroundColor:
+                              const Color.fromARGB(255, 53, 152, 71),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -457,22 +469,22 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                                 width: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 3,
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
                                 ),
                               )
-                            : const Text(
-                                '変更を保存',
-                                style: TextStyle(
+                            : Text(
+                                AppLocalizations.of(context)!.saveChanges,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // キャンセルボタン
                     SizedBox(
                       width: double.infinity,
@@ -489,7 +501,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                           ),
                         ),
                         child: Text(
-                          'キャンセル',
+                          AppLocalizations.of(context)!.cancel,
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey.shade700,

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
 import '../services/subscription_service.dart';
 import '../models/subscription_model.dart';
+import '../providers/language_provider.dart';
 import 'login_screen.dart';
 import 'subscription_info_screen.dart';
 import 'notification_settings_screen.dart';
@@ -12,6 +13,7 @@ import 'privacy_policy_screen.dart';
 import 'terms_of_service_screen.dart';
 import 'contact_screen.dart';
 import 'commercial_transaction_screen.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -67,7 +69,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('情報の取得に失敗しました: $e'),
+            content: Text(
+                AppLocalizations.of(context)!.failedToLoadInfo(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -87,7 +90,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       },
       icon: const Icon(Icons.workspace_premium),
-      label: const Text('プランをアップグレード'),
+      label: Text(AppLocalizations.of(context)!.upgradeYourPlan),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.amber,
         foregroundColor: Colors.white,
@@ -101,16 +104,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ログアウト'),
-        content: const Text('本当にログアウトしますか？'),
+        title: Text(AppLocalizations.of(context)!.logout),
+        content: Text(AppLocalizations.of(context)!.logoutConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('ログアウト'),
+            child: Text(AppLocalizations.of(context)!.logout),
           ),
         ],
       ),
@@ -134,20 +137,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final firstConfirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('アカウントの削除'),
-        content: const Text(
-            'アカウントを削除しますか？\n\n注意: アカウントを削除すると、すべてのデータ（覚え方、カードセット、プロフィールなど）が完全に削除され、元に戻すことができません。'),
+        title: Text(AppLocalizations.of(context)!.deleteAccount),
+        content: Text(AppLocalizations.of(context)!.deleteAccountConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('削除する'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -159,19 +161,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final finalConfirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('最終確認'),
-        content: const Text('この操作は取り消すことができません。\n\n本当にアカウントを削除しますか？'),
+        title: Text(AppLocalizations.of(context)!.finalConfirmation),
+        content:
+            Text(AppLocalizations.of(context)!.finalDeleteConfirmationMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('削除する'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -183,13 +186,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const AlertDialog(
+        builder: (context) => AlertDialog(
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('アカウントを削除しています...')
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(AppLocalizations.of(context)!.deletingAccount)
             ],
           ),
         ),
@@ -211,8 +214,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           // 完了メッセージを表示
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('アカウントが削除されました'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.accountDeleted),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 3),
             ),
@@ -224,7 +227,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Navigator.of(context).pop(); // ローディングダイアログ閉じる
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('アカウントの削除に失敗しました: $e'),
+              content: Text(AppLocalizations.of(context)!
+                  .failedToDeleteAccount(e.toString())),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 5),
             ),
@@ -247,7 +251,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera),
-              title: const Text('カメラで撮影'),
+              title: Text(AppLocalizations.of(context)!.camera),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
@@ -255,7 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('ギャラリーから選択'),
+              title: Text(AppLocalizations.of(context)!.gallery),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.gallery);
@@ -264,7 +268,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (_profilePhotoUrl != null && _profilePhotoUrl!.isNotEmpty)
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: const Text('プロフィール画像を削除',
+                title: Text(AppLocalizations.of(context)!.deleteProfilePicture,
                     style: TextStyle(color: Colors.red)),
                 onTap: () {
                   Navigator.pop(context);
@@ -308,8 +312,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('プロフィール画像を更新しました'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.profilePictureUpdated),
             backgroundColor: Colors.green,
           ),
         );
@@ -323,7 +327,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('画像の更新に失敗しました: $e'),
+            content: Text(AppLocalizations.of(context)!
+                .failedToUpdateImage(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -349,8 +354,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('プロフィール画像を削除しました'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.profilePictureDeleted),
             backgroundColor: Colors.green,
           ),
         );
@@ -363,7 +368,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('プロフィール画像の削除に失敗しました: $e'),
+            content: Text(AppLocalizations.of(context)!
+                .failedToDeleteProfilePicture(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -372,6 +378,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // 設定項目ウィジェット
+  // 言語選択ダイアログを表示
+  void _showLanguageSelectionDialog(BuildContext context) {
+    final languageProvider =
+        Provider.of<LanguageProvider>(context, listen: false);
+    final currentLocale = languageProvider.currentLocale.languageCode;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.selectLanguage),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 日本語選択
+            ListTile(
+              leading: Radio<String>(
+                value: 'ja',
+                groupValue: currentLocale,
+                onChanged: (value) {
+                  if (value != null) {
+                    languageProvider.changeLocale(const Locale('ja'));
+                    Navigator.pop(context);
+                    // 言語切替メッセージを表示
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context)!
+                            .languageSwitchedJapanese),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                },
+              ),
+              title: Text(AppLocalizations.of(context)!.japanese),
+              onTap: () {
+                languageProvider.changeLocale(const Locale('ja'));
+                Navigator.pop(context);
+                // 言語切替メッセージを表示
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        AppLocalizations.of(context)!.languageSwitchedJapanese),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+            ),
+            // 英語選択
+            ListTile(
+              leading: Radio<String>(
+                value: 'en',
+                groupValue: currentLocale,
+                onChanged: (value) {
+                  if (value != null) {
+                    languageProvider.changeLocale(const Locale('en'));
+                    Navigator.pop(context);
+                    // 言語切替メッセージを表示
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context)!
+                            .languageSwitchedEnglish),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                },
+              ),
+              title: Text(AppLocalizations.of(context)!.english),
+              onTap: () {
+                languageProvider.changeLocale(const Locale('en'));
+                Navigator.pop(context);
+                // 言語切替メッセージを表示
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        AppLocalizations.of(context)!.languageSwitchedEnglish),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+            ),
+            // 中国語選択
+            ListTile(
+              leading: Radio<String>(
+                value: 'zh',
+                groupValue: currentLocale,
+                onChanged: (value) {
+                  if (value != null) {
+                    languageProvider.changeLocale(const Locale('zh'));
+                    Navigator.pop(context);
+                    // 言語切替メッセージを表示
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context)!
+                            .languageSwitchedChinese),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                },
+              ),
+              title: Text(AppLocalizations.of(context)!.chinese),
+              onTap: () {
+                languageProvider.changeLocale(const Locale('zh'));
+                Navigator.pop(context);
+                // 言語切替メッセージを表示
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        AppLocalizations.of(context)!.languageSwitchedChinese),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.cancel),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSettingItem({
     required IconData icon,
     required String title,
@@ -404,10 +537,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final authService = Provider.of<AuthService>(context);
     final user = authService.currentUser;
     final bool isAnonymous = user?.isAnonymous ?? true;
-    final String userEmail = user?.email ?? '匿名ユーザー';
+    final String userEmail = user?.email ?? l10n.anonymousUser;
     final String displayName = user?.displayName ?? userEmail;
 
     return Scaffold(
@@ -426,11 +560,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ),
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'プロフィール',
+              AppLocalizations.of(context)!.profile,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -456,7 +590,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       size: 16, color: Colors.amber.shade300),
                   const SizedBox(width: 4),
                   Text(
-                    'プレミアム',
+                    AppLocalizations.of(context)!.premium,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -468,7 +602,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
-            tooltip: '情報を更新',
+            tooltip: AppLocalizations.of(context)!.refreshUserInfo,
             onPressed: _loadUserInfo,
           ),
         ],
@@ -640,9 +774,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(width: 6),
                               Text(
                                 _subscription != null
-                                    ? _subscription!
-                                        .subscriptionName // 新しい表示名ゲッターを使用
-                                    : '無料プラン',
+                                    ? _getLocalizedSubscriptionName(
+                                        _subscription!.type, context)
+                                    : AppLocalizations.of(context)!.freePlan,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
@@ -743,7 +877,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'プランと料金',
+                                      l10n.planAndPricing,
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -753,8 +887,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     const SizedBox(height: 4),
                                     Text(
                                       _subscription != null
-                                          ? _subscription!.subscriptionName
-                                          : '無料プラン',
+                                          ? _getLocalizedSubscriptionName(
+                                              _subscription!.type, context)
+                                          : AppLocalizations.of(context)!
+                                              .freePlan,
                                       style: TextStyle(
                                         fontSize: 14,
                                         color:
@@ -784,7 +920,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      '設定',
+                      AppLocalizations.of(context)!.settings,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -810,9 +946,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       children: [
                         // 通知設定
+                        // 言語設定
+                        _buildSettingItem(
+                          icon: Icons.language_outlined,
+                          title: AppLocalizations.of(context)!.languageSettings,
+                          onTap: () {
+                            _showLanguageSelectionDialog(context);
+                          },
+                        ),
+
+                        // 通知設定
                         _buildSettingItem(
                           icon: Icons.notifications_outlined,
-                          title: '通知設定',
+                          title: AppLocalizations.of(context)!
+                              .notificationSettings,
                           iconColor: Colors.orange,
                           onTap: () {
                             // 通知設定画面へ移動
@@ -835,7 +982,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'アカウント',
+                      l10n.accountSectionTitle,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -863,7 +1010,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         // プロフィール編集
                         _buildSettingItem(
                           icon: Icons.edit,
-                          title: 'プロフィール編集',
+                          title: AppLocalizations.of(context)!.editProfile,
                           onTap: () async {
                             // プロフィール編集画面へ遷移
                             final result = await Navigator.push(
@@ -890,7 +1037,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         // アカウント削除
                         _buildSettingItem(
                           icon: Icons.delete_forever,
-                          title: 'アカウントを削除',
+                          title: l10n.deleteAccount,
                           iconColor: Colors.red.shade700,
                           onTap: _showDeleteAccountConfirmation,
                         ),
@@ -899,7 +1046,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         // ログアウト
                         _buildSettingItem(
                           icon: Icons.logout,
-                          title: 'ログアウト',
+                          title: AppLocalizations.of(context)!.logout,
                           iconColor: Colors.red,
                           onTap: _showSignOutConfirmation,
                         ),
@@ -913,7 +1060,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'アプリについて',
+                      l10n.aboutAppSectionTitle,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -941,7 +1088,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         // プライバシーポリシー
                         _buildSettingItem(
                           icon: Icons.privacy_tip_outlined,
-                          title: 'プライバシーポリシー',
+                          title: l10n.privacyPolicy,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -957,7 +1104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         // 利用規約
                         _buildSettingItem(
                           icon: Icons.description_outlined,
-                          title: '利用規約',
+                          title: l10n.termsOfService,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -973,7 +1120,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         // お問い合わせ
                         _buildSettingItem(
                           icon: Icons.help_outline,
-                          title: 'お問い合わせ',
+                          title: l10n.contactUs,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -988,7 +1135,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         // 特定商取引法に基づく表記
                         _buildSettingItem(
                           icon: Icons.shopping_bag_outlined,
-                          title: '特定商取引法に基づく表記',
+                          title: l10n.commercialTransactionAct,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -1010,10 +1157,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Icon(Icons.info_outline,
                                   color: Colors.grey.shade600),
                               const SizedBox(width: 16),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
-                                  'バージョン',
-                                  style: TextStyle(
+                                  l10n.versionInfo,
+                                  style: const TextStyle(
                                     fontSize: 16,
                                   ),
                                 ),
@@ -1037,5 +1184,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
     );
+  }
+
+  String _getLocalizedSubscriptionName(
+      SubscriptionType type, BuildContext context) {
+    switch (type) {
+      case SubscriptionType.premium_monthly:
+        return AppLocalizations.of(context)!.monthlyPremiumPlan;
+      case SubscriptionType.premium_yearly:
+        return AppLocalizations.of(context)!.yearlyPremiumPlan;
+      default:
+        return AppLocalizations.of(context)!.freePlan;
+    }
   }
 }

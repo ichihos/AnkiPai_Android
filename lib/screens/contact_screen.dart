@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher.dart' show launchUrl, LaunchMode;
 import 'package:flutter/foundation.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'dart:io' show Platform;
 
 class ContactScreen extends StatelessWidget {
   const ContactScreen({super.key});
@@ -10,18 +12,22 @@ class ContactScreen extends StatelessWidget {
   final String _contactEmail = 'AnkiPai.app@gmail.com'; // 実際のメールアドレス
 
   Future<void> launchMail(String url) async {
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url));
-    } else {
-      final Error error = ArgumentError('Error launching $url');
-      throw error;
+    final uri = Uri.parse(url);
+    if (!await launchUrl(
+      uri,
+      mode: Platform.isAndroid || Platform.isIOS
+          ? LaunchMode.externalApplication
+          : LaunchMode.platformDefault,
+    )) {
+      throw Exception('Error launching $url');
     }
   }
 
-  void openMailApp() async {
-    final title = Uri.encodeComponent('お問い合わせ');
-    final body = Uri.encodeComponent(
-        '暗記Paiに関するお問い合わせ、ご意見、バグ報告などございましたら、お気軽にお問い合わせください。');
+  void openMailApp(BuildContext context) async {
+    final title =
+        Uri.encodeComponent(AppLocalizations.of(context)!.contactEmailSubject);
+    final body =
+        Uri.encodeComponent(AppLocalizations.of(context)!.contactEmailBody);
     const mailAddress = 'AnkiPai.app@gmail.com'; //メールアドレス
 
     return launchMail(
@@ -33,8 +39,8 @@ class ContactScreen extends StatelessWidget {
   void _copyEmailToClipboard(BuildContext context) {
     Clipboard.setData(ClipboardData(text: _contactEmail));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('メールアドレスをコピーしました'),
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.emailCopied),
         backgroundColor: Colors.green,
       ),
     );
@@ -44,7 +50,7 @@ class ContactScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('お問い合わせ'),
+        title: Text(AppLocalizations.of(context)!.contactUs),
         elevation: 0,
         foregroundColor: Colors.white,
         flexibleSpace: Container(
@@ -77,9 +83,9 @@ class ContactScreen extends StatelessWidget {
                     color: Colors.green.shade700,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'お問い合わせ',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.contactUs,
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
@@ -91,7 +97,7 @@ class ContactScreen extends StatelessWidget {
 
             // お問い合わせ方法の説明
             Text(
-              '暗記Paiに関するご質問、ご意見、バグ報告などがございましたら、以下のメールアドレスまでお気軽にお問い合わせください。',
+              AppLocalizations.of(context)!.contactDescription,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey.shade800,
@@ -121,7 +127,7 @@ class ContactScreen extends StatelessWidget {
                       Icon(Icons.email, color: Colors.green.shade700),
                       const SizedBox(width: 12),
                       Text(
-                        'メールアドレス',
+                        AppLocalizations.of(context)!.emailAddressLabel,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -154,12 +160,12 @@ class ContactScreen extends StatelessWidget {
                         child: ElevatedButton.icon(
                           onPressed: () async {
                             if (!kIsWeb) {
-                              openMailApp();
+                              openMailApp(context);
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Webブラウザではメールを開くことができません。お問い合わせメールアドレスをコピーして、メールソフトで送信してください。'),
+                                SnackBar(
+                                  content: Text(AppLocalizations.of(context)!
+                                      .webBrowserEmailError),
                                   backgroundColor: Colors.black,
                                   duration: Duration(seconds: 3),
                                 ),
@@ -167,7 +173,7 @@ class ContactScreen extends StatelessWidget {
                             }
                           },
                           icon: const Icon(Icons.mail_outline),
-                          label: const Text('メールを送信'),
+                          label: Text(AppLocalizations.of(context)!.sendEmail),
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 const Color.fromARGB(255, 53, 152, 71),
@@ -180,7 +186,7 @@ class ContactScreen extends StatelessWidget {
                       IconButton(
                         onPressed: () => _copyEmailToClipboard(context),
                         icon: const Icon(Icons.copy),
-                        tooltip: 'コピー',
+                        tooltip: AppLocalizations.of(context)!.copy,
                         style: IconButton.styleFrom(
                           backgroundColor: Colors.grey.shade200,
                           foregroundColor: Colors.grey.shade700,
@@ -209,7 +215,7 @@ class ContactScreen extends StatelessWidget {
                       Icon(Icons.info_outline, color: Colors.amber.shade800),
                       const SizedBox(width: 8),
                       Text(
-                        'お問い合わせの際の注意事項',
+                        AppLocalizations.of(context)!.contactNotes,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -220,9 +226,7 @@ class ContactScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '• お問い合わせの内容によっては、回答に時間がかかる場合があります。\n'
-                    '• アプリのバージョン、お使いのデバイスの情報をお知らせいただくと、より早く問題解決ができます。\n'
-                    '• バグ報告の際は、発生状況をできるだけ詳しくお知らせください。',
+                    AppLocalizations.of(context)!.contactNotesContent,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey.shade800,

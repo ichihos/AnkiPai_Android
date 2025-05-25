@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../models/notification_settings_model.dart';
 import '../services/notification_service.dart';
@@ -48,7 +49,7 @@ class _NotificationSettingsScreenState
       _isLoading = true;
     });
 
-    await _notificationService.saveNotificationSettings(_settings);
+    await _notificationService.updateNotificationSettings(_settings);
 
     setState(() {
       _isLoading = false;
@@ -56,8 +57,8 @@ class _NotificationSettingsScreenState
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('通知設定を保存しました'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.notificationSettingsSaved),
           backgroundColor: Colors.green,
         ),
       );
@@ -68,7 +69,7 @@ class _NotificationSettingsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('通知設定'),
+        title: Text(AppLocalizations.of(context)!.notificationSettings),
         backgroundColor: const Color.fromARGB(255, 53, 152, 71),
         foregroundColor: Colors.white,
       ),
@@ -82,12 +83,12 @@ class _NotificationSettingsScreenState
                   children: [
                     // 通知の全体設定
                     _buildSettingsSection(
-                      title: '通知',
-                      description: '通知を受け取るかどうかを設定します。オフにすると、すべての通知が無効になります。',
+                      title: AppLocalizations.of(context)!.notificationSectionTitle,
+                      description: AppLocalizations.of(context)!.notificationSectionDescription,
                       child: SwitchListTile(
-                        title: const Text('通知を有効にする'),
+                        title: Text(AppLocalizations.of(context)!.enableNotifications),
                         subtitle: Text(
-                          _settings.isEnabled ? '通知はオンです' : '通知はオフです',
+                          _settings.isEnabled ? AppLocalizations.of(context)!.notificationsOn : AppLocalizations.of(context)!.notificationsOff,
                           style: TextStyle(
                             color: _settings.isEnabled
                                 ? Colors.green
@@ -109,11 +110,11 @@ class _NotificationSettingsScreenState
                     // 通知種類別の設定
                     if (_settings.isEnabled) ...[
                       _buildSettingsSection(
-                        title: '暗記法生成完了通知',
-                        description: 'バックグラウンドで暗記法の生成が完了したときに通知します。',
+                        title: AppLocalizations.of(context)!.techniqueGenerationNotificationTitle,
+                        description: AppLocalizations.of(context)!.techniqueGenerationNotificationDescription,
                         child: SwitchListTile(
-                          title: const Text('暗記法生成完了通知'),
-                          subtitle: const Text('バックグラウンドで生成が完了したら通知'),
+                          title: Text(AppLocalizations.of(context)!.memorizationCompletedNotification),
+                          subtitle: Text(AppLocalizations.of(context)!.notifyWhenGenerationCompletes),
                           value:
                               _settings.enableTechniqueGenerationNotifications,
                           activeColor: Colors.green,
@@ -128,11 +129,11 @@ class _NotificationSettingsScreenState
                       ),
                       const SizedBox(height: 16),
                       _buildSettingsSection(
-                        title: '暗記法学習リマインダー',
-                        description: '忘却曲線に基づいて、作成した暗記法の復習時期を通知します。',
+                        title: AppLocalizations.of(context)!.memoryMethodReminderTitle,
+                        description: AppLocalizations.of(context)!.memoryMethodReminderDescription,
                         child: SwitchListTile(
-                          title: const Text('暗記法学習リマインダー'),
-                          subtitle: const Text('忘却曲線に基づく学習タイミングを通知'),
+                          title: Text(AppLocalizations.of(context)!.memorizationMethodReminder),
+                          subtitle: Text(AppLocalizations.of(context)!.notifyOptimalTimingForgeeting),
                           value: _settings.enableTechniqueLearningReminders,
                           activeColor: Colors.green,
                           onChanged: (value) {
@@ -146,11 +147,11 @@ class _NotificationSettingsScreenState
                       ),
                       const SizedBox(height: 16),
                       _buildSettingsSection(
-                        title: 'フラッシュカード学習リマインダー',
-                        description: '忘却曲線に基づいて、作成したフラッシュカードの復習時期を通知します。',
+                        title: AppLocalizations.of(context)!.flashcardReminderTitle,
+                        description: AppLocalizations.of(context)!.flashcardReminderDescription,
                         child: SwitchListTile(
-                          title: const Text('フラッシュカード学習リマインダー'),
-                          subtitle: const Text('忘却曲線に基づく学習タイミングを通知'),
+                          title: Text(AppLocalizations.of(context)!.flashcardLearningReminder),
+                          subtitle: Text(AppLocalizations.of(context)!.notifyOptimalTimingForgeeting),
                           value: _settings.enableFlashcardLearningReminders,
                           activeColor: Colors.green,
                           onChanged: (value) {
@@ -178,7 +179,7 @@ class _NotificationSettingsScreenState
                             vertical: 12,
                           ),
                         ),
-                        child: const Text('設定を保存'),
+                        child: Text(AppLocalizations.of(context)!.saveSettings),
                       ),
                     ),
 
@@ -263,9 +264,9 @@ class _NotificationSettingsScreenState
             children: [
               Icon(Icons.info_outline, color: Colors.blue.shade700),
               const SizedBox(width: 8),
-              const Text(
-                '忘却曲線について',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.aboutForgettingCurve,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -273,22 +274,21 @@ class _NotificationSettingsScreenState
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
-            '忘却曲線は、人間の記憶がどのように減衰するかを示す曲線です。'
-            '効果的な学習のためには、適切なタイミングで復習することが重要です。',
-            style: TextStyle(fontSize: 14),
+          Text(
+            AppLocalizations.of(context)!.forgettingCurveDescription,
+            style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 8),
-          const Text(
-            '通常、以下のタイミングで復習することが推奨されています：',
-            style: TextStyle(fontSize: 14),
+          Text(
+            AppLocalizations.of(context)!.reviewRecommendation,
+            style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 8),
-          _buildTimelineItem('1回目の復習：学習した日の1日後'),
-          _buildTimelineItem('2回目の復習：前回の復習から3日後'),
-          _buildTimelineItem('3回目の復習：前回の復習から1週間後'),
-          _buildTimelineItem('4回目の復習：前回の復習から2週間後'),
-          _buildTimelineItem('5回目の復習：前回の復習から1ヶ月後'),
+          _buildTimelineItem(AppLocalizations.of(context)!.firstReview),
+          _buildTimelineItem(AppLocalizations.of(context)!.secondReview),
+          _buildTimelineItem(AppLocalizations.of(context)!.thirdReview),
+          _buildTimelineItem(AppLocalizations.of(context)!.fourthReview),
+          _buildTimelineItem(AppLocalizations.of(context)!.fifthReview),
         ],
       ),
     );

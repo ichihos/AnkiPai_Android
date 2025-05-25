@@ -36,6 +36,7 @@ class MemoryTechnique {
   final String image; // 暗記法に関連する画像の説明
   final String content; // 暗記法の対象となる内容
   final String taskId; // バックグラウンドタスクのID
+  final String? userId; // 暗記法を作成したユーザーID
 
   MemoryTechnique({
     this.id = '',
@@ -51,6 +52,7 @@ class MemoryTechnique {
     this.image = '',
     this.content = '',
     this.taskId = '',
+    this.userId,
   });
 
   factory MemoryTechnique.fromMap(Map<String, dynamic> data) {
@@ -76,6 +78,7 @@ class MemoryTechnique {
       image: data['image'] ?? '',
       content: data['content'] ?? '',
       taskId: data['taskId'] ?? '',
+      userId: data['userId'],
       flashcards: () {
         // Handle both old single flashcard format and new multiple flashcards format
         if (data['flashcards'] != null && data['flashcards'] is List) {
@@ -121,6 +124,7 @@ class MemoryTechnique {
       'itemDescription': itemDescription,
       'image': image,
       'createdAt': DateTime.now().millisecondsSinceEpoch, // 作成日時を追加
+      'userId': userId, // ユーザーIDを追加
       'flashcards': flashcards.map((card) => card.toMap()).toList(),
     };
   }

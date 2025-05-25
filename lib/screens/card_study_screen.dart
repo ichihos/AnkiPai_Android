@@ -11,6 +11,7 @@ import '../services/ad_service.dart';
 import '../services/subscription_service.dart';
 
 import 'package:flutter_math_fork/flutter_math.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CardStudyScreen extends StatefulWidget {
   final String cardSetId;
@@ -159,7 +160,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('カード情報の取得に失敗しました: $errorMessage'),
+                content: Text(AppLocalizations.of(context)!.failedToGetCardInfo(errorMessage)),
                 backgroundColor: Colors.red.shade400,
                 action: SnackBarAction(
                   label: 'ログイン',
@@ -189,7 +190,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('データの読み込みに失敗しました: $errorMessage'),
+            content: Text(AppLocalizations.of(context)!.failedToLoadData(errorMessage)),
             backgroundColor: Colors.red.shade400,
             action: SnackBarAction(
               label: 'ログイン',
@@ -660,7 +661,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
                   Icon(Icons.touch_app, color: Colors.blue.shade700, size: 16),
                   const SizedBox(width: 4),
                   Text(
-                    'タップしてカードを裏返す',
+                    AppLocalizations.of(context)!.tapToFlip,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.blue.shade700,
@@ -755,7 +756,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '学習完了！',
+                            AppLocalizations.of(context)!.studyCompleted,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 22,
@@ -763,7 +764,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
                             ),
                           ),
                           Text(
-                            'お疲れ様でした！',
+                            AppLocalizations.of(context)!.goodJob,
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.blue.shade700,
@@ -835,7 +836,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
                             color: Colors.green.shade600,
                             bgColor: Colors.green.shade50,
                             count: _correctCount,
-                            label: '正解',
+                            label: AppLocalizations.of(context)!.correct,
                           ),
                           Container(
                             height: 60,
@@ -847,7 +848,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
                             color: Colors.red.shade600,
                             bgColor: Colors.red.shade50,
                             count: _incorrectCount,
-                            label: '不正解',
+                            label: AppLocalizations.of(context)!.incorrect,
                           ),
                         ],
                       ),
@@ -884,8 +885,6 @@ class _CardStudyScreenState extends State<CardStudyScreen>
                 ),
                 const SizedBox(height: 24),
 
-                // バナー広告表示エリアを削除（インタースティシャル広告に置き換えるため）
-
                 // ボタン
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -904,7 +903,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
                         ),
                       ),
                       child: Text(
-                        '終了',
+                        AppLocalizations.of(context)!.finish,
                         style: TextStyle(
                           color: Colors.blue.shade700,
                           fontWeight: FontWeight.bold,
@@ -917,7 +916,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
                         _restartStudy();
                       },
                       icon: const Icon(Icons.replay),
-                      label: const Text('もう一度'),
+                      label: Text(AppLocalizations.of(context)!.tryAgain),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue.shade500,
                         foregroundColor: Colors.white,
@@ -998,12 +997,15 @@ class _CardStudyScreenState extends State<CardStudyScreen>
   }
 
   // 正答率に応じたメッセージを返す
+  // 評価メッセージを国際化対応にローカライズされた文字列で返す
   String _getResultMessage(double percentage) {
-    if (percentage >= 80) return '素晴らしい成績です！よく理解できています。';
-    if (percentage >= 70) return '良い成績です！あともう少し復習しましょう。';
-    if (percentage >= 60) return 'まずまずの成績です。もう少し復習が必要かもしれません。';
-    if (percentage >= 50) return '基本的な理解はできています。定期的に復習しましょう。';
-    return 'もう少し復習が必要です。焦らず繰り返し学習しましょう。';
+    final AppLocalizations localizations = AppLocalizations.of(context)!;
+    
+    if (percentage >= 80) return localizations.studyResultExcellent;
+    if (percentage >= 70) return localizations.studyResultGood;
+    if (percentage >= 60) return localizations.studyResultFair;
+    if (percentage >= 50) return localizations.studyResultOkay;
+    return localizations.studyResultNeedsWork;
   }
 
   void _restartStudy() {
@@ -1028,7 +1030,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(
-          '学習: ${widget.cardSetTitle}',
+          '${AppLocalizations.of(context)!.study}: ${widget.cardSetTitle}',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
@@ -1055,7 +1057,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
               }
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('カードをシャッフルしました'),
+                  content: Text(AppLocalizations.of(context)!.cardShuffled),
                   backgroundColor: Colors.blue.shade400,
                   duration: const Duration(seconds: 1),
                 ),
@@ -1064,7 +1066,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
           ),
           IconButton(
             icon: const Icon(Icons.info_outline),
-            tooltip: '学習のヒント',
+            tooltip: AppLocalizations.of(context)!.studyHints,
             onPressed: () {
               _showStudyHintDialog(context);
             },
@@ -1146,7 +1148,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'カードを追加してから学習を始めましょう',
+                            AppLocalizations.of(context)!.addCardBeforeStudy,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 16,
@@ -1157,7 +1159,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
                           ElevatedButton.icon(
                             onPressed: () => Navigator.of(context).pop(),
                             icon: const Icon(Icons.arrow_back),
-                            label: const Text('戻る'),
+                            label: Text(AppLocalizations.of(context)!.back),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue.shade500,
                               foregroundColor: Colors.white,
@@ -1193,7 +1195,7 @@ class _CardStudyScreenState extends State<CardStudyScreen>
                                 // スクリーンリーダーでフィードバックを表示
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: const Text('次のカードに進みました'),
+                                    content: Text(AppLocalizations.of(context)!.movedToNextCard),
                                     backgroundColor: Colors.green.shade400,
                                     duration: const Duration(milliseconds: 500),
                                   ),
@@ -1238,14 +1240,14 @@ class _CardStudyScreenState extends State<CardStudyScreen>
                             _buildActionButton(
                               onPressed: () => _nextCard(correct: false),
                               icon: Icons.close,
-                              label: '不正解',
+                              label: AppLocalizations.of(context)!.incorrect,
                               backgroundColor: Colors.red.shade400,
                               borderColor: Colors.red.shade600,
                             ),
                             _buildActionButton(
                               onPressed: () => _nextCard(correct: true),
                               icon: Icons.check,
-                              label: '正解',
+                              label: AppLocalizations.of(context)!.correct,
                               backgroundColor: Colors.green.shade400,
                               borderColor: Colors.green.shade600,
                             ),
@@ -1346,7 +1348,7 @@ void _showStudyHintDialog(BuildContext context) {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      '学習のヒント',
+                      AppLocalizations.of(context)!.studyHints,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -1365,22 +1367,22 @@ void _showStudyHintDialog(BuildContext context) {
               Divider(color: Colors.blue.shade100, height: 24),
               _buildHelpItem(
                 icon: Icons.touch_app,
-                text: 'カードをタップして、表側と裏側を切り替えることができます',
+                text: AppLocalizations.of(context)!.tapToFlipCard,
               ),
               const SizedBox(height: 12),
               _buildHelpItem(
                 icon: Icons.check,
-                text: '答えを確認した後、「正解」または「不正解」ボタンで自分の理解度を記録しましょう',
+                text: AppLocalizations.of(context)!.checkUnderstandingAfterAnswer,
               ),
               const SizedBox(height: 12),
               _buildHelpItem(
                 icon: Icons.refresh,
-                text: '学習が終わったら、「もう一度」ボタンで再度学習できます',
+                text: AppLocalizations.of(context)!.tryAgainAfterFinish,
               ),
               const SizedBox(height: 12),
               _buildHelpItem(
                 icon: Icons.shuffle,
-                text: '右上の「シャッフル」ボタンで、カードの順番をランダムに変更できます',
+                text: AppLocalizations.of(context)!.shuffleCards,
               ),
               const SizedBox(height: 16),
               Center(
@@ -1395,7 +1397,7 @@ void _showStudyHintDialog(BuildContext context) {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text('閉じる'),
+                  child: Text(AppLocalizations.of(context)!.close),
                 ),
               ),
             ],

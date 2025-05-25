@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../services/flash_card_service.dart';
 import '../services/card_set_service.dart';
 
@@ -54,15 +55,18 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
     try {
       final frontText = _frontTextController.text;
       final backText = _backTextController.text;
-      final flashCardService = Provider.of<FlashCardService>(context, listen: false);
-      final cardSetService = Provider.of<CardSetService>(context, listen: false);
+      final flashCardService =
+          Provider.of<FlashCardService>(context, listen: false);
+      final cardSetService =
+          Provider.of<CardSetService>(context, listen: false);
 
       if (_isEditMode && widget.cardId != null) {
         // 既存のカードを更新
-        await flashCardService.updateFlashCard(widget.cardId!, frontText, backText);
+        await flashCardService.updateFlashCard(
+            widget.cardId!, frontText, backText);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('カードを更新しました')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.cardUpdated)),
           );
         }
       } else {
@@ -74,10 +78,10 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
           // 紐づかないカードを追加する場合
           await flashCardService.addFlashCard(frontText, backText);
         }
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('新しいカードを追加しました')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.newCardAdded)),
           );
         }
       }
@@ -89,7 +93,8 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('カードの保存に失敗しました: $e'),
+            content: Text(
+                AppLocalizations.of(context)!.failedToSaveCard(e.toString())),
             backgroundColor: Colors.red.shade400,
           ),
         );
@@ -107,13 +112,15 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditMode ? 'カードを編集' : '新しいカードを作成'),
+        title: Text(_isEditMode
+            ? AppLocalizations.of(context)!.editCard
+            : AppLocalizations.of(context)!.createNewCard),
         actions: [
           if (!_isLoading)
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: _saveCard,
-              tooltip: 'カードを保存',
+              tooltip: AppLocalizations.of(context)!.saveCard,
             ),
         ],
       ),
@@ -135,9 +142,9 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              '表面（質問）',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.of(context)!.frontQuestion,
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.blueGrey,
                               ),
@@ -146,13 +153,15 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
                             TextFormField(
                               controller: _frontTextController,
                               maxLines: 5,
-                              decoration: const InputDecoration(
-                                hintText: '質問や単語を入力してください',
-                                border: OutlineInputBorder(),
+                              decoration: InputDecoration(
+                                hintText: AppLocalizations.of(context)!
+                                    .enterQuestionOrWord,
+                                border: const OutlineInputBorder(),
                               ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
-                                  return '表面のテキストを入力してください';
+                                  return AppLocalizations.of(context)!
+                                      .frontTextRequired;
                                 }
                                 return null;
                               },
@@ -171,9 +180,9 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              '裏面（回答）',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.of(context)!.backAnswer,
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.blueGrey,
                               ),
@@ -182,13 +191,15 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
                             TextFormField(
                               controller: _backTextController,
                               maxLines: 5,
-                              decoration: const InputDecoration(
-                                hintText: '回答や定義を入力してください',
-                                border: OutlineInputBorder(),
+                              decoration: InputDecoration(
+                                hintText: AppLocalizations.of(context)!
+                                    .enterAnswerOrDefinition,
+                                border: const OutlineInputBorder(),
                               ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
-                                  return '裏面のテキストを入力してください';
+                                  return AppLocalizations.of(context)!
+                                      .backTextRequired;
                                 }
                                 return null;
                               },
@@ -205,7 +216,9 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12.0),
                       ),
                       child: Text(
-                        _isEditMode ? 'カードを更新する' : 'カードを作成する',
+                        _isEditMode
+                            ? AppLocalizations.of(context)!.updateCard
+                            : AppLocalizations.of(context)!.createCard,
                         style: const TextStyle(fontSize: 16.0),
                       ),
                     ),

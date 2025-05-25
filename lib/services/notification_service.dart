@@ -1,4 +1,5 @@
 import 'dart:io' if (dart.library.html) 'package:anki_pai/utils/web_stub.dart';
+import 'dart:async'; // StreamControllerのためのインポートを追加
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -38,7 +39,13 @@ class NotificationService with WidgetsBindingObserver {
   NotificationSettingsModel? _settings;
   bool _isInitialized = false;
   bool _useSimulationMode = false; // Web環境でのシミュレーションモードフラグ
-  
+
+  // サブスクリプション情報ストリームコントローラ
+  final StreamController<NotificationSettingsModel> _subscriptionController =
+      StreamController<NotificationSettingsModel>.broadcast();
+  Stream<NotificationSettingsModel> get notificationSettingsStream =>
+      _subscriptionController.stream;
+
   // アプリがフォアグラウンドにあるか追跡するフラグ
   bool _isAppInForeground = true; // デフォルトとしてアプリは開始時にフォアグラウンドとみなす
 
@@ -56,10 +63,13 @@ class NotificationService with WidgetsBindingObserver {
   Future<void> initialize() async {
     // すでに初期化済みならスキップ
     if (_isInitialized) return;
-    
-    // ライフサイクルオブザーバーを登録
-    WidgetsBinding.instance.addObserver(this);
-    print('NotificationService: ライフサイクルオブザーバーを登録しました');
+
+    // ライフサイクルオブザーバーを登録 - UIが構築された後に行う
+    // 初期化時にメッセージが破棄される問題を修正
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addObserver(this);
+      print('NotificationService: ライフサイクルオブザーバーを登録しました');
+    });
 
     // Web環境では初期化時にシミュレーションモードの確認
     if (kIsWeb) {
@@ -109,6 +119,12 @@ class NotificationService with WidgetsBindingObserver {
 
   /// Firebase Cloud Messagingの設定
   Future<void> _setupFirebaseMessaging() async {
+    // ユーザーがログインしていない場合は初期化しない
+    if (_auth.currentUser == null) {
+      print('ユーザーがログインしていません。ログイン後に初期化を再試行します。');
+      return;
+    }
+
     try {
       // Web環境でのService Worker確認
       if (kIsWeb) {
@@ -323,8 +339,8 @@ class NotificationService with WidgetsBindingObserver {
         _settings = NotificationSettingsModel.fromFirestore(doc);
       } else {
         _settings = NotificationSettingsModel();
-        // デフォルト値を保存
-        await saveNotificationSettings(_settings!);
+        // デフォルト値を保存 - 新しい関数名を使用
+        await updateNotificationSettings(_settings!);
       }
     } catch (e) {
       print('通知設定の読み込みに失敗しました: $e');
@@ -333,21 +349,37 @@ class NotificationService with WidgetsBindingObserver {
   }
 
   /// 通知設定を保存
-  Future<void> saveNotificationSettings(
+  Future<bool> updateNotificationSettings(
       NotificationSettingsModel settings) async {
-    if (_auth.currentUser == null) return;
-
-    _settings = settings;
-
     try {
-      await _firestore
+      // ユーザーが認証されていることを確認
+      final user = _auth.currentUser;
+      if (user == null) {
+        print('通知設定更新: ユーザーがログインしていません');
+        return false;
+      }
+
+      // ローカルキャッシュを先に更新して高速化
+      _settings = settings;
+
+      // ストリームで通知
+      _subscriptionController.add(settings);
+
+      // Firestoreへ設定を保存（非同期で実行）
+      _firestore
           .collection('users')
-          .doc(_auth.currentUser!.uid)
+          .doc(user.uid)
           .collection('settings')
           .doc('notifications')
-          .set(settings.toFirestore());
+          .set(settings.toFirestore())
+          .catchError((e) {
+        print('通知設定のFirestore保存中にエラーが発生: $e');
+      });
+
+      return true;
     } catch (e) {
-      print('通知設定の保存に失敗しました: $e');
+      print('通知設定の更新中にエラーが発生しました: $e');
+      return false;
     }
   }
 
@@ -388,6 +420,8 @@ class NotificationService with WidgetsBindingObserver {
       tz.TZDateTime.from(scheduledDate, tz.local),
       details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
       payload: payload,
     );
   }
@@ -403,7 +437,7 @@ class NotificationService with WidgetsBindingObserver {
       print('アプリがフォアグラウンドにあるため、通知をスキップします: $title');
       return;
     }
-    
+
     if (!_isInitialized ||
         !settings.isEnabled ||
         !settings.enableTechniqueGenerationNotifications) {
@@ -504,10 +538,11 @@ class NotificationService with WidgetsBindingObserver {
         break;
     }
   }
-  
-  /// リソースの解放
+
+  // リソースの解放
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _subscriptionController.close();
     print('NotificationService: ライフサイクルオブザーバーを解除しました');
   }
 }

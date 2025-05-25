@@ -1,0 +1,1074 @@
+{
+  "@@locale": "ja",
+  "appTitle": "暗記Pai",
+  "languageSwitchedJapanese": "日本語に切り替えました",
+  "languageSwitchedEnglish": "英語に切り替えました",
+  "languageSwitchedChinese": "中国語に切り替えました",
+  "chinese": "中国語",
+  "aboutApp": "このアプリについて",
+  "howToUse": "使い方",
+  "ichihosotsuji": "細辻一",
+  "home": "ホーム",
+  "library": "ライブラリ",
+  "settings": "設定",
+  "login": "ログイン",
+  "logout": "ログアウト",
+  "noResults": "検索結果がありません",
+  "tryAgain": "再試行してください",
+  "thinkingMode": "考え方モード",
+  "thinkingModeDescription": "内容の本質や原理を捕えた簡潔な説明を生成",
+  "email": "メールアドレス",
+  "password": "パスワード",
+  "signIn": "サインイン",
+  "signUp": "サインアップ",
+  "createAccount": "アカウント作成",
+  "forgotPassword": "パスワードをお忘れの方",
+  "resetPassword": "パスワードのリセット",
+  "memoryItems": "暗記アイテム",
+  "memoryTechniques": "暗記法",
+  "addMemoryItem": "暗記アイテムを追加",
+  "addMemoryTechnique": "暗記法を追加",
+  "publicTechniques": "公開された暗記法",
+  "myTechniques": "マイ暗記法",
+  "search": "検索",
+  "cancel": "キャンセル",
+  "save": "保存",
+  "delete": "削除",
+  "edit": "編集",
+  "name": "名前",
+  "description": "説明",
+  "type": "タイプ",
+  "tags": "タグ",
+  "isPublic": "公開",
+  "privateMemoryTechnique": "非公開の暗記法",
+  "publicMemoryTechnique": "公開された暗記法",
+  "mnemonic": "ニーモニック",
+  "relationship": "関係性",
+  "concept": "概念",
+  "paymentSuccess": "支払い完了",
+  "paymentCancel": "支払いキャンセル",
+  "returnToHome": "ホームに戻る",
+  "waitingForPayment": "支払い処理中...",
+  "paymentSuccessful": "お支払いが完了しました！",
+  "enjoyPremiumFeatures": "プレミアム機能をお楽しみください",
+  "paymentCancelled": "支払いがキャンセルされました",
+  "weHopeToSeeYouAgain": "ご利用をお待ちしております",
+  "subscription": "サブスクリプション",
+  "premium": "プレミアム",
+  "free": "無料",
+  "unsubscribe": "解約",
+  "confirmUnsubscribe": "本当に解約しますか？",
+  "yes": "はい",
+  "no": "いいえ",
+  "createMemPie": "暗記パイを作ろう！",
+  "memPieDescription": "テキストや画像を入力すると、AIが最適な暗記法を提案するよ。",
+  "addFailed": "追加に失敗しました: {errorMessage}",
+  "takePhoto": "カメラで撮影",
+  "selectFromGallery": "ギャラリーから選択",
+  "ocrTextSet": "OCRテキストを入力欄に設定しました。内容を確認して「送信」ボタンを押してください。",
+  "close": "閉じる",
+  "howToUse": "使い方",
+  "termsOfService": "利用規約",
+  "privacyPolicy": "プライバシーポリシー",
+  "commercialTransaction": "特定商取引法に基づく表記",
+  "remainingUses": "残り{count}回",
+  "unlimitedUses": "無制限",
+  "premiumFeature": "プレミアム機能",
+  "permissionDeniedError": "データベースのアクセス権限がありません。再度ログインしてください。",
+  "loginRequiredError": "ログイン状態が無効です。再度ログインしてください。",
+  "postingExamples": "投稿例を見る",
+  "languageNameEnglish": "English",
+  "languageNameJapanese": "日本語",
+  "languageSwitchedJapanese": "日本語に切り替えました",
+  "languageSwitchedEnglish": "英語に切り替えました",
+  "exampleTypeMnemonic": "ニーモニック",
+  "exampleTypeRelationship": "関係性",
+  "exampleTypeConcept": "概念",
+  "postingExamplesTitle": "投稿例",
+  "featureQuickMemorize": "サクっと暗記！",
+  "featureQuickMemorizeDesc": "簡単に知識を頭に入れよう！",
+  "featureScientificCycle": "科学的な記憶サイクル",
+  "featureScientificCycleDesc": "忘却曲線に基づいて、ちょうどいいタイミングで復習をお知らせ",
+  "featureFunContinuation": "楽しく継続！",
+  "featureFunContinuationDesc": "ゲーム感覚で暗記が続く！色々な覚え方を試そう！",
+  "aboutThisApp": "このアプリについて",
+  "signInCancelled": "サインインがキャンセルされました。もう一度お試しください。",
+  "appCatchphrase": "サクッと覚える暗記パイ",
+  "login": "ログイン",
+  "createAccount": "アカウント作成",
+  "emailAddress": "メールアドレス",
+  "pleaseEnterEmail": "メールアドレスを入力してください",
+  "pleaseEnterValidEmail": "有効なメールアドレスを入力してください",
+  "pleaseEnterPassword": "パスワードを入力してください",
+  "passwordMinLength": "パスワードは6文字以上必要です",
+  "backToLoginScreen": "ログイン画面に戻る",
+  "or": "または",
+  "continueWithoutLogin": "ログインしない",
+  "agreeToTerms": "登録することで、利用規約とプライバシーポリシーに同意したことになります",
+  "register": "登録",
+  "invalidAuthState": "認証状態が無効です。再度ログインしてください。",
+  "permissionDenied": "データベースのアクセス権限がありません。再度ログインしてください。",
+  "invalidLoginState": "ログイン状態が無効です。再度ログインしてください。",
+  "dataLoadFailed": "データの読み込みに失敗しました: {errorMessage}",
+  "recentMemoryMethodsFailed": "最近の暗記法の取得に失敗しました: {errorMessage}",
+  "myPublishedMethods": "自分が公開した覚え方",
+  "noPublishedMethodsYet": "公開した覚え方はまだありません",
+  "publicMethodsLoadFailed": "公開覚え方の読み込みに失敗しました: {errorMessage}",
+  "myMethodsLoadFailed": "自分の暗記法の取得に失敗しました: {errorMessage}",
+  "itemDeleted": "項目を削除しました",
+  "deleteFailed": "削除に失敗しました: {errorMessage}",
+  "searchMethodsHint": "覚え方を検索...",
+  "publicMethods": "公開された覚え方",
+  "otherPeopleMethods": "他の人の覚え方",
+  "myMethods": "自分の覚え方",
+  "searchInOthersMethods": "他の人の覚え方から「{query}」を検索",
+  "otherMethodsSearchResults": "他の人の覚え方検索結果",
+  "noItemsInLibrary": "ライブラリにはまだ項目がありません",
+  "addNewMemoryItem": "ホーム画面から新しい暗記アイテムを追加しましょう！",
+  "tryDifferentKeyword": "別のキーワードで検索してみてください",
+  "noMatchForSearchQuery": "「{query}」に一致する項目はありません",
+  "today": "今日",
+  "yesterday": "昨日",
+  "recentlyPublishedMethods": "最近公開された覚え方",
+  "viewOtherMethods": "別の覚え方を見る",
+  "createdOn": "作成: {date}",
+  "confirmation": "確認",
+  "deleteMemoryItemConfirm": "この暗記アイテムを削除しますか？",
+  "cancel": "キャンセル",
+  "delete": "削除",
+  "publicMethodsSearchFailed": "公開覚え方の検索に失敗しました: {errorMessage}",
+  "publishedMethodsError": "公開済み覚え方の取得に失敗しました: {errorMessage}",
+  "thinkingMethod": "考え方",
+  "pleaseEnterExplanation": "説明を入力してください",
+  "methodIsHidden": "覚え方は隠されています",
+  "aiEvaluatingExplanation": "AIがあなたの説明を評価しています...",
+  "cardNotFound": "カードが見つかりませんでした",
+  "failedToLoadCard": "カードの読み込みに失敗しました: {error}",
+  "deleteCard": "カードを削除",
+  "deleteCardConfirmation": "このカードを削除してもよろしいですか？この操作は元に戻せません。",
+  "cardDeleted": "カードを削除しました",
+  "failedToDeleteCard": "カードの削除に失敗しました: {error}",
+  "cardDetails": "カードの詳細",
+  "editCard": "カードを編集",
+  "tapToFlipCard": "タップしてカードを裏返す",
+  "answer": "回答",
+  "question": "質問",
+  "cardUpdated": "カードを更新しました",
+  "newCardAdded": "新しいカードを追加しました",
+  "failedToSaveCard": "カードの保存に失敗しました: {error}",
+  "createNewCard": "新しいカードを作成",
+  "saveCard": "カードを保存",
+  "frontQuestion": "表面（質問）",
+  "enterQuestionOrWord": "質問や単語を入力してください",
+  "frontTextRequired": "表面のテキストを入力してください",
+  "backAnswer": "裏面（回答）",
+  "enterAnswerOrDefinition": "回答や定義を入力してください",
+  "backTextRequired": "裏面のテキストを入力してください",
+  "updateCard": "カードを更新する",
+  "createCard": "カードを作成する",
+  "cardSetDeleted": "このカードセットは削除されました",
+  "failedToLoadCardSetInfo": "カードセット情報の取得に失敗しました: {error}",
+  "failedToLoadCardInfo": "カード情報の取得に失敗しました: {error}",
+  "failedToLoadData": "データの読み込みに失敗しました: {error}",
+  "premiumUpgradeTitle": "プレミアムプランへのアップグレード",
+  "premiumBenefitsIntro": "プレミアムプランでは以下の特典があります:",
+  "unlimitedThinkingAndMultiAgent": "考え方モードとマルチエージェントモードが無制限",
+  "unlimitedCardSets": "カードセット数無制限",
+  "unlimitedCardsPerSet": "各カードセットのカード枚数無制限",
+  "noAds": "広告の非表示",
+  "upgradedToPremium": "プレミアムプランにアップグレードしました！",
+  "upgrade": "アップグレード",
+  "cardLimitTitle": "カード枚数の制限",
+  "cardLimitMessage": "無料プランで許可されている最大カード枚数({maxCards})に達しました。プレミアムにアップグレードしてより多くのカードを追加してください。",
+  "@cardLimitMessage": {
+    "placeholders": {
+      "maxCards": {
+        "type": "int"
+      }
+    }
+  },
+  "close": "閉じる",
+  "deleteCardTitle": "カードを削除",
+  "deleteCardConfirmText": "このカードを削除しますか？",
+  "cardDeleted": "カードを削除しました",
+  "deleteFailed": "削除に失敗しました: {error}",
+  "cardSetDetails": "カードセット詳細",
+  "premium": "プレミアム",
+  "startLearning": "学習開始",
+  "cardSetNotFound": "カードセットが見つかりません",
+  "start": "スタート",
+  "searchCardsHint": "カードを検索...",
+  "addCard": "カードを追加",
+  "edit": "編集",
+  "publicMethodDescription": "この覚え方は公開されます。完了ボタンを押すと公開ライブラリに追加されます。",
+  "feedbackError": "フィードバックの取得中にエラーが発生しました。再度お試しください。",
+  "thinkingModeTitle": "考え方モード",
+  "thinkingNameFormat": "考え方: {title}",
+  "@thinkingNameFormat": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "thinkingModeErrorMessage": "考え方モードの説明を取得できませんでした。後で再度お試しください。",
+  "thinkingModeSuffix": "と考えよう",
+  "thinkingModeTag": "考え方",
+  "memoryTechniqueErrorFallback": "エラーが発生しましたが、この内容は繰り返し学習が効果的です。",
+  "displayError": "（表示エラー）",
+  "otherItemsCount": "...他 {count} 件",
+  "@otherItemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recentPublicTechnique": "最近公開された覚え方",
+  "myPublishedTechniques": "自分が公開した覚え方",
+  "noPublishedTechniquesYet": "公開した覚え方はまだありません",
+  "searchFromPublicTechniques": "公開覚え方から検索する",
+  "failedToLoadRecentTechnique": "最近の暗記法の取得に失敗しました: {error}",
+  "@failedToLoadRecentTechnique": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToLoadPublicTechniques": "公開覚え方の読み込みに失敗しました: {error}",
+  "@failedToLoadPublicTechniques": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToLoadMyTechniques": "自分の暗記法の取得に失敗しました: {error}",
+  "@failedToLoadMyTechniques": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSearchPublicTechniques": "公開覚え方の検索に失敗しました: {error}",
+  "@failedToSearchPublicTechniques": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "standardMode": "標準モード",
+  "multiAgentMode": "マルチエージェントモード",
+  "thinkingMode": "考え方モード", 
+  "standardModeDescription": "通常の覚え方生成",
+  "multiAgentModeDescription": "複数のAIが協力してより良い覚え方を作成",
+  "thinkingModeDescription": "内容についての考え方を生成",
+  "generatingMemoryTechnique": "暗記法を生成中...",
+  "generatingMultipleTechniques": "複数の暗記法を生成中...",
+  "generatingThinkingWay": "考え方を生成中...",
+  "aiTeamGeneratingTechnique": "AIチームが暗記法を考えています...",
+  "processingWithThinkingMode": "考え方モードで処理します",
+  "processingWithMultiAgentMode": "マルチエージェントモードで処理します",
+  "defaultMemoryMethodName": "標準学習法",
+  "defaultMemoryMethodDescription": "この内容は繰り返し学習が効果的です。",
+  "postingExamples": "投稿例",
+  "remainingUsesCount": "残り{count}回",
+  "@remainingUsesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unlimitedUses": "無制限",
+  "remainingUses": "残り：{count}回",
+  "@remainingUses": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "memoryTechniqueLabel": "暗記法:",
+  "profile": "プロフィール",
+  "settings": "設定",
+  "notificationSettings": "通知設定",
+  "editProfile": "プロフィール編集",
+  "logout": "ログアウト",
+  "logoutConfirmation": "本当にログアウトしますか？",
+  "deleteAccount": "アカウントを削除",
+  "deleteAccountConfirmation": "アカウントを削除しますか？\n\n注意: アカウントを削除すると、すべてのデータ（覚え方、カードセット、プロフィールなど）が完全に削除され、元に戻すことができません。",
+  "deleteProfilePicture": "プロフィール画像を削除",
+  "profilePictureUpdated": "プロフィール画像を更新しました",
+  "profilePictureDeleted": "プロフィール画像を削除しました",
+  "failedToDeleteProfilePicture": "プロフィール画像の削除に失敗しました: {error}",
+  "@failedToDeleteProfilePicture": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cancel": "キャンセル",
+  "delete": "削除",
+  "camera": "カメラ",
+  "gallery": "ギャラリー",
+  "chooseProfilePicture": "プロフィール画像を選択",
+  "finalConfirmation": "最終確認",
+  "finalDeleteConfirmationMessage": "この操作は取り消すことができません。\n\n本当にアカウントを削除しますか？",
+  "deletingAccount": "アカウントを削除しています...",
+  "failedToLoadInfo": "情報の取得に失敗しました: {error}",
+  "@failedToLoadInfo": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "upgradeYourPlan": "プランをアップグレード",
+  "accountDeleted": "アカウントが削除されました",
+  "failedToDeleteAccount": "アカウントの削除に失敗しました: {error}",
+  "@failedToDeleteAccount": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateImage": "画像の更新に失敗しました: {error}",
+  "@failedToUpdateImage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToGetCardInfo": "カード情報の取得に失敗しました: {error}",
+  "@failedToGetCardInfo": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToLoadData": "データの読み込みに失敗しました: {error}",
+  "@failedToLoadData": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cardShuffled": "カードをシャッフルしました",
+  "movedToNextCard": "次のカードに進みました",
+  "tryAgain": "もう一度",
+  "back": "戻る",
+  "close": "閉じる",
+  "studyCompleted": "学習完了",
+  "completed": "完了",
+  "studyResults": "学習結果",
+  "correctAnswers": "正解数",
+  "difficulty": "難易度",
+  "timeSpent": "学習時間",
+  "min": "分",
+  "sec": "秒",
+  "tapToFlip": "タップしてカードを裏返す",
+  "goodJob": "お疲れ様でした！",
+  "correct": "正解",
+  "incorrect": "不正解",
+  "finish": "終了",
+  "study": "学習",
+  "studyHints": "学習のヒント",
+  "addCardBeforeStudy": "カードを追加してから学習を始めましょう",
+  "tapToFlipCard": "カードをタップして、表側と裏側を切り替えることができます",
+  "checkUnderstandingAfterAnswer": "答えを確認した後、「正解」または「不正解」ボタンで自分の理解度を記録しましょう",
+  "tryAgainAfterFinish": "学習が終わったら、「もう一度」ボタンで再度学習できます",
+  "shuffleCards": "カードをシャッフルしてランダムな順序で学習できます",
+  "commercialTransactionAct": "特定商取引法に基づく表記",
+  "companyName": "販売業社名",
+  "representative": "代表者",
+  "location": "所在地",
+  "phoneNumber": "電話番号",
+  "contact": "連絡先",
+  "productPrice": "商品の販売価格",
+  "additionalFees": "商品代金以外の必要料金",
+  "paymentMethod": "お支払い方法",
+  "deliveryTime": "商品の引き渡し時期",
+  "returnExchangePolicy": "返品・交換について",
+  "additionalFeesDescription": "なし（インターネット接続料金はお客様負担となります）",
+  "paymentTiming": "支払時期",
+  "paymentTimingDescription": "月間プレミアムプラン：申込時及び毎月の契約応当日に自動決済\n年間プレミアムプラン：申込時及び毎年の契約応当日に自動決済",
+  "cancellationRefundExchange": "キャンセル・返品・交換について",
+  "cancellationRefundExchangeDescription": "デジタルコンテンツの性質上、お申込み後のキャンセル・返品・返金はお受けしておりません。\nサブスクリプションはいつでも解約可能ですが、日割り計算による返金は行いません。\n解約後は契約期間満了まで引き続きサービスをご利用いただけます。",
+  "operatingEnvironment": "動作環境",
+  "operatingEnvironmentDescription": "iOS: iOS 14.0以上\nAndroid: Android 6.0以上\nWeb: 最新版のGoogle Chrome, Safari, Firefox, Microsoft Edge",
+  "serviceSuspension": "サービス提供の停止・中断について",
+  "serviceSuspensionDescription": "以下の場合、事前の通知なくサービスの全部または一部の提供を停止または中断する場合があります。\n・システムの保守点検または更新を定期的または緊急に行う場合\n・地震、落雷、火災、停電、天災などの不可抗力により、サービスの提供が困難となった場合\n・その他、運営者が停止または中断を必要と判断した場合",
+  "lastUpdated": "最終更新日: 2025年4月16日",
+  "contact": "お問い合わせ",
+  "contactUs": "お問い合わせ",
+  "contactDescription": "暗記Paiに関するお問い合わせ、ご意見、バグ報告などございましたら、お気軽にお問い合わせください。",
+  "contactOption1": "1. メールでお問い合わせ",
+  "contactOption2": "2. GitHubでバグを報告",
+  "contactOption3": "3. 新機能を提案",
+  "openEmailApp": "メールアプリを開く",
+  "openGitHub": "GitHubを開く",
+  "openFeatureSuggestion": "機能を提案する",
+  "contactEmailSubject": "お問い合わせ",
+  "contactEmailBody": "暗記Paiに関するお問い合わせ、ご意見、バグ報告などございましたら、お気軽にお問い合わせください。",
+  "emailCopied": "メールアドレスをコピーしました",
+  "emailAddressLabel": "メールアドレス",
+  "webBrowserEmailError": "Webブラウザではメールを開くことができません。お問い合わせメールアドレスをコピーして、メールソフトで送信してください。",
+  "sendEmail": "メールを送信",
+  "copy": "コピー",
+  "contactNotes": "お問い合わせの際の注意事項",
+  "contactNotesContent": "• お問い合わせの内容によっては、回答に時間がかかる場合があります。\n• アプリのバージョン、お使いのデバイスの情報をお知らせいただくと、より早く問題解決ができます。\n• バグ報告の際は、発生状況をできるだけ詳しくお知らせください。",
+  "dataLoadFailed": "データの読み込みに失敗しました: {error}",
+  "deletingCardSet": "「{title}」を削除中...",
+  "pleaseWait": "しばらくお待ちください",
+  "cardSetDeleted": "カードセットを削除しました",
+  "deleteFailed": "削除に失敗しました: {error}",
+  "premiumUpgrade": "プレミアムプランへのアップグレード",
+  "premiumBenefits": "プレミアムプランでは以下の特典があります:",
+  "thinkingModeUnlimited": "考え方モードとマルチエージェントモードが無制限",
+  "cardSetsUnlimited": "カードセット数無制限",
+  "cardsPerSetUnlimited": "各カードセットのカード枚数無制限",
+  "noAdsDisplay": "広告の非表示",
+  "upgradedToPremium": "プレミアムプランにアップグレードしました！",
+  "cardSetLimit": "カードセット数の制限",
+  "cardSetLimitMessage": "無料プランでは最大{count}つまでのカードセットしか作成できません。プレミアムプランにアップグレードすると、無制限に作成できます。",
+  "@cardSetLimitMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "title": "タイトル",
+  "descriptionOptional": "説明 (オプション)",
+  "titleExample": "例: 英単語帳",
+  "descriptionExample": "例: 日常会話で使う単語",
+  "close": "閉じる",
+  "newCardSet": "新しいカードセットを作成",
+  "enterTitle": "タイトルを入力してください",
+  "create": "作成",
+  "cardSetCreated": "カードセットを作成しました",
+  "creationFailed": "作成に失敗しました: {error}",
+  "editCardSet": "カードセットを編集",
+  "update": "更新",
+  "cardSetUpdated": "カードセットを更新しました",
+  "updateFailed": "更新に失敗しました: {error}",
+  "noCardsInSet": "このカードセットにはカードがありません",
+  "createNew": "新規作成",
+  "profileEdit": "プロフィール編集",
+  "takePhoto": "カメラで撮影",
+  "chooseFromGallery": "ギャラリーから選択",
+  "removeProfileImage": "プロフィール画像を削除",
+  "profileImageUpdated": "プロフィール画像を更新しました",
+  "imageUpdateFailed": "画像の更新に失敗しました: {error}",
+  "@imageUpdateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "profileUpdated": "プロフィールを更新しました",
+  "profileUpdateFailed": "プロフィールの更新に失敗しました: {error}",
+  "@profileUpdateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "confirmation": "確認",
+  "discardChangesConfirmation": "変更内容が保存されていません。\n破棄してもよろしいですか？",
+  "discard": "破棄する",
+  "premiumPlan": "プレミアムプラン",
+  "subscriptionPurchaseCompleted": "サブスクリプションの購入が完了しました",
+  "purchaseRestored": "購入を復元しました",
+  "enterBothSides": "表面と裏面の両方を入力してください",
+  "flashCardSaveFailed": "暗記カードの保存に失敗しました: {error}",
+  "@flashCardSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationSettings": "通知設定",
+  "enableNotifications": "通知を有効にする",
+  "memorizationCompletedNotification": "暗記法生成完了通知",
+  "notifyWhenGenerationCompletes": "バックグラウンドで生成が完了したら通知",
+  "memorizationMethodReminder": "暗記法学習リマインダー",
+  "notifyOptimalTimingForgeeting": "忘却曲線に基づく学習タイミングを通知",
+  "flashcardLearningReminder": "フラッシュカード学習リマインダー",
+  "saveSettings": "設定を保存",
+  "notificationSettingsSaved": "通知設定を保存しました",
+  "flashCardMonitoringFailed": "フラッシュカードの監視に失敗しました: {error}",
+  "@flashCardMonitoringFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "flashCardMonitoringSetupFailed": "フラッシュカードの監視設定に失敗しました: {error}",
+  "@flashCardMonitoringSetupFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "flashCardLoadingFailed": "フラッシュカードの読み込みに失敗しました: {error}",
+  "@flashCardLoadingFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "edit": "編集",
+  "delete": "削除",
+  "dataLoadingFailed": "データの読み込みに失敗しました: {error}",
+  "memorizationMethodGenerationFailed": "暗記法の生成に失敗しました",
+  "memorizationMethodUnpublished": "暗記法の公開を取り消しました",
+  "unpublishFailed": "公開の取り消しに失敗しました: {error}",
+  "@unpublishFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "updatePublicStatusFailed": "公開状態の更新に失敗しました: {error}",
+  "@updatePublicStatusFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToRetrieveMemorizationMethod": "暗記法の情報が取得できませんでした",
+  "noContentForFlashcards": "暗記カードを作成できる暗記法の内容がありません",
+  "createFlashcards": "暗記カードの作成",
+  "selectCardSet": "カードセットの選択：",
+  "createNewCardSet": "新規カードセットを作成",
+  "addToExistingCardSet": "既存のカードセットに追加",
+  "cancel": "キャンセル",
+  "create": "作成",
+  "cardSetCreationFailed": "カードセットの作成に失敗しました: {error}",
+  "@cardSetCreationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "flashcardsCreated": "{count}枚の暗記カードを作成しました",
+  "@flashcardsCreated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "memorizationMethod": "暗記法",
+  "previousMethod": "前の暗記法",
+  "nextMethod": "次の暗記法",
+  "memorizationMethodSaved": "覚え方を保存しました",
+  "memorizationMethodPublished": "覚え方を公開しました",
+  "publishFailed": "暗記法の公開に失敗しました: {error}",
+  "@publishFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "memorizationMethodSaveFailed": "暗記法の保存に失敗しました: {error}",
+  "@memorizationMethodSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "complete": "完了",
+  "imageHint": "イメージヒント",
+  "close": "閉じる",
+  "pleaseEnterTitle": "タイトルを入力してください",
+  "languageSettings": "言語設定",
+  "selectLanguage": "言語を選択",
+  "japanese": "日本語",
+  "english": "英語",
+  "@dataLoadingFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "disclosureUponRequest": "メールアドレスへご請求いただければ、遅滞なく開示いたします。",
+  "emailAddress": "メールアドレス: {email}",
+  "@emailAddress": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "priceDescription": "暗記Pai月間プレミアムプラン：380円（税込）\n暗記Pai年間プレミアムプラン：3,800円（税込）",
+  "paymentDescription": "お支払いは、App StoreまたはGoogle Play Storeの決済システムを介して行われます。",
+  "deliveryDescription": "お支払い完了後、ただちにサービスをご利用いただけます。",
+  "returnDescription": "既に提供されたデジタルコンテンツは、法律で定められた場合を除き、返品・返金できません。",
+  "aiGenerationMode": "AI生成モード",
+  "thinkingModeError": "考え方モードの説明を取得できませんでした。後で再度お試しください。",
+  "postContent": "投稿内容",
+  "createFlashcards": "フラッシュカード作成",
+  "viewInput": "入力を見る",
+  "generatingThinkingMode": "考え方を生成中...",
+  "thinkingGenerationFailed": "考え方の生成に失敗しました。",
+  "regenerate": "再生成",
+  "standardLearningMethod": "標準学習法",
+  "repeatedLearningEffective": "この内容は繰り返し学習で身につけることが効果的です。",
+  "multipleItemsDetected": "複数の項目が検出されました",
+  "multipleItemsDetectedDescription": "入力内容から以下の複数の項目が検出されました：",
+  "multiAgentNotAvailable": "複数の項目が検出されたため、マルチエージェント機能は使用されません。",
+  "howToProcess": "どのように処理しますか？",
+  "cancel": "キャンセル",
+  "generateAsSingle": "一つの覚え方として生成",
+  "generateSeparately": "個別に生成",
+  
+  "postingExamples": "投稿例",
+  "mnemonicType": "ニーモニック",
+  "solarSystemPlanets": "太陽系の惑星",
+  "solarSystemPlanetsContent": "水星、金星、地球、火星、木星、土星、天王星、海王星",
+  "solarSystemPlanetsTechnique": "「水・金・地・火・木・土・天・海」の頭文字をつなげた「みずきんちかもくどってんかい」で覚えよう！",
+  
+  "relationshipType": "関係性",
+  "macronutrientsAndRoles": "三大栄養素と役割",
+  "macronutrientsContent": "タンパク質：筋肉や臓器の材料、炭水化物：エネルギー源、脂質：体温維持やホルモン材料",
+  "macronutrientsTechnique": "各栄養素の役割を体の部位と結びつけて覚えよう！タンパク質→筋肉、炭水化物→エネルギー電池、脂質→断熱材のイメージです。",
+  
+  "conceptType": "概念",
+  "democracyPrinciples": "民主主義の3原則",
+  "democracyPrinciplesContent": "国民主権、基本的人権の尊重、平和主義",
+  "democracyPrinciplesTechnique": "「主・人・平」の3文字で覚えよう！",
+  
+  "enterContentToMemorize": "覚えたい内容を入力...",
+  "addImage": "画像",
+  "send": "送信",
+  
+  "myCardSets": "マイカードセット",
+  "cardSetSubtitle": "覚えたい内容をカードにまとめよう",
+  "noCardSets": "カードセットがありません",
+  "createNewCardSetFromButton": "「+」ボタンから新しいカードセットを作成しましょう",
+  "loginButtonLabel": "ログイン",
+  "permissionDeniedError": "データベースのアクセス権限がありません。再度ログインしてください。",
+  "invalidLoginStateError": "ログイン状態が無効です。再度ログインしてください。",
+  "searchCardSets": "カードセットを検索...",
+  "noSearchResults": "検索結果が見つかりませんでした",
+  "changeSearchCriteria": "検索条件を変更してみてください",
+  
+  "appLogoShort": "暗記Pai",
+  "appLogoFull": "暗記 Planner ai",
+  
+  "homeNavLabel": "ホーム",
+  "libraryNavLabel": "ライブラリ",
+  "settingsNavLabel": "設定",
+  
+  "accountSectionTitle": "アカウント",
+  "aboutAppSectionTitle": "アプリについて",
+  "planAndPricing": "プランと料金",
+  "freePlan": "無料プラン",
+  "monthlyPremiumPlan": "月額パイ食べ放題（プレミアム）",
+  "yearlyPremiumPlan": "年間パイ食べ放題（プレミアム）",
+  "editProfile": "プロフィール編集",
+  "deleteAccount": "アカウントを削除",
+  "anonymousUser": "匿名ユーザー",
+  "privacyPolicy": "プライバシーポリシー",
+  "termsOfService": "利用規約",
+  "contactUs": "お問い合わせ",
+  "commercialTransactionAct": "特定商取引法に基づく表記",
+  "versionInfo": "バージョン",
+  "loginWithGoogle": "Googleでログイン",
+  "loginWithApple": "Appleでログイン",
+  
+  "privacyPolicyHeader": "プライバシーポリシー",
+  "privacyPolicyIntro": "本アプリ「暗記Pai」（以下、本アプリ）は、個人情報を適切に取り扱うことの重要性を認識し、以下の通りプライバシーポリシー（以下、本ポリシー）を定めます。",
+  "privacyPolicySection1Title": "第1条（収集する個人情報）",
+  "privacyPolicySection1Content": "本アプリが収集する個人情報は、以下のものを含みます：\n・利用者が自己の意思で提供するメールアドレス\n・利用者が公開する暗記法に含まれる情報（利用者名、投稿内容等）\n・利用者がアップロードした画像（OCR機能使用時）\n・デバイス情報（OSバージョン、デバイスの種類など）\n・利用統計情報（アプリの使用頻度、機能の使用状況など）",
+  
+  "termsHeader": "利用規約",
+  "termsIntro": "本利用規約（以下「本規約」）は、本アプリ「暗記Pai」（以下「本アプリ」）の利用条件を定めるものです。ユーザーの皆様には、本規約に従って本アプリをご利用いただきます。",
+  "termsSection1Title": "第1条（適用）",
+  "termsSection1Content": "1. 本規約は、ユーザーと本アプリの利用に関わる一切の関係に適用されるものとします。\n2. 本アプリは本規約のほか、ご利用に関するルールを定めることがあります。これらのルールは本規約の一部を構成するものとします。",
+  
+  "subscriptionInfo": "サブスクリプション情報",
+  "processingPayment": "決済処理中...",
+  "redirectingToPaymentPage": "決済ページに移動します。処理が完了するまでお待ちください...",
+  "paymentPageRedirected": "決済ページに移動しました。決済完了後、このページに戻ってください。",
+  "paymentRedirectFailed": "決済ページへの移動に失敗しました: {error}",
+  "processingInAppPurchase": "アプリ内課金を実行中です。\nストアが起動するまでお待ちください...",
+  "premiumPlanCancellationPending": "サブスクリプションはキャンセル予定です。{date}以降はフリープランに切り替わります。再有効化すると、現在のプランが継続されます。",
+  "premiumPlanCancelled": "サブスクリプションは現在キャンセルされています。食べ放題（プレミアム）プランを再度利用するには、サブスクリプションを再有効化してください。",
+  "cancelSubscriptionConfirmation": "サブスクリプションをキャンセルしてもよろしいですか？\n\nキャンセル後、現在の請求期間が終了すると食べ放題（プレミアム）プランを利用できなくなります。",
+  
+  "aboutCardSets": "カードセットについて",
+  "cardSetHelpTitle": "カードセットとは？",
+  "cardSetHelpDescription": "カードセットは、間隔反復を通じて情報を効果的に学習し記憶するのに役立つ暗記カードのコレクションです。使い方は次のとおりです：\n\n• 異なる科目や分野のセットを作成\n• セットに暗記カードを追加\n• 定期的に練習して最高の記憶効果を得る\n• 統計データで進捗を追跡",
+  "cardSetHelpConfirm": "了解しました",
+
+  "studyResultExcellent": "素晴らしい成績です！よく理解できています。",
+  "studyResultGood": "良い成績です！あともう少し復習しましょう。",
+  "studyResultFair": "まずまずの成績です。もう少し復習が必要かもしれません。",
+  "studyResultOkay": "基本的な理解はできています。定期的に復習しましょう。",
+  "studyResultNeedsWork": "もう少し復習が必要です。焦らず繰り返し学習しましょう。",
+
+  "loadingCardSets": "カードセットを読み込み中...",
+  "lastStudyTime": "最終学習日時",
+  "cardEditTooltip": "カード編集",
+  "setEditTooltip": "編集",
+  "deleteTooltip": "削除",
+  "studyTooltip": "学習",
+  "deleteCardSetTitle": "カードセットを削除",
+  "deleteCardSetConfirm": "このカードセットを削除してもよろしいですか？この操作は元に戻せません。",
+  "cancelButton": "キャンセル",
+  "deleteButton": "削除",
+  "noCardSetsYet": "カードセットがまだありません",
+  "createFirstCardSet": "最初のカードセットを作成して学習を始めましょう！",
+  
+  "monthlyConversion": "月額換算¥248（4ヶ月分お得）",
+  "startingBillingProcess": "課金処理を開始しています。App Storeの画面が表示されます...",
+  "premiumPlanChanged": "{planName} 食べ放題（プレミアム）プランに変更しました！",
+  "yearlyPlanBenefit": "お得な年間プランでは、月額換算で約4ヶ月分お得になります。",
+  "premiumPlanBenefits": "食べ放題（プレミアム）プランでは以下の特典があります:",
+  "planAndPrice": "{planName} プラン: {price}",
+  "purchase": "購入する",
+  "unlimited": "無制限",
+  "remainingUses": "残り{count}回",
+  "refreshInfo": "情報を更新",
+  "premiumPlanTitle": "暗記パイ食べ放題（プレミアム）プラン",
+  "generatingMultipleItems": "複数項目の覚え方を生成中",
+  "processing": "処理中: {current}/{total}",
+  "rankedMethodsTitle": "ランキング付き覚え方",
+  "memorabilityScore": "記憶しやすさスコア: {score}",
+  "effectiveness": "有効度",
+  "seeNextMethod": "次の覚え方を見る",
+  "seeMore": "もっと見る",
+  "rankedMemoryTipsTitle": "覚え方のランキング",
+  "selectCardSetTitle": "カードセットを選択",
+  "selectCardSetDescription": "フラッシュカードを保存する場所を選択してください",
+  "newCardSet": "新規カードセット",
+  "newCardSetNameHint": "カードセット名を入力",
+  "create": "作成",
+  "selectCardSetError": "カードセットを選択するか、名前を入力してください",
+  "flashcardsCreatedSuccess": "フラッシュカードが作成されました！",
+  "flashcardsCreationFailed": "フラッシュカードの作成に失敗しました: {error}",
+  "viewFlashcards": "フラッシュカードを見る",
+  "tryAnotherMethod": "他の覚え方を試す",
+  "multiAgentMode": "マルチエージェントモード",
+  "continueWithoutRanking": "通常モードで続ける",
+  "generateTechniques": "覚え方を生成",
+  "loadingMultiAgentMode": "マルチエージェントモードをロード中...",
+  "upgradeToUsePremiumFeature": "この機能を使うにはアップグレードしてください",
+  "shareAsTip": "覚え方として共有",
+  "makePublic": "公開する",
+  "techniqueTags": "タグ",
+  "mainPoints": "ポイント",
+  "keyMemorizationTips": "覚えポイント",
+  "moreDetails": "詳細を表示",
+  "hideDetails": "詳細を隠す",
+  "techniquesGenerationFailed": "暗記法の生成に失敗しました",
+  "unpublishedTechnique": "暗記法の公開を取り消しました",
+  "unpublishFailed": "公開の取り消しに失敗しました: {error}",
+  "techniqueMadePublic": "暗記法を公開しました",
+  "techniqueMadePrivate": "暗記法を非公開にしました",
+  "updatePublicStatusFailed": "公開状態の更新に失敗しました: {error}",
+  "techniqueInfoRetrievalFailed": "暗記法の情報が取得できませんでした",
+  "cannotCreateFlashcards": "暗記カードを作成できる暗記法の内容がありません",
+  "createFlashcardTitle": "暗記カードの作成",
+  "otherItemsCount": "...他 {count} 件",
+  "reminderToEnterExplanation": "AIからのフィードバックを取得するには、入力欄に記憶が必要な内容や説明を入力してください。",
+  "aiTips": "AIからのヒント",
+  "togglePublic": "公開する",
+  "upgradeButton": "パイ食べ放題",
+  "confirmToLeaveTitle": "ページを離れますか？",
+  "confirmToLeaveContent": "このページを離れると、入力した内容や生成した覚え方が失われる可能性があります。本当に離れますか？",
+  "stayOnPage": "このページに残る",
+  "leavePage": "離れる",
+  "cardNotFound": "カードが見つかりませんでした",
+  "failedToLoadCard": "カードの読み込みに失敗しました: {error}",
+  "deleteCard": "カードを削除",
+  "deleteCardConfirmation": "このカードを削除してもよろしいですか？この操作は元に戻せません。",
+  "delete": "削除",
+  "cardDeleted": "カードを削除しました",
+  "failedToDeleteCard": "カードの削除に失敗しました: {error}",
+  "cardDetails": "カードの詳細",
+  "editCard": "カードを編集",
+  "tapToFlipCard": "タップしてカードを裏返す",
+  "answer": "回答",
+  "question": "質問",
+  "tryPremium": "プレミアムを試す",
+  "upgradeNeeded": "このモードを使うにはアップグレードが必要です",
+  "viewPlans": "プランを見る",
+  "login": "ログイン",
+  "standardMode": "標準モード",
+  "standardModeDescription": "透明感のある暗記法を生成します",
+  "multiAgentMode": "マルチエージェントモード",
+  "multiAgentModeDescription": "複数のAIが最適な暗記法を導き出します",
+  "thinkingMode": "考え方モード",
+  "thinkingModeDescription": "本質と原理を捉えた簡潔な説明を生成します",
+  "solarSystemPlanets": "太陽系の惑星",
+  "threeNutrients": "三大栄養素と役割",
+  "democracyPrinciples": "民主主義の3原則",
+  "unsubscribing": "解約処理中...",
+  "unsubscribeSuccess": "解約が完了しました",
+  "unsubscribeError": "サブスクリプション解約中にエラーが発生しました",
+  "unsubscribeExplanation": "解約後は一部の記憶機能が制限されます。現在の課金期間が終了するまではプレミアム特典をご利用いただけます。",
+  "premiumUntil": "{date}までプレミアム",
+
+  "imageLoadingText": "画像を読み込んでいます...",
+  "fileLoadError": "ファイルの読み込みに失敗しました。別の画像をお試しください。",
+  "imageSelectionError": "画像の選択中にエラーが発生しました: {error}",
+  "imageLoaded": "画像が読み込まれました。必要に応じてトリミングやOCR解析を行ってください。",
+  "detectingOcrMode": "OCRモードを自動判別中...",
+  "modeDetectionFailed": "モード判別に失敗しました。デフォルトの写真モードを使用します。",
+  "trimmingInProgress": "トリミングが進行中です。しばらくお待ちください。",
+  "preparingTrimming": "トリミングの準備中...",
+  "adjustThenTrimPrompt": "大きさを調整後にトリミングボタンを押してください。",
+  "trimmingExecutionError": "トリミング実行エラー: {error}",
+  "manualTrimmingSuccess": "手動トリミング成功!",
+  "missingTrimmingInfo": "トリミングに必要な情報が不足しています。",
+  "trimmingError": "トリミングエラー: {error}",
+  "structuringVocabularyData": "単語帳データを構造化中...",
+  "vocabularyAndMathDetected": "単語リストと数式が検出されました。適切な形式で整形しました。",
+  "vocabularyDetected": "単語リストが検出されました。自動的に整形しました。",
+  "mathDetected": "数式が検出されました。TeX形式で出力しました。",
+  "ocrCompleted": "OCR解析が完了しました。ウィジェットを閉じます...",
+  "ocrAnalysisError": "OCR解析中にエラーが発生しました: {error}",
+  "trimmingSuccess": "トリミング成功。画像が更新されました。",
+  "trimmingFailed": "トリミングに失敗しました: {error}",
+  "trimmingProcessingError": "トリミング結果の処理に問題がありました。",
+  "trimmingCancelled": "トリミングをキャンセルしました。",
+  
+  "executeTrimmingButton": "トリミング実行",
+  "trimmingButton": "トリミング",
+  "readButton": "読み取って送信",
+  "readOnlyButton": "読み取り",
+  "cancelButton": "キャンセル",
+  "reselectImageButton": "画像を再選択",
+  
+  "refreshUserInfo": "ユーザー情報の更新",
+  "cardSetsLimit": "カードセット数",
+  "cardSetsLimitDescription": "カードセットの作成数制限",
+  "cardsPerSetLimit": "カード枚数制限",
+  "cardsPerSetLimitDescription": "1セットあたりのカード枚数制限",
+  "unlimited": "無制限",
+  "maxCardSets": "最大{count}セット",
+  "maxCardsPerSet": "最大{count}枚/セット",
+  "usageResetDate": "使用量リセット日",
+  "nextResetDate": "次回の使用回数リセット日: {date}",
+  "noResetDateSet": "リセット日が設定されていません",
+  "@premiumUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "@maxCardSets": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "@maxCardsPerSet": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "@nextResetDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "aiLanguagePrompt": "日本語で回答してください",
+
+  "privacyPolicySection2Title": "第2条（個人情報の利用目的）",
+  "privacyPolicySection2Content": "• 収集したメールアドレスは、このアプリでの認証に使用されます。\n• ユーザー名と投稿内容は、このアプリ内でのコミュニケーション促進のために使用される場合があります。\n• アップロードされた画像は、OCR（光学文字認識）と記憊法の生成に使用されます。\n• デバイス情報と使用統計は、アプリの改善とカスタマイズに使用されます。",
+  "privacyPolicySection3Title": "第3条（個人情報の管理）",
+  "privacyPolicySection3Content": "収集されたメールアドレスはFirebaseに保存され、ユーザー自身とこのアプリの開発者のみがアクセスできます。公開された記憊法やコメントに含まれる情報は、このアプリのユーザーが利用できるようになります。アップロードされた画像は、OCR処理のためにGoogle Cloud Visionサービスで一時的に処理される場合があります。",
+  "privacyPolicySection4Title": "第4条（ユーザーの権利）",
+  "privacyPolicySection4Content": "ユーザーは個人情報を変更する権利を有します。この権利は、このアプリの設定を通じて行使できます。また、ユーザーは自分が公開した記憊法やコメントを編集または削除する権利も有します。",
+  "privacyPolicySection5Title": "第5条（アカウントの削除）",
+  "privacyPolicySection5Content": "ユーザーはいつでもアカウントを削除する権利を持ちます。アカウントを削除するには、プロフィール画面の設定セクションにある「アカウントを削除」ボタンをタップしてください。\n\nアカウントを削除すると、以下の情報が完全に削除されます：\n• ユーザーアカウント情報（メールアドレス、認証情報など）\n• プロフィール情報とプロフィール写真\n• ユーザーが作成した記憊法とカードセット\n• ユーザーに関連するすべてのデータ\n\nこの操作は元に戻せず、データは复元できません。アカウントを削除した後、再登録することはできますが、以前のデータは引き継がれません。",
+  "privacyPolicySection6Title": "第6条（苦情）",
+  "privacyPolicySection6Content": "このアプリにおける個人情報の取り扱いについてご不明な点があれば、以下のメールアドレスまでお問い合わせください：\nAnkiPai.app@gmail.com",
+  "privacyPolicySection7Title": "第7条（外部サービスの利用）",
+  "privacyPolicySection7Content": "このアプリは、以下の外部サービスを使用しており、それぞれのプライバシーポリシーが適用されます。\n\n• Firebase: ユーザー認証、データストレージ\n• Google Cloud Vision API: 画像内のテキスト認識（OCR）\n• OpenAI API: 記憊法の生成\n• Vertex AI Gemini: 記憊法の生成\n• Google AdMob: 広告配信\n\nこれらのサービスには、このアプリのプライバシーポリシーとは別に、それぞれ独自のプライバシーポリシーがあります。",
+  "privacyPolicySection8Title": "第8条（広告について）",
+  "privacyPolicySection8Content": "このアプリでは、Google AdMobを使用して広告を配信しています。AdMobは、広告を表示するために、デバイスIDやIPアドレス、位置情報などの情報を収集する場合があります。この情報の収集と使用は、Googleのプライバシーポリシー（https://policies.google.com/privacy）に従います。広告IDは、設定からリセットまたはオプトアウトすることができます。",
+  "privacyPolicySection9Title": "第9条（プライバシーポリシーの変更）",
+  "privacyPolicySection9Content": "当社は、必要と判断した場合、ユーザーに通知することなく本ポリシーを変更することがあります。本ポリシーの変更は、当社が指定する方法によりユーザーに通知した時点から効力を生じます。",
+  "policyRevisionDate": "2025年4月25日改訂",
+
+  "termsSection2Title": "第2条（登録）",
+  "termsSection2Content": "1. 本アプリの利用を希望する者は、本アプリが定める方法により登録の申請を行い、本アプリが承認した時点で登録が完了するものとします。\n2. 本アプリは、申請者が以下の事由に該当すると判断した場合、登録の申請を承認しない場合があります。\n• 申請に虚偽の情報が提出された場合\n• 過去に本利用規約に違反した者の申請である場合\n• その他、登録が不適切と本アプリが判断した場合",
+  "termsSection3Title": "第3条（ユーザーIDおよびパスワードの管理）",
+  "termsSection3Content": "1. ユーザーは、自己の責任において、本アプリのユーザーIDおよびパスワードを適切に管理するものとします。\n2. 本アプリの故意または重大な過失による場合を除き、ユーザーIDおよびパスワードが第三者により使用されたことによる損害について本アプリは一切の責任を負いません。",
+  "termsSection4Title": "第4条（禁止事項）",
+  "termsSection4Content": "本アプリの利用において、以下の行為を禁止します。\n• 法令または公序良俗に違反する行為\n• 犯罪行為に関連する行為\n• 本アプリの他のユーザーまたは第三者のサーバーまたはネットワークの機能を破壊または妨害する行為\n• 本アプリのサービスの運営を妨げるおそれのある行為\n• 不正アクセスを試みる行為または不正アクセスを行う行為\n• 他のユーザーに関する個人情報を収集または蓄積する行為\n• 本アプリを不適切な目的で利用する行為\n• 本アプリの他のユーザーまたはその他の第三者に不利益、損害または不快を与える行為\n• 他のユーザーになりすます行為\n• 本アプリが許可していない本アプリ上での広告、宣伝、勧誘または営業行為\n• 面識のない異性との出会いを目的とした行為\n• 本アプリに関連して反社会的勢力に直接的または間接的に利益を供与する行為\n• その他、本アプリが不適切と判断する行為",
+
+  "termsSection5Title": "第5条（アプリサービスの停止）",
+  "termsSection5Content": "1. 本アプリは、以下の事由があると判断した場合、ユーザーに事前に通知することなく、本アプリの提供の全部または一部を停止または中断することがあります。\n• 本アプリに関わるコンピューターシステムのメンテナンスまたはアップデートを行う場合\n• 地震、落雷、火災、停電または天災などの不可抗力により、本アプリの提供が困難となった場合\n• コンピューターまたは通信回線が事故により停止した場合\n• その他、本アプリが、本アプリの提供が困難と判断した場合\n2. 本アプリは、本アプリの提供の停止または中断により、ユーザーまたは第三者が被った不利益または損害について一切の責任を負いません。",
+  "termsSection6Title": "第6条（利用制限および登録拒否）",
+  "termsSection6Content": "本アプリは、ユーザーが以下のいずれかに該当する場合は、事前の通知なく、本アプリの利用の全部または一部を制限し、またはユーザーとしての登録を拒否することができます。\n• 本利用規約のいずれかの条項に違反した場合\n• 登録事項に虚偽の事実があることが判明した場合\n• その他、本アプリが本アプリの利用が適当でないと判断した場合",
+  "termsSection7Title": "第7条（退会）",
+  "termsSection7Content": "ユーザーは、本アプリが定める退会手続きに従って、本アプリから退会することができます。",
+  "termsSection8Title": "第8条（免責事項および免責）",
+  "termsSection8Content": "1. 本アプリは、本アプリに事実上または法律上の瑕疵（安全性、信頼性、正確性、完全性、有効性、特定の目的への適合性、セキュリティなどに関する瑕疵、エラーやバグ、権利侵害などを含みます）がないことを明示的にも黙示的にも保証しません。\n2. 本アプリは、本アプリに起因してユーザーに生じたいかなる損害についても一切の責任を負いません。",
+  "termsSection9Title": "第9条（サービス内容の変更）",
+  "termsSection9Content": "本アプリは、ユーザーに通知することなく、本アプリの内容を変更、または本アプリの提供を停止することがあり、これによりユーザーに生じた損害について一切の責任を負いません。",
+  "termsSection10Title": "第10条（利用規約の変更）",
+  "termsSection10Content": "本アプリは、必要と判断した場合、ユーザーに通知することなくいつでも本規約を変更することができます。また、ユーザーが本規約変更後に本アプリの利用を開始した場合、当該ユーザーは変更後の規約に同意したものとみなします。",
+  "termsSection11Title": "第11条（個人情報の取扱い）",
+  "termsSection11Content": "本アプリの利用により取得した個人情報は、本アプリの「プライバシーポリシー」に従って適切に取り扱うものとします。",
+  "termsSection12Title": "第12条（通知または連絡）",
+  "termsSection12Content": "1. ユーザーと本アプリとの間の通知または連絡は、本アプリが定める方法により行うものとします。\n2. 本アプリが別途定める方法に従ってユーザーから変更の連絡がない限り、現在登録されている連絡先が有効なものとみなし、本アプリはその連絡先に通知または連絡を行い、これらは送信時にユーザーに到達したものとみなします。",
+  "termsSection13Title": "第13条（利用者の地位および権利等の譲渡禁止）",
+  "termsSection13Content": "ユーザーは、本アプリの事前の書面による同意なく、利用契約上の地位または本利用規約に基づく権利もしくは義務を第三者に譲渡し、または担保に供することはできません。",
+  "termsSection14Title": "第14条（準拠法および裁判管轄）",
+  "termsSection14Content": "1. 本利用規約の解釈については、日本法を準拠法とします。\n2. 本アプリに関して約が生じた場合には、本アプリの運営者の所在地を管轄する裁判所を専属的合意管轄とします。",
+  "termsRevisionDate": "2025年4月15日改訂",
+
+  "howToUseTitle": "暗記Paiの使い方",
+  "howToUseIntro": "はじめに",
+  "howToUseIntroContent": "暗記PaiはAIを活用した記憶学習をサポートするアプリです。テキストや画像から自動的に記憶法を生成し、効率的な学習をサポートします。",
+
+  "howToUseFeature1Title": "テキスト入力から記憶法を生成",
+  "howToUseFeature1Content": "AIがテキスト入力から記憶したい内容に基づいて最適な記憶法を提案します。",
+  "howToUseFeature1Steps": "テキストを入力 → \"記憊法を生成\"ボタンをタップ → AIが記憊法を提案",
+
+  "howToUseFeature2Title": "画像から記憊法を生成（OCR機能）",
+  "howToUseFeature2Content": "画像から自動的にテキストを抽出し、その内容に基づいて記憊法を生成します。",
+  "howToUseFeature2Steps": "画像アイコンをタップ → 写真を選択または撮影 → テキストを抽出 → 記憊法を生成",
+
+  "howToUseFeature3Title": "カードセットで学習を管理",
+  "howToUseFeature3Content": "関連する記憊項目をカードセットにまとめて簡単に管理します。",
+  "howToUseFeature3Steps": "カードセットタブを選択 → \"新規作成\"ボタンをタップ → カードを追加",
+
+  "howToUseFeature4Title": "公開された記憊法を使用",
+  "howToUseFeature4Content": "他のユーザーが公開した記憊法を閲覧して使用できます。",
+  "howToUseFeature4Steps": "ライブラリタブを選択 → 公開された記憊法を検索/閲覧 → 自分の記憊項目に追加",
+
+  "howToUseFeature5Title": "AIモードを切り替え",
+  "howToUseFeature5Content": "ニーズに応じて異なるAIモードを選択できます。",
+  "howToUseFeature5Steps": "標準モード：基本的な記憊法を生成\nマルチエージェントモード：複数のAIが協力して最適な記憊法を提案\n思考モード：なぜその記憊法が効果的かの説明とともに記憊法を提案",
+
+  "howToUseTipsTitle": "記憊のコツ",
+  "howToUseTip1": "間隔を空けた繰り返し学習は記憊の定着を高めます。",
+  "howToUseTip2": "画像を使用すると抽象的な内容も記憊しやすくなります。",
+  "howToUseTip3": "書いたり声に出したりすると記憊が強化されます。",
+  "howToUseTip4": "新しい情報をすでに知っていることに関連づけると記憊が向上します。",
+  "howToUseHowTo": "使い方:",
+  "notificationSectionTitle": "通知",
+  "notificationSectionDescription": "通知をオンにして記憶をサポートしましょう。",
+  "notificationsOn": "通知オン",
+  "notificationsOff": "通知オフ",
+  "techniqueGenerationNotificationTitle": "記憶法が完成しました",
+  "techniqueGenerationNotificationDescription": "記憶法が生成されました。今すぐ確認しましょう！",
+  "memoryMethodReminderTitle": "記憶法の見直しタイミングです",
+  "memoryMethodReminderDescription": "忘却曲線に基づいて、作成したカードの最適な復習タイミングをお知らせします。",
+  "flashcardReminderTitle": "フラッシュカードの復習時間です",
+  "flashcardReminderDescription": "復習することで記憶が定着しやすくなります。",
+  "aboutForgettingCurve": "忘却曲線について",
+  "forgettingCurveDescription": "忘却曲線は人間の記憊が時間とともに忘却されていく際の曲線です。効果的な学習には、適切なタイミングでの復習が重要です。",
+  "reviewRecommendation": "以下の復習タイミングが推奨されます：",
+  "firstReview": "1回目の復習：学習から1日後",
+  "secondReview": "2回目の復習：前回の復習から3日後",
+  "thirdReview": "3回目の復習：前回の復習から1週間後",
+  "fourthReview": "4回目の復習：前回の復習から2週間後",
+  "fifthReview": "5回目の復習：前回の復習から1ヶ月後",
+  "displayNameLabel": "表示名",
+  "displayNameHint": "ニックネームを入力してください",
+  "displayNameDescription": "表示名は、他のユーザーに公開されます。",
+  "saveChanges": "変更を保存",
+  "plansAndPricing": "プランと料金",
+  "monthlyLabel": "月額プラン",
+  "yearlyLabel": "年額プラン",
+  "currentlyUsingPremium": "現在、プレミアムプランをご利用中です。",
+  "currentlyUsingFree": "現在、無料プランをご利用中です。",
+  "taxIncluded": "税込価格",
+  "monthlyPremiumDescription": "月額プランでは、全機能を月単位でご利用いただけます。",
+  "yearlyPremiumDescription": "年額プランでは、全機能を1年分まとめてお得にご利用いただけます。",
+  "switchToMonthlyPlan": "月額プランに切り替え",
+  "switchToYearlyPlan": "年額プランに切り替え",
+  "bestValue": "かなりお得",
+  "premiumPlanBenefitsDescription": "プレミアムプランでは、無制限の記憶法作成、広告非表示、復習通知などの機能をご利用いただけます。",
+  "usageStatus": "利用状況",
+  "multiAgentDescription": "複数エージェント機能を使用可能",
+  "unlimitedUsage": "無制限利用",
+  "subscriptionUpgradePlanTitle": "プランのアップグレード",
+  "planDiscount": "割引プランあり！",
+  "reactivateSubscription": "サブスクリプションを再開",
+  "refreshSubscriptionInfo": "サブスクリプション情報を更新",
+  "nextBillingDate": "次回の請求日",
+  "subscriptionCancellation": "サブスクリプションのキャンセル",
+  "subscriptionManagement": "サブスクリプション管理",
+  "reactivateSubscriptionTitle": "サブスクリプションの再開確認",
+  "reactivateSubscriptionConfirmation": "サブスクリプションを再開してもよろしいですか？",
+  "reactivatingSubscription": "再開中...",
+  "subscriptionReactivated": "サブスクリプションが再開されました",
+  "unknownError": "不明なエラーが発生しました",
+  "reactivateSubscriptionError": "サブスクリプション再開に失敗しました",
+  "reactivateSubscriptionProcessError": "サブスクリプション再開中にエラーが発生しました",
+  "completeCancellationInSettings": "設定でキャンセルを完了してください",
+  "logoShortName": "暗記パイ",
+  "logoFullName": "暗記Pai AI",
+
+  "imageLoadingText": "画像読み込み中...",
+
+  "cardCount": "カード数: {count}",
+  "@cardCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "startLearningWithSet": "このセットで学習を始める",
+
+  "checkMemorization": "覚えたか確認する",
+  "showMethod": "覚え方を表示する",
+  "explainToAI": "AIに説明してみる",
+  "explainInstructions": "自分の言葉で説明してみてください。AIがコメントしてくれます。",
+  "explainHint": "ここに説明を入力してください",
+  "wordTab": "言葉",
+  "timeTab": "時間",
+  "cardSetNameLabel": "カードセット名",
+  "generatingMemoryCards": "暗記カードを生成中...",
+  "existingCardSets": "既存カードセット",
+  "generateAnotherMethod": "別の暗記法を生成",
+  "createMemoryCards": "暗記カードを作成",
+  "autoGenerateCards": "この暗記法から暗記カードを自動生成します。複数項目がある場合は複数のカードが作成されます。",
+  "createFlashcardsButton": "フラッシュカードを作成",
+  "publishThisMethod": "この覚え方を公開する",
+  "publishMethodExplanation": "公開すると、他のユーザーがあなたの覚え方を参考にできます。",
+  "privateLabel": "非公開",
+  "publishedLabel": "公開中",
+  "viewInput": "入力を見る",
+  "showNextRecommendedMethod": "次のおすすめの覚え方を表示",
+  "multipleItemsDetected": "複数項目が検出されました（標準検出）"
+}

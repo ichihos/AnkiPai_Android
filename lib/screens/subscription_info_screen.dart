@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import '../services/subscription_service.dart';
 import '../services/stripe_payment_service.dart';
 import '../models/subscription_model.dart';
+import '../constants/subscription_constants.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SubscriptionInfoScreen extends StatefulWidget {
   const SubscriptionInfoScreen({super.key});
@@ -28,6 +30,9 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
   }
 
   Future<void> _loadSubscriptionInfo() async {
+    // ウィジェットがまだマウントされているか確認
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
     });
@@ -45,20 +50,27 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
         print('解約予定日: ${subscription.cancelAt}');
       }
 
-      setState(() {
-        _subscription = subscription;
-        _isLoading = false;
-      });
+      // ウィジェットがまだマウントされているか確認
+      if (mounted) {
+        setState(() {
+          _subscription = subscription;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       print('サブスクリプション情報取得エラー: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      // ウィジェットがまだマウントされているか確認
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('サブスクリプション情報の取得に失敗しました: $e'),
+            content:
+                Text(AppLocalizations.of(context)!.subscriptionInfo + ': $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -69,304 +81,339 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
   // プレミアムへのアップグレードダイアログを表示
   void _showPremiumUpgradeDialog(
       {SubscriptionType planType = SubscriptionType.premium_monthly}) {
-    String planName = planType == SubscriptionType.premium_yearly ? '年間' : '月間';
-    String price =
-        planType == SubscriptionType.premium_yearly ? '¥2,980/年' : '¥380/月';
+    String planName = planType == SubscriptionType.premium_yearly
+        ? AppLocalizations.of(context)!.yearlyLabel
+        : AppLocalizations.of(context)!.monthlyLabel;
+
+    // ロケールに基づいた価格表示
+    final locale = Localizations.localeOf(context).toString();
+    String price = planType == SubscriptionType.premium_yearly
+        ? SubscriptionConstants.getYearlyPriceDisplay(locale)
+        : SubscriptionConstants.getMonthlyPriceDisplay(locale);
 
     showDialog(
-      context: context,
-      barrierDismissible: false, // ダイアログ外タップでの閉じるを防止
-      builder: (BuildContext dialogContext) {
-        // ローディング状態を管理するためのStatefulBuilderを使用
-        return StatefulBuilder(
-          builder: (context, setState) {
-            // ローディング状態を管理
-            bool isLoading = false;
-            String statusMessage = '';
+        context: context,
+        barrierDismissible: false, // ダイアログ外タップでの閉じるを防止
+        builder: (BuildContext dialogContext) {
+          // ローディング状態を管理するためのStatefulBuilderを使用
+          return StatefulBuilder(
+            builder: (context, setState) {
+              // ローディング状態を管理
+              bool isLoading = false;
+              String statusMessage = '';
 
-            // 購入処理を実行
-            Future<void> processPurchase() async {
-              setState(() {
-                isLoading = true;
-                statusMessage = '処理を開始しています...';
-              });
+              // 購入処理を実行
+              Future<void> processPurchase() async {
+                setState(() {
+                  isLoading = true;
+                  statusMessage =
+                      AppLocalizations.of(context)!.processingPayment;
+                });
 
-              try {
-                // Web環境ではStripePaymentServiceを使用
-                if (kIsWeb) {
-                  setState(() {
-                    statusMessage = '決済ページへ移動します...';
-                  });
+                try {
+                  // Web環境ではStripePaymentServiceを使用
+                  if (kIsWeb) {
+                    setState(() {
+                      statusMessage =
+                          AppLocalizations.of(context)!.processingPayment;
+                    });
 
-                  // 少し待機して状態更新を画面に反映させる
-                  await Future.delayed(const Duration(milliseconds: 100));
+                    // 少し待機して状態更新を画面に反映させる
+                    await Future.delayed(const Duration(milliseconds: 100));
 
-                  // ダイアログを閉じる
-                  Navigator.pop(dialogContext);
+                    // ダイアログを閉じる
+                    Navigator.pop(dialogContext);
 
-                  // Webブラウザでの支払い処理前にSnackBar表示
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('決済ページに移動します。処理が完了するまでお待ちください...'),
-                      backgroundColor: Colors.blue,
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
+                    // Webブラウザでの支払い処理前にSnackBar表示
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context)!
+                            .redirectingToPaymentPage),
+                        backgroundColor: Colors.blue,
+                        duration: Duration(seconds: 3),
+                      ),
+                    );
 
-                  // Stripe決済処理
-                  final result =
-                      await StripePaymentService.startSubscription(planType);
+                    // Stripe決済処理
+                    final result =
+                        await StripePaymentService.startSubscription(planType);
 
-                  if (result['success']) {
-                    // 決済画面に遷移成功
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('決済ページに移動しました。決済完了後、このページに戻ってください。'),
-                          backgroundColor: Colors.blue,
-                          duration: Duration(seconds: 8),
-                        ),
-                      );
-                    }
-                  } else {
-                    // エラーメッセージを表示
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('決済ページへの移動に失敗しました: ${result['error']}'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
-                } else {
-                  // ネイティブアプリでの課金処理
-                  setState(() {
-                    statusMessage = 'アプリ内課金を実行中です。\nストアが起動するまでお待ちください...';
-                  });
-
-                  // 少し待機して状態更新を画面に反映させる
-                  await Future.delayed(const Duration(milliseconds: 500));
-
-                  final subscriptionService =
-                      Provider.of<SubscriptionService>(context, listen: false);
-
-                  // ダイアログを閉じる
-                  Navigator.pop(dialogContext);
-
-                  // ユーザーに課金処理が開始されたことを通知
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('課金処理を開始しています。App Storeの画面が表示されます...'),
-                      backgroundColor: Colors.blue,
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
-
-                  // プランタイプに応じた処理を実行
-                  try {
-                    if (planType == SubscriptionType.premium_yearly) {
-                      await subscriptionService.purchaseYearlyPlan();
-                    } else {
-                      await subscriptionService.purchaseMonthlyPlan();
-                    }
-
-                    // 少し待機してから最新情報を読み込む（購入処理が完了する時間を考慮）
-                    await Future.delayed(const Duration(seconds: 1));
-                    await _loadSubscriptionInfo();
-
-                    // 成功メッセージ
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('$planName 食べ放題（プレミアム）プランに変更しました！'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    print('購入処理中にエラーが発生: $e');
-                    // 購入キャンセルの場合は特に通知しない（ユーザーが意図的にキャンセルした場合）
-                    if (!e.toString().contains('canceled') &&
-                        !e.toString().contains('キャンセル') &&
-                        !e.toString().contains('cancel')) {
+                    if (result['success']) {
+                      // 決済画面に遷移成功
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('購入処理中にエラーが発生しました: $e'),
+                            content: Text(AppLocalizations.of(context)!
+                                .paymentPageRedirected),
+                            backgroundColor: Colors.blue,
+                            duration: Duration(seconds: 8),
+                          ),
+                        );
+                      }
+                    } else {
+                      // エラーメッセージを表示
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content:
+                                Text('決済ページへの移動に失敗しました: ${result['error']}'),
                             backgroundColor: Colors.red,
                           ),
                         );
                       }
-                    } else {
-                      // キャンセルの場合は控えめな通知
+                    }
+                  } else {
+                    // ネイティブアプリでの課金処理
+                    setState(() {
+                      statusMessage =
+                          AppLocalizations.of(context)!.processingInAppPurchase;
+                    });
+
+                    // 少し待機して状態更新を画面に反映させる
+                    await Future.delayed(const Duration(milliseconds: 500));
+
+                    final subscriptionService =
+                        Provider.of<SubscriptionService>(context,
+                            listen: false);
+
+                    // ダイアログを閉じる
+                    Navigator.pop(dialogContext);
+
+                    // ユーザーに課金処理が開始されたことを通知
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context)!
+                            .startingBillingProcess),
+                        backgroundColor: Colors.blue,
+                        duration: Duration(seconds: 3),
+                      ),
+                    );
+
+                    // プランタイプに応じた処理を実行
+                    try {
+                      if (planType == SubscriptionType.premium_yearly) {
+                        await subscriptionService.purchaseYearlyPlan();
+                      } else {
+                        await subscriptionService.purchaseMonthlyPlan();
+                      }
+
+                      // 少し待機してから最新情報を読み込む（購入処理が完了する時間を考慮）
+                      await Future.delayed(const Duration(seconds: 1));
+                      await _loadSubscriptionInfo();
+
+                      // 成功メッセージ
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('購入はキャンセルされました'),
-                            backgroundColor: Colors.grey,
+                          SnackBar(
+                            content: Text(
+                                '${planName} ${AppLocalizations.of(context)!.premiumPlanChanged}'),
+                            backgroundColor: Colors.green,
                           ),
                         );
                       }
-                    }
-                  }
-                }
-              } catch (e) {
-                // ダイアログがまだ表示されている場合は閉じる
-                if (Navigator.of(dialogContext).canPop()) {
-                  Navigator.pop(dialogContext);
-                }
-
-                print('購入初期化処理エラー: $e');
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('購入処理の準備中にエラーが発生しました: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              } finally {
-                // mountedおよびdialogContextが有効か確認
-                if (mounted) {
-                  try {
-                    // 安全にダイアログの状態を確認
-                    var canPop = false;
-                    try {
-                      canPop = Navigator.of(dialogContext).canPop();
                     } catch (e) {
-                      print('DialogContextが無効です: $e');
+                      print('購入処理中にエラーが発生: $e');
+                      // 購入キャンセルの場合は特に通知しない（ユーザーが意図的にキャンセルした場合）
+                      if (!e.toString().contains('canceled') &&
+                          !e.toString().contains('キャンセル') &&
+                          !e.toString().contains('cancel')) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('購入処理中にエラーが発生しました: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } else {
+                        // キャンセルの場合は控えめな通知
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('購入はキャンセルされました'),
+                              backgroundColor: Colors.grey,
+                            ),
+                          );
+                        }
+                      }
                     }
-
-                    if (canPop) {
-                      setState(() {
-                        isLoading = false;
-                      });
-                    }
-                  } catch (contextError) {
-                    print('コンテキストエラー: $contextError');
                   }
+                } catch (e) {
+                  // ダイアログがまだ表示されている場合は閉じる
+                  bool isDialogContextValid = false;
+                  try {
+                    // dialogContextの安全なチェック方法
+                    isDialogContextValid = ModalRoute.of(dialogContext) != null;
+                  } catch (contextError) {
+                    print('ダイアログコンテキストの参照エラー: $contextError');
+                    isDialogContextValid = false;
+                  }
+
+                  // ダイアログが有効な場合のみ閉じる処理を行う
+                  if (isDialogContextValid) {
+                    try {
+                      Navigator.pop(dialogContext);
+                    } catch (navError) {
+                      print('ダイアログの閉じる処理エラー: $navError');
+                    }
+                  }
+
+                  print('購入初期化処理エラー: $e');
+                  // 非同期処理後の安全なUI更新
+                  // Futureで遅延実行してマイクロタスクキューをクリアにする
+                  Future.microtask(() {
+                    if (mounted) {
+                      try {
+                        final messenger = ScaffoldMessenger.of(context);
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text('購入処理の準備中にエラーが発生しました: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      } catch (scaffoldError) {
+                        print('スナックバー表示エラー: $scaffoldError');
+                        // エラーメッセージを表示できない場合はコンソールにログ記録のみ
+                      }
+                    }
+                  });
+                } finally {
+                  // 操作の完了時にローディング状態をリセット
+                  Future.microtask(() {
+                    if (mounted) {
+                      try {
+                        // ダイアログのコンテキストに依存せずに状態を更新
+                        setState(() {
+                          isLoading = false;
+                        });
+                      } catch (stateError) {
+                        print('状態更新エラー: $stateError');
+                      }
+                    }
+                  });
                 }
               }
-            }
 
-            return AlertDialog(
-              title: Text('$planName 食べ放題（プレミアムプランへのアップグレード'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ローディング中の表示
-                  if (isLoading) ...[
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text(
-                          statusMessage,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 14),
+              return AlertDialog(
+                title:
+                    Text('$planName ${AppLocalizations.of(context)!.premium}'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ローディング中の表示
+                    if (isLoading) ...[
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.0),
+                          child: CircularProgressIndicator(),
                         ),
                       ),
-                    ),
-                  ],
-
-                  // 通常の内容（ローディング中は非表示）
-                  if (!isLoading) ...[
-                    // 選択したプラン表示
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: planType == SubscriptionType.premium_yearly
-                            ? Colors.amber.shade50
-                            : Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: planType == SubscriptionType.premium_yearly
-                              ? Colors.amber.shade300
-                              : Colors.blue.shade300,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '$planName プラン: $price',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: planType == SubscriptionType.premium_yearly
-                                  ? Colors.amber.shade800
-                                  : Colors.blue.shade800,
-                            ),
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text(
+                            statusMessage,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 14),
                           ),
-                          if (planType == SubscriptionType.premium_yearly)
-                            const Text('お得な年間プランでは、月額換算で約２ヶ月分お得になります。',
-                                style: TextStyle(fontSize: 12)),
-                        ],
+                        ),
                       ),
+                    ],
+
+                    // 通常の内容（ローディング中は非表示）
+                    if (!isLoading) ...[
+                      // 選択したプラン表示
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8, horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: planType == SubscriptionType.premium_yearly
+                              ? Colors.amber.shade50
+                              : Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: planType == SubscriptionType.premium_yearly
+                                ? Colors.amber.shade300
+                                : Colors.blue.shade300,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$planName プラン: $price',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color:
+                                    planType == SubscriptionType.premium_yearly
+                                        ? Colors.amber.shade800
+                                        : Colors.blue.shade800,
+                              ),
+                            ),
+                            if (planType == SubscriptionType.premium_yearly)
+                              Text(
+                                  AppLocalizations.of(context)!
+                                      .yearlyPlanBenefit,
+                                  style: const TextStyle(fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(AppLocalizations.of(context)!.premiumPlanBenefits),
+                      const SizedBox(height: 8),
+                      const ListTile(
+                        leading: Icon(Icons.check_circle, color: Colors.green),
+                        contentPadding: EdgeInsets.zero,
+                        title: Text('考え方モードとマルチエージェントモードが無制限'),
+                        dense: true,
+                      ),
+                      const ListTile(
+                        leading: Icon(Icons.check_circle, color: Colors.green),
+                        contentPadding: EdgeInsets.zero,
+                        title: Text('カードセット数無制限'),
+                        dense: true,
+                      ),
+                      const ListTile(
+                        leading: Icon(Icons.check_circle, color: Colors.green),
+                        contentPadding: EdgeInsets.zero,
+                        title: Text('各カードセットのカード枚数無制限'),
+                        dense: true,
+                      ),
+                      const ListTile(
+                        leading: Icon(Icons.check_circle, color: Colors.green),
+                        contentPadding: EdgeInsets.zero,
+                        title: Text('広告の非表示'),
+                        dense: true,
+                      ),
+                    ],
+                  ],
+                ),
+                actions: [
+                  // ローディング中はボタンを無効化
+                  if (!isLoading) ...[
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('キャンセル'),
                     ),
-                    const SizedBox(height: 16),
-                    const Text('食べ放題（プレミアム）プランでは以下の特典があります:'),
-                    const SizedBox(height: 8),
-                    const ListTile(
-                      leading: Icon(Icons.check_circle, color: Colors.green),
-                      contentPadding: EdgeInsets.zero,
-                      title: Text('考え方モードとマルチエージェントモードが無制限'),
-                      dense: true,
-                    ),
-                    const ListTile(
-                      leading: Icon(Icons.check_circle, color: Colors.green),
-                      contentPadding: EdgeInsets.zero,
-                      title: Text('カードセット数無制限'),
-                      dense: true,
-                    ),
-                    const ListTile(
-                      leading: Icon(Icons.check_circle, color: Colors.green),
-                      contentPadding: EdgeInsets.zero,
-                      title: Text('各カードセットのカード枚数無制限'),
-                      dense: true,
-                    ),
-                    const ListTile(
-                      leading: Icon(Icons.check_circle, color: Colors.green),
-                      contentPadding: EdgeInsets.zero,
-                      title: Text('広告の非表示'),
-                      dense: true,
+                    ElevatedButton(
+                      onPressed: processPurchase,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            planType == SubscriptionType.premium_yearly
+                                ? Colors.amber.shade600
+                                : Colors.blue.shade600,
+                      ),
+                      child: Text(AppLocalizations.of(context)!.purchase),
                     ),
                   ],
                 ],
-              ),
-              actions: [
-                // ローディング中はボタンを無効化
-                if (!isLoading) ...[
-                  TextButton(
-                    onPressed: () => Navigator.pop(dialogContext),
-                    child: const Text('キャンセル'),
-                  ),
-                  ElevatedButton(
-                    onPressed: processPurchase,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          planType == SubscriptionType.premium_yearly
-                              ? Colors.amber.shade600
-                              : Colors.blue.shade600,
-                    ),
-                    child: const Text('購入する'),
-                  ),
-                ],
-              ],
-            );
-          },
-        );
-      },
-    );
+              );
+            },
+          );
+        });
   }
 
   // 残り使用回数を取得
@@ -383,10 +430,15 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
     }
   }
 
-  // モード別の残り使用回数テキストを取得
+  // Get remaining uses text by mode
   String _getRemainingUsesText(String mode) {
     final remaining = _getRemainingUses(mode);
-    return remaining < 0 ? '無制限' : '残り$remaining回';
+    if (remaining < 0) {
+      return AppLocalizations.of(context)!.unlimitedUsage;
+    } else {
+      // The remainingUses string is a function that takes a count parameter
+      return AppLocalizations.of(context)!.remainingUses(remaining);
+    }
   }
 
   // 使用状況を表示するカード
@@ -449,7 +501,7 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('暗記パイ食べ放題（プレミアム）プラン'),
+        title: Text(AppLocalizations.of(context)!.subscriptionInfo),
         backgroundColor: const Color.fromARGB(255, 53, 152, 71),
         foregroundColor: Colors.white,
         actions: [
@@ -468,8 +520,9 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
 
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('サブスクリプション情報を更新しました'),
+                  SnackBar(
+                    content: Text(
+                        AppLocalizations.of(context)!.refreshSubscriptionInfo),
                     backgroundColor: Colors.green,
                   ),
                 );
@@ -486,17 +539,17 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // プランタイトル
-                    const Text(
-                      'プランと料金',
-                      style: TextStyle(
+                    // Plan title
+                    Text(
+                      AppLocalizations.of(context)!.plansAndPricing,
+                      style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
 
-                    // 現在のプラン状態
+                    // Current plan status
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -526,8 +579,10 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                           Expanded(
                             child: Text(
                               _subscription?.isPremium ?? false
-                                  ? 'あなたは現在食べ放題（プレミアム）プランをご利用中です'
-                                  : 'あなたは現在無料プランをご利用中です',
+                                  ? AppLocalizations.of(context)!
+                                      .currentlyUsingPremium
+                                  : AppLocalizations.of(context)!
+                                      .currentlyUsingFree,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: _subscription?.isPremium ?? false
@@ -541,9 +596,9 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // プラン比較カード
+                    // Plan comparison cards
                     Row(children: [
-                      // 月額プラン
+                      // Monthly plan
                       Expanded(
                         child: Card(
                           elevation: 3,
@@ -552,49 +607,64 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                // プランタイトル
-                                const Text(
-                                  '月間食べ放題（プレミアム）',
-                                  style: TextStyle(
+                                // Plan title
+                                Text(
+                                  AppLocalizations.of(context)!
+                                      .monthlyPremiumPlan,
+                                  style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
 
-                                // 価格
-                                const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.baseline,
-                                  textBaseline: TextBaseline.alphabetic,
-                                  children: [
-                                    Text(
-                                      '¥380',
-                                      style: TextStyle(
-                                        fontSize: 26,
-                                        fontWeight: FontWeight.bold,
+                                // 価格 - ロケールベースの表示
+                                Builder(builder: (context) {
+                                  final locale = Localizations.localeOf(context)
+                                      .toString();
+                                  final isJapanese = locale.startsWith('ja');
+
+                                  // 通貨記号と金額部分 - 英語表示はすべてドルにする
+                                  String currencySymbol =
+                                      isJapanese ? '¥' : '\$';
+                                  String amount = isJapanese ? '380' : '1.99';
+                                  // 期間表記
+                                  String period = isJapanese ? '/月' : '/month';
+
+                                  return Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.baseline,
+                                    textBaseline: TextBaseline.alphabetic,
+                                    children: [
+                                      Text(
+                                        currencySymbol + amount,
+                                        style: const TextStyle(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      ' /月',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
+                                      Text(
+                                        ' ' + period,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
+                                    ],
+                                  );
+                                }),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '税込み',
+                                  AppLocalizations.of(context)!.taxIncluded,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey.shade600,
                                   ),
                                 ),
                                 Text(
-                                  '食べ放題（プレミアム）プランを一ヶ月間ご利用いただけます',
+                                  AppLocalizations.of(context)!
+                                      .monthlyPremiumDescription,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey.shade600,
@@ -613,7 +683,9 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                                       minimumSize:
                                           const Size(double.infinity, 40),
                                     ),
-                                    child: const Text('月間プランに変更',
+                                    child: Text(
+                                        AppLocalizations.of(context)!
+                                            .switchToMonthlyPlan,
                                         style: TextStyle(
                                             fontSize: 16, color: Colors.black)),
                                   ),
@@ -625,13 +697,13 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
 
                       const SizedBox(width: 8),
 
-                      // 年額プラン
+                      // Yearly plan
                       Expanded(
                           child: Card(
                               elevation: 5, // 年額プランの方を強調
                               color: Colors.amber.shade50,
                               child: Stack(children: [
-                                // お得バッジ
+                                // Best value badge
                                 Positioned(
                                   top: 0,
                                   right: 0,
@@ -645,8 +717,8 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                                         bottomLeft: Radius.circular(10),
                                       ),
                                     ),
-                                    child: const Text(
-                                      'お得',
+                                    child: Text(
+                                      AppLocalizations.of(context)!.bestValue,
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -662,10 +734,11 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.center,
                                         children: [
-                                          // プランタイトル
-                                          const Text(
-                                            '年間食べ放題（プレミアム）',
-                                            style: TextStyle(
+                                          // Plan title
+                                          Text(
+                                            AppLocalizations.of(context)!
+                                                .yearlyPremiumPlan,
+                                            style: const TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -673,30 +746,48 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                                           const SizedBox(height: 8),
 
                                           // 価格
-                                          const Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.baseline,
-                                            textBaseline:
-                                                TextBaseline.alphabetic,
-                                            children: [
-                                              Text(
-                                                '¥2,980',
-                                                style: TextStyle(
-                                                  fontSize: 26,
-                                                  fontWeight: FontWeight.bold,
+                                          // 価格 - ロケールベースの表示
+                                          Builder(builder: (context) {
+                                            final locale =
+                                                Localizations.localeOf(context)
+                                                    .toString();
+                                            final isJapanese =
+                                                locale.startsWith('ja');
+
+                                            // 通貨記号と金額部分 - 英語表示はすべてドルにする
+                                            String currencySymbol =
+                                                isJapanese ? '¥' : '\$';
+                                            String amount =
+                                                isJapanese ? '2,980' : '19.99';
+                                            // 期間表記
+                                            String period =
+                                                isJapanese ? '/年' : '/year';
+
+                                            return Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.baseline,
+                                              textBaseline:
+                                                  TextBaseline.alphabetic,
+                                              children: [
+                                                Text(
+                                                  currencySymbol + amount,
+                                                  style: const TextStyle(
+                                                    fontSize: 26,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                              Text(
-                                                ' /年',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.grey,
+                                                Text(
+                                                  ' ' + period,
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey,
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
-                                          ),
+                                              ],
+                                            );
+                                          }),
                                           Container(
                                             margin: const EdgeInsets.symmetric(
                                                 vertical: 4),
@@ -707,8 +798,9 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                                               borderRadius:
                                                   BorderRadius.circular(10),
                                             ),
-                                            child: const Text(
-                                              '月額換算 ¥248  (２ヶ月分お得)',
+                                            child: Text(
+                                              AppLocalizations.of(context)!
+                                                  .monthlyConversion,
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.bold,
@@ -717,14 +809,16 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                                             ),
                                           ),
                                           Text(
-                                            '税込み',
+                                            AppLocalizations.of(context)!
+                                                .taxIncluded,
                                             style: TextStyle(
                                               fontSize: 12,
                                               color: Colors.grey.shade600,
                                             ),
                                           ),
                                           Text(
-                                            '食べ放題（プレミアム）プランを一年間ご利用いただけます',
+                                            AppLocalizations.of(context)!
+                                                .yearlyPremiumDescription,
                                             style: TextStyle(
                                               fontSize: 12,
                                               color: Colors.grey.shade600,
@@ -747,7 +841,10 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                                                   minimumSize: const Size(
                                                       double.infinity, 40),
                                                 ),
-                                                child: const Text('お得な年間プランに変更',
+                                                child: Text(
+                                                    AppLocalizations.of(
+                                                            context)!
+                                                        .switchToYearlyPlan,
                                                     style: TextStyle(
                                                         color: Colors.black))),
                                         ]))
@@ -755,7 +852,7 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                     ]),
                     const SizedBox(height: 12),
 
-                    // 食べ放題プランの説明
+                    // Premium plan description
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -772,7 +869,8 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              '食べ放題（プレミアム）プランでは広告の表示が無くなり、以下の機能の制限が開放されます。\n・暗記カード枚数制限\n・カードセット数制限\n・マルチエージェントモード回数制限\n・考え方モード回数制限',
+                              AppLocalizations.of(context)!
+                                  .premiumPlanBenefitsDescription,
                               style: TextStyle(
                                 color: Colors.orange.shade800,
                                 fontWeight: FontWeight.w500,
@@ -784,10 +882,12 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    const Text(
-                      '使用状況',
-                      style: TextStyle(
-                        fontSize: 18,
+                    // Usage status
+                    const SizedBox(height: 24),
+                    Text(
+                      AppLocalizations.of(context)!.usageStatus,
+                      style: const TextStyle(
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -795,37 +895,39 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
 
                     // AI特殊モードの使用状況
                     _buildUsageCard(
-                      'マルチエージェントモード',
-                      '複数のAIエージェントが協力して暗記法を生成します',
+                      AppLocalizations.of(context)!.multiAgentMode,
+                      AppLocalizations.of(context)!.multiAgentDescription,
                       _getRemainingUsesText('multi_agent'),
-                      Icons.group_work_outlined,
+                      Icons.people_alt_outlined,
                       Colors.purple,
                     ),
 
                     _buildUsageCard(
-                      '考え方モード',
-                      '内容の本質を捉えた説明を生成します',
+                      AppLocalizations.of(context)!.thinkingMode,
+                      AppLocalizations.of(context)!.thinkingModeDescription,
                       _getRemainingUsesText('thinking'),
-                      Icons.psychology_outlined,
+                      Icons.psychology,
                       Colors.teal,
                     ),
 
                     _buildUsageCard(
-                      'カードセット数',
-                      'カードセットの作成数制限',
+                      AppLocalizations.of(context)!.cardSetsLimit,
+                      AppLocalizations.of(context)!.cardSetsLimitDescription,
                       _subscription?.isPremium ?? false
-                          ? '無制限'
-                          : '最大${SubscriptionModel.maxCardSets}セット',
+                          ? AppLocalizations.of(context)!.unlimited
+                          : AppLocalizations.of(context)!.maxCardSets(
+                              SubscriptionModel.maxCardSets.toString()),
                       Icons.folder_outlined,
                       Colors.blue,
                     ),
 
                     _buildUsageCard(
-                      'カード枚数制限',
-                      '1セットあたりのカード枚数制限',
+                      AppLocalizations.of(context)!.cardsPerSetLimit,
+                      AppLocalizations.of(context)!.cardsPerSetLimitDescription,
                       _subscription?.isPremium ?? false
-                          ? '無制限'
-                          : '最大${SubscriptionModel.maxCardsPerSet}枚/セット',
+                          ? AppLocalizations.of(context)!.unlimited
+                          : AppLocalizations.of(context)!.maxCardsPerSet(
+                              SubscriptionModel.maxCardsPerSet.toString()),
                       Icons.credit_card_outlined,
                       Colors.orange,
                     ),
@@ -841,9 +943,9 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                '使用量リセット日',
-                                style: TextStyle(
+                              Text(
+                                AppLocalizations.of(context)!.usageResetDate,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -851,8 +953,11 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                               const SizedBox(height: 8),
                               Text(
                                 _subscription!.usageResetDate != null
-                                    ? '次回の使用回数リセット日: ${_subscription!.usageResetDate!.year}年${_subscription!.usageResetDate!.month}月${_subscription!.usageResetDate!.day}日'
-                                    : 'リセット日が設定されていません',
+                                    ? AppLocalizations.of(context)!
+                                        .nextResetDate(_formatResetDate(
+                                            _subscription!.usageResetDate!))
+                                    : AppLocalizations.of(context)!
+                                        .noResetDateSet,
                                 style: TextStyle(color: Colors.grey.shade700),
                               ),
                             ],
@@ -869,8 +974,9 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                           children: [
                             const Divider(height: 1),
                             const SizedBox(height: 24),
-                            const Text(
-                              'サブスクリプション管理',
+                            Text(
+                              AppLocalizations.of(context)!
+                                  .subscriptionManagement,
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -896,13 +1002,15 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                                         BorderSide(color: Colors.red.shade200),
                                   ),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.cancel_outlined),
-                                    SizedBox(width: 8),
-                                    Text('サブスクリプションを解約する',
-                                        style: TextStyle(fontSize: 16)),
+                                    const Icon(Icons.cancel_outlined),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                        AppLocalizations.of(context)!
+                                            .unsubscribe,
+                                        style: const TextStyle(fontSize: 16)),
                                   ],
                                 ),
                               )
@@ -922,13 +1030,16 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                                         color: Colors.green.shade200),
                                   ),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(Icons.refresh),
                                     SizedBox(width: 8),
-                                    Text('サブスクリプションを再開する',
-                                        style: TextStyle(fontSize: 16)),
+                                    Text(
+                                      AppLocalizations.of(context)!
+                                          .reactivateSubscription,
+                                      style: TextStyle(fontSize: 16),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -940,16 +1051,17 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                                 (_subscription!.status == 'active' ||
                                     _subscription!.status == null))
                               Text(
-                                '解約すると、暗記のためのさまざまな機能が制限されます。現在の期間が終了するまでは引き続きご利用いただけます。',
+                                AppLocalizations.of(context)!
+                                    .unsubscribeExplanation,
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
+                                  fontSize: 14,
+                                  color: Colors.grey.shade700,
                                 ),
                                 textAlign: TextAlign.center,
                               )
                             else if (_subscription!.status == 'canceling')
                               Text(
-                                'サブスクリプションは解約予定です。${_subscription!.cancelAt != null ? _formatDate(_subscription!.cancelAt!) : '次回の課金日'}以降は無料プランに切り替わります。再開すると現在のプランが継続されます。',
+                                _getPremiumCancellingText(),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey.shade600,
@@ -958,7 +1070,8 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                               )
                             else if (_subscription!.status == 'canceled')
                               Text(
-                                'サブスクリプションは現在解約されています。食べ放題（プレミアム）プランを再度ご利用いただくには、サブスクリプションを再開してください。',
+                                AppLocalizations.of(context)!
+                                    .premiumPlanCancelled,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey.shade600,
@@ -975,9 +1088,24 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
     );
   }
 
-  // 日付を文字列にフォーマットするメソッド
+  // 日付のフォーマット
   String _formatDate(DateTime date) {
     return '${date.year}年${date.month}月${date.day}日';
+  }
+
+  // リセット日のフォーマット
+  String _formatResetDate(DateTime date) {
+    return '${date.year}年${date.month}月${date.day}日';
+  }
+
+  // Helper method to properly format localization with date parameter
+  String _getPremiumCancellingText() {
+    String dateText = _subscription!.cancelAt != null
+        ? _formatDate(_subscription!.cancelAt!)
+        : '次回の課金日';
+    // The premiumPlanCancellationPending string is a function that takes a date parameter
+    return AppLocalizations.of(context)!
+        .premiumPlanCancellationPending(dateText);
   }
 
   // サブスクリプション解約確認ダイアログを表示
@@ -985,9 +1113,9 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('サブスクリプションの解約'),
-        content: const Text(
-            '本当にサブスクリプションを解約しますか？\n\n解約すると、現在の課金期間が終了した後は食べ放題（プレミアム）プランが利用できなくなります。'),
+        title: Text(AppLocalizations.of(context)!.subscriptionCancellation),
+        content:
+            Text(AppLocalizations.of(context)!.cancelSubscriptionConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -1059,8 +1187,8 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('追加手順が必要です'),
-                  content:
-                      const Text('サブスクリプションを完全に解約するには、開いた設定ページで手続きを完了させてください。'),
+                  content: Text(AppLocalizations.of(context)!
+                      .completeCancellationInSettings),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
@@ -1107,13 +1235,18 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('サブスクリプションの再開'),
-        content:
-            const Text('サブスクリプションを再開しますか？\n\n現在解約予定または解約済みのサブスクリプションを再開します。'),
+        title: Text(AppLocalizations.of(context)!.reactivateSubscriptionTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(AppLocalizations.of(context)!
+                .reactivateSubscriptionConfirmation),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             style: TextButton.styleFrom(
@@ -1159,7 +1292,8 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(result['message'] ?? 'サブスクリプションが再開されました'),
+              content: Text(result['message'] ??
+                  AppLocalizations.of(context)!.subscriptionReactivated),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 4),
             ),
@@ -1173,8 +1307,8 @@ class _SubscriptionInfoScreenState extends State<SubscriptionInfoScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  Text('サブスクリプションの再開に失敗しました: ${result['error'] ?? '不明なエラー'}'),
+              content: Text(
+                  'サブスクリプションの再開に失敗しました: ${result['error'] ?? AppLocalizations.of(context)!.unknownError}'),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 4),
             ),
